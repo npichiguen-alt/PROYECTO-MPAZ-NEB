@@ -14,8 +14,10 @@ import com.example.mpazneb.model.PerfilUsuario
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
 
 @Composable
-fun SeleccionPerfilScreen(modifier: Modifier = Modifier) {
-
+fun SeleccionPerfilScreen(
+    modifier: Modifier = Modifier,
+    onContinuarEstudiante: () -> Unit = {}
+) {
     var perfilSeleccionado by rememberSaveable {
         mutableStateOf("")
     }
@@ -73,13 +75,18 @@ fun SeleccionPerfilScreen(modifier: Modifier = Modifier) {
 
         Button(
             onClick = {
-                mensaje = "Seleccionaste: $perfilSeleccionado"
+                if (perfilSeleccionado == PerfilUsuario.ESTUDIANTE.nombreVisible) {
+                    onContinuarEstudiante()
+                } else {
+                    mensaje = "Seleccionaste: $perfilSeleccionado"
+                }
             },
             enabled = perfilSeleccionado.isNotEmpty(),
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Continuar")
         }
+
 
         if (mensaje.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
