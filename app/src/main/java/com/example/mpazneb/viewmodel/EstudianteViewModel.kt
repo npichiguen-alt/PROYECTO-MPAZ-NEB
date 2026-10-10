@@ -18,6 +18,13 @@ data class LecturaUiState(
     val esCorrecta: Boolean? = null
 )
 
+
+data class MatematicaUiState(
+    val respuestaSeleccionada: String? = null,
+    val mensaje: String = "",
+    val esCorrecta: Boolean? = null
+)
+
 class EstudianteViewModel : ViewModel() {
 
     // INGRESO DEL ESTUDIANTE
@@ -88,6 +95,46 @@ class EstudianteViewModel : ViewModel() {
         }
 
         _estadoLectura.value = _estadoLectura.value.copy(
+            mensaje = mensajeResultado,
+            esCorrecta = correcta
+        )
+    }
+    private val _estadoMatematica = MutableStateFlow(
+        MatematicaUiState()
+    )
+
+    val estadoMatematica: StateFlow<MatematicaUiState> =
+        _estadoMatematica
+
+    fun seleccionarRespuestaMatematica(respuesta: String) {
+        _estadoMatematica.value = _estadoMatematica.value.copy(
+            respuestaSeleccionada = respuesta,
+            mensaje = "",
+            esCorrecta = null
+        )
+    }
+
+    fun comprobarRespuestaMatematica() {
+        val respuesta =
+            _estadoMatematica.value.respuestaSeleccionada
+
+        if (respuesta == null) {
+            _estadoMatematica.value = _estadoMatematica.value.copy(
+                mensaje = "Selecciona una respuesta.",
+                esCorrecta = null
+            )
+            return
+        }
+
+        val correcta = respuesta == "12"
+
+        val mensajeResultado = if (correcta) {
+            "¡Muy bien! Respuesta correcta."
+        } else {
+            "Inténtalo nuevamente."
+        }
+
+        _estadoMatematica.value = _estadoMatematica.value.copy(
             mensaje = mensajeResultado,
             esCorrecta = correcta
         )
