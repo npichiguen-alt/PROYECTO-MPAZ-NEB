@@ -1,6 +1,7 @@
 
 package com.example.mpazneb.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -14,8 +15,12 @@ import com.example.mpazneb.ui.theme.MPAZNEBTheme
 
 @Composable
 fun InicioEstudianteScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAbrirLectura: () -> Unit = {},
+    onAbrirMatematica: () -> Unit = {},
+    onAbrirResultados: () -> Unit = {}
 ) {
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -51,12 +56,17 @@ fun InicioEstudianteScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // TARJETA DE LECTURA
+
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onAbrirLectura()
+                }
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+
                 Text(
                     text = "Lectura",
                     style = MaterialTheme.typography.titleLarge
@@ -67,17 +77,29 @@ fun InicioEstudianteScreen(
                 Text(
                     text = "Actividades de comprensión lectora."
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Presiona para ingresar",
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // TARJETA DE MATEMÁTICA
+
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onAbrirMatematica()
+                }
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+
                 Text(
                     text = "Matemática",
                     style = MaterialTheme.typography.titleLarge
@@ -88,17 +110,29 @@ fun InicioEstudianteScreen(
                 Text(
                     text = "Actividades y ejercicios matemáticos."
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Presiona para ingresar",
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // TARJETA DE RESULTADOS
+
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onAbrirResultados()
+                }
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+
                 Text(
                     text = "Mis resultados",
                     style = MaterialTheme.typography.titleLarge
@@ -108,6 +142,13 @@ fun InicioEstudianteScreen(
 
                 Text(
                     text = "Consulta tu progreso y tus logros."
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Presiona para consultar",
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
         }
@@ -124,6 +165,7 @@ fun InicioEstudianteScreen(
 @Preview(showBackground = true)
 @Composable
 fun InicioEstudiantePreview() {
+
     MPAZNEBTheme {
         InicioEstudianteScreen()
     }

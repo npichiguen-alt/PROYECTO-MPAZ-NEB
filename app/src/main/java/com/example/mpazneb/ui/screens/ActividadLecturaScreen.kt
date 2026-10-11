@@ -23,6 +23,7 @@ fun ActividadLecturaScreen(
     onComprobar: () -> Unit = {},
     mensaje: String = "",
     esCorrecta: Boolean? = null,
+    finalizada: Boolean = false,
     modifier: Modifier = Modifier
 ) {
 
@@ -91,7 +92,8 @@ fun ActividadLecturaScreen(
                     selected = respuestaSeleccionada == alternativa,
                     onClick = {
                         onSeleccionarRespuesta(alternativa)
-                    }
+                    },
+                    enabled = !finalizada
                 )
 
                 Text(text = alternativa)
@@ -102,10 +104,20 @@ fun ActividadLecturaScreen(
 
         Button(
             onClick = onComprobar,
-            enabled = respuestaSeleccionada != null,
+            enabled = respuestaSeleccionada != null && !finalizada,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Comprobar respuesta")
+        }
+
+        if (finalizada) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "¡Actividad completada!",
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleMedium
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -163,6 +175,8 @@ fun ActividadLecturaConViewModel(
                 .seleccionarRespuestaLectura(respuesta)
         },
 
+        finalizada = estadoLectura.finalizada,
+
         onComprobar = {
             estudianteViewModel.comprobarRespuestaLectura()
         },
@@ -170,6 +184,9 @@ fun ActividadLecturaConViewModel(
         mensaje = estadoLectura.mensaje,
         esCorrecta = estadoLectura.esCorrecta,
         modifier = modifier
+
+
+
     )
 }
 

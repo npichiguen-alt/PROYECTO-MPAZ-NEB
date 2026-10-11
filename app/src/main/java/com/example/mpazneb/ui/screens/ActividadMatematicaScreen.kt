@@ -23,6 +23,7 @@ fun ActividadMatematicaScreen(
     onComprobar: () -> Unit = {},
     mensaje: String = "",
     esCorrecta: Boolean? = null,
+    finalizada: Boolean = false,
     modifier: Modifier = Modifier
 ) {
 
@@ -94,7 +95,8 @@ fun ActividadMatematicaScreen(
                     selected = respuestaSeleccionada == alternativa,
                     onClick = {
                         onSeleccionarRespuesta(alternativa)
-                    }
+                    },
+                    enabled = !finalizada
                 )
 
                 Text(text = alternativa)
@@ -105,10 +107,20 @@ fun ActividadMatematicaScreen(
 
         Button(
             onClick = onComprobar,
-            enabled = respuestaSeleccionada != null,
+            enabled = respuestaSeleccionada != null && !finalizada,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Comprobar respuesta")
+        }
+
+        if (finalizada) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "¡Actividad completada!",
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleMedium
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -157,6 +169,7 @@ fun ActividadMatematicaConViewModel(
 
         mensaje = estadoMatematica.mensaje,
         esCorrecta = estadoMatematica.esCorrecta,
+        finalizada = estadoMatematica.finalizada,
         modifier = modifier
     )
 }
