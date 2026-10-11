@@ -16,10 +16,15 @@ import com.example.mpazneb.ui.theme.MPAZNEBTheme
 @Composable
 fun InicioEstudianteScreen(
     modifier: Modifier = Modifier,
+    lecturaCompletada: Boolean = false,
+    matematicaCompletada: Boolean = false,
     onAbrirLectura: () -> Unit = {},
     onAbrirMatematica: () -> Unit = {},
     onAbrirResultados: () -> Unit = {}
 ) {
+    val totalCompletadas =
+        listOf(lecturaCompletada, matematicaCompletada)
+            .count { it }
 
     Column(
         modifier = modifier
@@ -47,6 +52,20 @@ fun InicioEstudianteScreen(
             text = "Bienvenido a tus actividades educativas"
         )
 
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Actividades completadas: $totalCompletadas de 2",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LinearProgressIndicator(
+            progress = { totalCompletadas / 2f },
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
@@ -65,7 +84,9 @@ fun InicioEstudianteScreen(
                     onAbrirLectura()
                 }
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
 
                 Text(
                     text = "Lectura",
@@ -78,10 +99,30 @@ fun InicioEstudianteScreen(
                     text = "Actividades de comprensión lectora."
                 )
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = if (lecturaCompletada) {
+                        "Estado: Completada"
+                    } else {
+                        "Estado: Pendiente"
+                    },
+                    color = if (lecturaCompletada) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    style = MaterialTheme.typography.labelLarge
+                )
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Presiona para ingresar",
+                    text = if (lecturaCompletada) {
+                        "Presiona para revisar la actividad"
+                    } else {
+                        "Presiona para comenzar"
+                    },
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -98,7 +139,9 @@ fun InicioEstudianteScreen(
                     onAbrirMatematica()
                 }
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
 
                 Text(
                     text = "Matemática",
@@ -111,10 +154,30 @@ fun InicioEstudianteScreen(
                     text = "Actividades y ejercicios matemáticos."
                 )
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = if (matematicaCompletada) {
+                        "Estado: Completada"
+                    } else {
+                        "Estado: Pendiente"
+                    },
+                    color = if (matematicaCompletada) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    style = MaterialTheme.typography.labelLarge
+                )
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Presiona para ingresar",
+                    text = if (matematicaCompletada) {
+                        "Presiona para revisar la actividad"
+                    } else {
+                        "Presiona para comenzar"
+                    },
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -131,7 +194,9 @@ fun InicioEstudianteScreen(
                     onAbrirResultados()
                 }
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
 
                 Text(
                     text = "Mis resultados",
@@ -141,7 +206,7 @@ fun InicioEstudianteScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Consulta tu progreso y tus logros."
+                    text = "Consulta tus aciertos, intentos y progreso."
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -165,8 +230,10 @@ fun InicioEstudianteScreen(
 @Preview(showBackground = true)
 @Composable
 fun InicioEstudiantePreview() {
-
     MPAZNEBTheme {
-        InicioEstudianteScreen()
+        InicioEstudianteScreen(
+            lecturaCompletada = true,
+            matematicaCompletada = false
+        )
     }
 }

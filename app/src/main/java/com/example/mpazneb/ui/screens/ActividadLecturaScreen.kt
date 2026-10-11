@@ -15,6 +15,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import com.example.mpazneb.viewmodel.EstudianteViewModel
 import androidx.compose.runtime.remember
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.expandVertically
 
 @Composable
 fun ActividadLecturaScreen(
@@ -110,15 +113,22 @@ fun ActividadLecturaScreen(
             Text("Comprobar respuesta")
         }
 
-        if (finalizada) {
-            Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "¡Actividad completada!",
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.titleMedium
-            )
+        AnimatedVisibility(
+            visible = finalizada,
+            enter = fadeIn() + expandVertically()
+        ) {
+            Column {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "¡Actividad completada!",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
         }
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
