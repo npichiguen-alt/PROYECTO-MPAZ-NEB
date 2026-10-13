@@ -1,5 +1,4 @@
-
-package com.example.mpazneb.ui.screens
+package com.example.mpazneb.ui.screens.estudiante
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

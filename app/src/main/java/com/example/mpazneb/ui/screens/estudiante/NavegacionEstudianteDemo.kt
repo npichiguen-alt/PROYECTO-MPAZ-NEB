@@ -1,4 +1,4 @@
-package com.example.mpazneb.ui.screens
+package com.example.mpazneb.ui.screens.estudiante
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column

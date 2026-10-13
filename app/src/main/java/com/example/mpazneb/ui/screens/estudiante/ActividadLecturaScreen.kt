@@ -1,5 +1,4 @@
-
-package com.example.mpazneb.ui.screens
+package com.example.mpazneb.ui.screens.estudiante
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,15 +10,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
 import com.example.mpazneb.viewmodel.EstudianteViewModel
+import androidx.compose.runtime.remember
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.expandVertically
+
 @Composable
-fun ActividadMatematicaScreen(
+fun ActividadLecturaScreen(
     respuestaSeleccionada: String? = null,
     onSeleccionarRespuesta: (String) -> Unit = {},
     onComprobar: () -> Unit = {},
@@ -29,7 +29,11 @@ fun ActividadMatematicaScreen(
     modifier: Modifier = Modifier
 ) {
 
-    val alternativas = listOf("10", "12", "14")
+    val alternativas = listOf(
+        "Un gato",
+        "Un perro",
+        "Un pájaro"
+    )
 
     Column(
         modifier = modifier
@@ -47,32 +51,27 @@ fun ActividadMatematicaScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "Actividad de Matemática",
+            text = "Actividad de Lectura",
             style = MaterialTheme.typography.titleLarge
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Card(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
 
                 Text(
-                    text = "Resuelve la operación",
+                    text = "El gato Tomás",
                     style = MaterialTheme.typography.titleMedium
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "7 + 5 = ?",
-                    style = MaterialTheme.typography.headlineLarge
+                    text = "Tomás es un gato pequeño que vive " +
+                            "en una casa con jardín. Todas las mañanas " +
+                            "sale a jugar con una pelota roja. " +
+                            "Después vuelve a casa para descansar."
                 )
             }
         }
@@ -80,19 +79,17 @@ fun ActividadMatematicaScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "¿Cuál es el resultado correcto?",
+            text = "¿Qué animal es Tomás?",
             style = MaterialTheme.typography.titleMedium
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         alternativas.forEach { alternativa ->
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 RadioButton(
                     selected = respuestaSeleccionada == alternativa,
                     onClick = {
@@ -146,6 +143,7 @@ fun ActividadMatematicaScreen(
             )
         }
 
+
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
@@ -155,47 +153,49 @@ fun ActividadMatematicaScreen(
     }
 }
 
-@Composable
-fun ActividadMatematicaConViewModel(
-    estudianteViewModel: EstudianteViewModel,
-    modifier: Modifier = Modifier
-) {
-    val estadoMatematica by
-    estudianteViewModel.estadoMatematica.collectAsState()
-
-    ActividadMatematicaScreen(
-        respuestaSeleccionada =
-            estadoMatematica.respuestaSeleccionada,
-
-        onSeleccionarRespuesta = { respuesta ->
-            estudianteViewModel
-                .seleccionarRespuestaMatematica(respuesta)
-        },
-
-        onComprobar = {
-            estudianteViewModel.comprobarRespuestaMatematica()
-        },
-
-        mensaje = estadoMatematica.mensaje,
-        esCorrecta = estadoMatematica.esCorrecta,
-        finalizada = estadoMatematica.finalizada,
-        modifier = modifier
-    )
-}
-
-
 @Preview(showBackground = true)
 @Composable
-fun ActividadMatematicaPreview() {
+fun ActividadLecturaPreview() {
     MPAZNEBTheme {
 
         val estudianteViewModel = remember {
             EstudianteViewModel()
         }
 
-        ActividadMatematicaConViewModel(
+        ActividadLecturaConViewModel(
             estudianteViewModel = estudianteViewModel
         )
     }
+}
+@Composable
+fun ActividadLecturaConViewModel(
+    estudianteViewModel: EstudianteViewModel,
+    modifier: Modifier = Modifier
+) {
+    val estadoLectura by
+    estudianteViewModel.estadoLectura.collectAsState()
+
+    ActividadLecturaScreen(
+        respuestaSeleccionada =
+            estadoLectura.respuestaSeleccionada,
+
+        onSeleccionarRespuesta = { respuesta ->
+            estudianteViewModel
+                .seleccionarRespuestaLectura(respuesta)
+        },
+
+        finalizada = estadoLectura.finalizada,
+
+        onComprobar = {
+            estudianteViewModel.comprobarRespuestaLectura()
+        },
+
+        mensaje = estadoLectura.mensaje,
+        esCorrecta = estadoLectura.esCorrecta,
+        modifier = modifier
+
+
+
+    )
 }
 
