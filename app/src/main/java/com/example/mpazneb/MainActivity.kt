@@ -16,7 +16,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
-import com.example.mpazneb.ui.screens.IngresoEstudianteScreen
+import com.example.mpazneb.ui.screens.estudiante.IngresoEstudianteScreen
 import com.example.mpazneb.ui.screens.SeleccionPerfilScreen
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
 import com.example.mpazneb.viewmodel.EstudianteViewModel
