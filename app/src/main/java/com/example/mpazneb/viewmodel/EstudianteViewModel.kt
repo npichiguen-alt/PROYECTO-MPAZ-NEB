@@ -1,18 +1,22 @@
-
 package com.example.mpazneb.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.mpazneb.model.Resultado
+import com.example.mpazneb.repository.estudiante.EstudianteRepository
+import com.example.mpazneb.repository.estudiante.DemoEstudianteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
-// ESTADO DEL INGRESO
+// Estado del ingreso del estudiante
 data class IngresoEstudianteUiState(
     val codigoTemporal: String = "",
-    val mensaje: String = ""
+    val mensaje: String = "",
+    val ingresoValidado: Boolean = false
 )
 
-// ESTADO DE LECTURA
+// Estado de la actividad de Lectura
 data class LecturaUiState(
     val respuestaSeleccionada: String? = null,
     val mensaje: String = "",
@@ -21,7 +25,7 @@ data class LecturaUiState(
     val finalizada: Boolean = false
 )
 
-// ESTADO DE MATEMÁTICA
+// Estado de la actividad de Matemática
 data class MatematicaUiState(
     val respuestaSeleccionada: String? = null,
     val mensaje: String = "",
@@ -30,10 +34,17 @@ data class MatematicaUiState(
     val finalizada: Boolean = false
 )
 
-class EstudianteViewModel : ViewModel() {
+// ====================================
+// 2. VIEWMODEL DEL ESTUDIANTE
+// ====================================
+
+class EstudianteViewModel(
+    private val repositorio: EstudianteRepository =
+        DemoEstudianteRepository()
+) : ViewModel() {
 
     // ====================================
-    // 1. INGRESO DEL ESTUDIANTE
+    // 3. INGRESO DEL ESTUDIANTE
     // ====================================
 
     private val _estado = MutableStateFlow(
@@ -43,29 +54,52 @@ class EstudianteViewModel : ViewModel() {
     val estado: StateFlow<IngresoEstudianteUiState> =
         _estado
 
+    // Actualiza el código que escribe el estudiante
     fun actualizarCodigo(codigo: String) {
         _estado.value = _estado.value.copy(
             codigoTemporal = codigo,
-            mensaje = ""
+            mensaje = "",
+            ingresoValidado = false
         )
     }
 
+    // Verifica el código mediante el Repository
     fun intentarIngresar() {
+
         val codigo = _estado.value.codigoTemporal.trim()
 
-        val mensaje = if (codigo.isEmpty()) {
-            "Debes ingresar un código."
-        } else {
-            "Código ingresado. Falta validar la asignación."
+        if (codigo.isBlank()) {
+            _estado.value = _estado.value.copy(
+                mensaje = "Debes ingresar un código.",
+                ingresoValidado = false
+            )
+            return
         }
 
-        _estado.value = _estado.value.copy(
-            mensaje = mensaje
-        )
+        viewModelScope.launch {
+
+            val asignacion =
+                repositorio.buscarAsignacionPorCodigo(codigo)
+
+            if (asignacion != null) {
+
+                _estado.value = _estado.value.copy(
+                    mensaje = "Código válido. Asignación encontrada.",
+                    ingresoValidado = true
+                )
+
+            } else {
+
+                _estado.value = _estado.value.copy(
+                    mensaje = "Código no encontrado.",
+                    ingresoValidado = false
+                )
+            }
+        }
     }
 
     // ====================================
-    // 2. RESULTADOS DEL ESTUDIANTE
+    // 4. RESULTADOS DEL ESTUDIANTE
     // ====================================
 
     private val _resultados = MutableStateFlow<List<Resultado>>(
@@ -76,7 +110,7 @@ class EstudianteViewModel : ViewModel() {
         _resultados
 
     // ====================================
-    // 3. ACTIVIDAD DE LECTURA
+    // 5. ACTIVIDAD DE LECTURA
     // ====================================
 
     private val _estadoLectura = MutableStateFlow(
@@ -86,6 +120,7 @@ class EstudianteViewModel : ViewModel() {
     val estadoLectura: StateFlow<LecturaUiState> =
         _estadoLectura
 
+    // Guarda la alternativa seleccionada
     fun seleccionarRespuestaLectura(respuesta: String) {
 
         if (_estadoLectura.value.finalizada) return
@@ -97,6 +132,7 @@ class EstudianteViewModel : ViewModel() {
         )
     }
 
+    // Comprueba la respuesta de Lectura
     fun comprobarRespuestaLectura() {
 
         val estadoActual = _estadoLectura.value
@@ -113,9 +149,10 @@ class EstudianteViewModel : ViewModel() {
             return
         }
 
-        // Sumamos un intento
+        // Aumenta el número de intentos
         val nuevosIntentos = estadoActual.intentos + 1
 
+        // Respuesta correcta del ejercicio de demostración
         val correcta = respuesta == "Un gato"
 
         val mensajeResultado = if (correcta) {
@@ -131,7 +168,7 @@ class EstudianteViewModel : ViewModel() {
             finalizada = correcta
         )
 
-        // Guardamos el resultado al completar la actividad
+        // Guarda temporalmente el resultado
         if (correcta) {
 
             val nuevoResultado = Resultado(
@@ -149,7 +186,7 @@ class EstudianteViewModel : ViewModel() {
     }
 
     // ====================================
-    // 4. ACTIVIDAD DE MATEMÁTICA
+    // 6. ACTIVIDAD DE MATEMÁTICA
     // ====================================
 
     private val _estadoMatematica = MutableStateFlow(
@@ -159,6 +196,7 @@ class EstudianteViewModel : ViewModel() {
     val estadoMatematica: StateFlow<MatematicaUiState> =
         _estadoMatematica
 
+    // Guarda la alternativa seleccionada
     fun seleccionarRespuestaMatematica(respuesta: String) {
 
         if (_estadoMatematica.value.finalizada) return
@@ -170,6 +208,7 @@ class EstudianteViewModel : ViewModel() {
         )
     }
 
+    // Comprueba la respuesta de Matemática
     fun comprobarRespuestaMatematica() {
 
         val estadoActual = _estadoMatematica.value
@@ -186,9 +225,10 @@ class EstudianteViewModel : ViewModel() {
             return
         }
 
-        // Sumamos un intento
+        // Aumenta el número de intentos
         val nuevosIntentos = estadoActual.intentos + 1
 
+        // Respuesta correcta del ejercicio de demostración
         val correcta = respuesta == "12"
 
         val mensajeResultado = if (correcta) {
@@ -204,7 +244,7 @@ class EstudianteViewModel : ViewModel() {
             finalizada = correcta
         )
 
-        // Guardamos el resultado al completar la actividad
+        // Guarda temporalmente el resultado
         if (correcta) {
 
             val nuevoResultado = Resultado(
@@ -220,5 +260,4 @@ class EstudianteViewModel : ViewModel() {
                 _resultados.value + nuevoResultado
         }
     }
-
 }
