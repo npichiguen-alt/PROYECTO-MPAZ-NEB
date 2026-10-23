@@ -24,8 +24,19 @@ class ActividadRepository(
         actividadDao.insertarActividad(entidad)
     }
 
-    suspend fun listarActividades(): List<ActividadEntity> {
-        return actividadDao.obtenerActividades()
+    suspend fun listarActividades(): List<Actividad> {
+
+        return actividadDao.obtenerActividades().map { entidad ->
+
+            Actividad(
+                id = entidad.id,
+                titulo = entidad.titulo,
+                modulo = entidad.modulo,
+                curso = entidad.curso,
+                dificultad = entidad.dificultad,
+                descripcion = entidad.descripcion,
+                activa = entidad.activa
+            )
+        }
     }
 }
-

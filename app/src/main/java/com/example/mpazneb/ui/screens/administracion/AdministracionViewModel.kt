@@ -18,12 +18,16 @@ class AdministracionViewModel(
     var mensaje by mutableStateOf("")
         private set
 
+    var actividades by mutableStateOf<List<Actividad>>(emptyList())
+        private set
+
     var actividadPreparada by mutableStateOf<Actividad?>(null)
         private set
 
     var guardando by mutableStateOf(false)
         private set
 
+    val repo = repositorio
     fun guardarActividad(
         titulo: String,
         descripcion: String,
@@ -64,6 +68,9 @@ class AdministracionViewModel(
         viewModelScope.launch {
             try {
                 repo.guardarActividad(actividad)
+
+                actividades = repo.listarActividades()
+
                 mensaje = "Actividad guardada correctamente."
             } catch (error: CancellationException) {
                 throw error
@@ -74,4 +81,22 @@ class AdministracionViewModel(
             }
         }
     }
+
+    fun cargarActividades() {
+
+        val repo = repositorio ?: return
+
+        viewModelScope.launch {
+            try {
+                actividades = repo.listarActividades()
+
+            } catch (error: CancellationException) {
+                throw error
+
+            } catch (error: Exception) {
+                mensaje = "No se pudieron cargar las actividades."
+            }
+        }
+    }
+
 }
