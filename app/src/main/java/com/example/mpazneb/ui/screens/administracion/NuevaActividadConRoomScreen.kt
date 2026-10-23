@@ -45,7 +45,11 @@ fun NuevaActividadConRoomScreen() {
 
     // Consultar Room cuando abrimos Lectura o Matemática
     LaunchedEffect(pantalla) {
-        if (pantalla != "Nueva") {
+        if (
+            pantalla == "Matematica" ||
+            pantalla == "Lectura" ||
+            pantalla == "Resultados"
+        ){
             viewModel.cargarActividades()
         }
     }
@@ -62,7 +66,7 @@ fun NuevaActividadConRoomScreen() {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
-            listOf("Nueva", "Matemática", "Lectura").forEach { opcion ->
+            listOf("Nueva", "Matemática", "Lectura", "Ususarios", "Resultados").forEach { opcion ->
 
                 FilterChip(
                     selected = pantalla == opcion,
@@ -90,6 +94,14 @@ fun NuevaActividadConRoomScreen() {
 
                 "Lectura" -> {
                     GestionLecturaScreen(
+                        actividades = viewModel.actividades
+                    )
+                }
+                "Ususarios" -> {
+                    AdministrarUsuariosScreen()
+                }
+                "Resultados" -> {
+                    ResultadosGeneralesScreen(
                         actividades = viewModel.actividades
                     )
                 }
