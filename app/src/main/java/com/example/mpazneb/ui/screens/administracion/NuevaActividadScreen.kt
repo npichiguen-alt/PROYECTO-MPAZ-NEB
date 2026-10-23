@@ -116,7 +116,7 @@ fun NuevaActividadScreen(
         }
         Button(
             onClick = {
-                viewModel.validarFormulario(
+                viewModel.guardarActividad(
                     titulo = titulo,
                     descripcion = descripcion,
                     modulo = modulo,
@@ -124,7 +124,9 @@ fun NuevaActividadScreen(
                     dificultad = dificultad
                 )
             },
-            enabled = titulo.isNotBlank() && descripcion.isNotBlank(),
+            enabled = titulo.isNotBlank() &&
+                      descripcion.isNotBlank()&&
+                      !viewModel.guardando,
             modifier = Modifier.fillMaxWidth()
         ){
             Text(text = "Guardar Actividad")

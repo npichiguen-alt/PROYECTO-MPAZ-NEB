@@ -5,9 +5,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.mpazneb.model.Actividad
+import com.example.mpazneb.repository.administracion.ActividadRepository
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
-class AdministracionViewModel : ViewModel() {
+class AdministracionViewModel(
+    private val repositorio: ActividadRepository? = null
+) : ViewModel() {
 
     var mensaje by mutableStateOf("")
         private set
@@ -15,13 +21,17 @@ class AdministracionViewModel : ViewModel() {
     var actividadPreparada by mutableStateOf<Actividad?>(null)
         private set
 
-    fun validarFormulario(
+    var guardando by mutableStateOf(false)
+        private set
+
+    fun guardarActividad(
         titulo: String,
         descripcion: String,
         modulo: String,
         curso: Int,
         dificultad: String
     ) {
+        if (guardando) return
 
         if (titulo.isBlank() || descripcion.isBlank()) {
             actividadPreparada = null
@@ -29,7 +39,7 @@ class AdministracionViewModel : ViewModel() {
             return
         }
 
-        actividadPreparada = Actividad(
+        val actividad = Actividad(
             id = 0,
             titulo = titulo.trim(),
             modulo = modulo,
@@ -39,6 +49,29 @@ class AdministracionViewModel : ViewModel() {
             activa = false
         )
 
-        mensaje = "Actividad preparada: ${titulo.trim()}. Pendiente guardar en Room."
+        actividadPreparada = actividad
+
+        val repo = repositorio
+
+        if (repo == null) {
+            mensaje = "Vista previa: actividad preparada, sin guardar en Room."
+            return
+        }
+
+        guardando = true
+        mensaje = "Guardando actividad..."
+
+        viewModelScope.launch {
+            try {
+                repo.guardarActividad(actividad)
+                mensaje = "Actividad guardada correctamente."
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                mensaje = "No se pudo guardar la actividad."
+            } finally {
+                guardando = false
+            }
+        }
     }
 }
