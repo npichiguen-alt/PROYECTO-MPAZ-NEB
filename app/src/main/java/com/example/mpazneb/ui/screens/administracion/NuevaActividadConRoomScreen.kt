@@ -46,7 +46,7 @@ fun NuevaActividadConRoomScreen() {
     // Consultar Room cuando abrimos Lectura o Matemática
     LaunchedEffect(pantalla) {
         if (
-            pantalla == "Matematica" ||
+            pantalla == "Matemática" ||
             pantalla == "Lectura" ||
             pantalla == "Resultados"
         ){
