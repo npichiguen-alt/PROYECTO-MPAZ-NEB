@@ -66,7 +66,7 @@ fun NuevaActividadConRoomScreen() {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
-            listOf("Nueva", "Matemática", "Lectura", "Ususarios", "Resultados").forEach { opcion ->
+            listOf("Nueva", "Matemática", "Lectura", "Usuarios", "Resultados").forEach { opcion ->
 
                 FilterChip(
                     selected = pantalla == opcion,
@@ -97,7 +97,7 @@ fun NuevaActividadConRoomScreen() {
                         actividades = viewModel.actividades
                     )
                 }
-                "Ususarios" -> {
+                "Usuarios" -> {
                     AdministrarUsuariosScreen()
                 }
                 "Resultados" -> {
