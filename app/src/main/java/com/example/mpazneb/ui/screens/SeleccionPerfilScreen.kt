@@ -22,7 +22,6 @@ fun SeleccionPerfilScreen(
     onContinuarAsistente: () -> Unit = {},
     onContinuarAdministracion: () -> Unit = {}
 ) {
-
     // Guarda el perfil seleccionado
     var perfilSeleccionado by rememberSaveable {
         mutableStateOf("")
@@ -97,6 +96,9 @@ fun SeleccionPerfilScreen(
                     // PERFIL ASISTENTE
                     PerfilUsuario.ASISTENTE_AULA.nombreVisible -> {
                         onContinuarAsistente()
+                    }
+                    PerfilUsuario.ADMINISTRACION_PEDAGOGICA.nombreVisible -> {
+                        onContinuarAdministracion()
                     }
 
                     // PERFIL ADMINISTRACIÓN
