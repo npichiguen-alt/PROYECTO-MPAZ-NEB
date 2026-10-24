@@ -1,3 +1,4 @@
+
 package com.example.mpazneb.ui.screens
 
 import androidx.compose.foundation.layout.*
@@ -16,12 +17,16 @@ import com.example.mpazneb.ui.theme.MPAZNEBTheme
 @Composable
 fun SeleccionPerfilScreen(
     modifier: Modifier = Modifier,
-    onContinuarEstudiante: () -> Unit = {}
+    onContinuarEstudiante: () -> Unit = {},
+    onContinuarAsistente: () -> Unit = {}
 ) {
+
+    // Guarda el perfil seleccionado
     var perfilSeleccionado by rememberSaveable {
         mutableStateOf("")
     }
 
+    // Guarda los mensajes que aparecen en pantalla
     var mensaje by rememberSaveable {
         mutableStateOf("")
     }
@@ -52,6 +57,7 @@ fun SeleccionPerfilScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Mostrar los tres perfiles disponibles
         PerfilUsuario.entries.forEach { perfil ->
 
             Row(
@@ -67,30 +73,48 @@ fun SeleccionPerfilScreen(
                     }
                 )
 
-                Text(text = perfil.nombreVisible)
+                Text(
+                    text = perfil.nombreVisible
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Botón para continuar al perfil seleccionado
         Button(
             onClick = {
-                if (perfilSeleccionado == PerfilUsuario.ESTUDIANTE.nombreVisible) {
-                    onContinuarEstudiante()
-                } else {
-                    mensaje = "Seleccionaste: $perfilSeleccionado"
+
+                when (perfilSeleccionado) {
+
+                    PerfilUsuario.ESTUDIANTE.nombreVisible -> {
+                        onContinuarEstudiante()
+                    }
+
+                    PerfilUsuario.ASISTENTE_AULA.nombreVisible -> {
+                        onContinuarAsistente()
+                    }
+
+                    else -> {
+                        mensaje = "Seleccionaste: $perfilSeleccionado"
+                    }
                 }
             },
             enabled = perfilSeleccionado.isNotEmpty(),
             modifier = Modifier.fillMaxWidth()
         ) {
+
             Text("Continuar")
         }
 
-
+        // Mostrar mensaje cuando corresponda
         if (mensaje.isNotEmpty()) {
+
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = mensaje)
+
+            Text(
+                text = mensaje
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -102,9 +126,11 @@ fun SeleccionPerfilScreen(
     }
 }
 
+// Vista previa de la pantalla
 @Preview(showBackground = true)
 @Composable
 fun SeleccionPerfilPreview() {
+
     MPAZNEBTheme {
         SeleccionPerfilScreen()
     }
