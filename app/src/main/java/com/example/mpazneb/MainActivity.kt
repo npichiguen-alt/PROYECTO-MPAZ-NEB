@@ -15,14 +15,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 
-// Pantalla de selección de perfiles
+// Selección de perfiles
 import com.example.mpazneb.ui.screens.SeleccionPerfilScreen
 
-// Módulo Estudiante de Noemí
+// Módulo Estudiante
 import com.example.mpazneb.ui.screens.estudiante.IngresoEstudianteScreen
+import com.example.mpazneb.ui.screens.estudiante.NavegacionEstudianteDemo
 import com.example.mpazneb.viewmodel.EstudianteViewModel
 
-// Módulo Asistente de Katy
+// Módulo Asistente
 import com.example.mpazneb.ui.screens.asistente.AsistenteScreen
 import com.example.mpazneb.repository.asistente.DemoAsistenteDataSource
 
@@ -36,7 +37,7 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-        // ViewModel del módulo Estudiante
+        // ViewModel del estudiante
         val estudianteViewModel =
             ViewModelProvider(this)[EstudianteViewModel::class.java]
 
@@ -44,21 +45,21 @@ class MainActivity : ComponentActivity() {
 
             MPAZNEBTheme {
 
-                // Controla qué pantalla está abierta
+                // Guarda qué perfil está abierto
                 var pantallaActual by rememberSaveable {
                     mutableStateOf("PERFILES")
                 }
 
-                // Estado del ingreso del estudiante
+                // Observa el estado del ingreso
                 val estadoEstudiante by
                 estudianteViewModel.estado.collectAsState()
 
-                // Fuente de datos de prueba del Asistente
+                // Datos ficticios del asistente
                 val fuenteAsistente = remember {
                     DemoAsistenteDataSource()
                 }
 
-                // Volver a la selección de perfiles
+                // Volver a seleccionar perfil
                 BackHandler(
                     enabled = pantallaActual != "PERFILES"
                 ) {
@@ -77,21 +78,36 @@ class MainActivity : ComponentActivity() {
 
                         "ESTUDIANTE" -> {
 
-                            IngresoEstudianteScreen(
-                                estado = estadoEstudiante,
+                            if (estadoEstudiante.ingresoValidado) {
 
-                                onCodigoChange = { codigo ->
-                                    estudianteViewModel
-                                        .actualizarCodigo(codigo)
-                                },
+                                // Código correcto:
+                                // mostrar el módulo del estudiante
+                                Box(
+                                    modifier = Modifier.padding(innerPadding)
+                                ) {
+                                    NavegacionEstudianteDemo()
+                                }
 
-                                onIngresar = {
-                                    estudianteViewModel
-                                        .intentarIngresar()
-                                },
+                            } else {
 
-                                modifier = Modifier.padding(innerPadding)
-                            )
+                                // Código no validado:
+                                // mostrar pantalla de ingreso
+                                IngresoEstudianteScreen(
+                                    estado = estadoEstudiante,
+
+                                    onCodigoChange = { codigo ->
+                                        estudianteViewModel
+                                            .actualizarCodigo(codigo)
+                                    },
+
+                                    onIngresar = {
+                                        estudianteViewModel
+                                            .intentarIngresar()
+                                    },
+
+                                    modifier = Modifier.padding(innerPadding)
+                                )
+                            }
                         }
 
                         // ==========================
@@ -103,7 +119,6 @@ class MainActivity : ComponentActivity() {
                             Box(
                                 modifier = Modifier.padding(innerPadding)
                             ) {
-
                                 AsistenteScreen(
                                     fuente = fuenteAsistente
                                 )
@@ -120,6 +135,10 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding),
 
                                 onContinuarEstudiante = {
+
+                                    // Reiniciar código anterior
+                                    estudianteViewModel.actualizarCodigo("")
+
                                     pantallaActual = "ESTUDIANTE"
                                 },
 
