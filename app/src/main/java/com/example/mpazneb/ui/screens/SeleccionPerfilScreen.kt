@@ -18,9 +18,9 @@ import com.example.mpazneb.ui.theme.MPAZNEBTheme
 fun SeleccionPerfilScreen(
     modifier: Modifier = Modifier,
     onContinuarEstudiante: () -> Unit = {},
-    onContinuarAsistente: () -> Unit = {}
+    onContinuarAsistente: () -> Unit = {},
+    onContinuarAdministracion: () -> Unit = {}
 ) {
-
     // Guarda el perfil seleccionado
     var perfilSeleccionado by rememberSaveable {
         mutableStateOf("")
@@ -93,6 +93,9 @@ fun SeleccionPerfilScreen(
 
                     PerfilUsuario.ASISTENTE_AULA.nombreVisible -> {
                         onContinuarAsistente()
+                    }
+                    PerfilUsuario.ADMINISTRACION_PEDAGOGICA.nombreVisible -> {
+                        onContinuarAdministracion()
                     }
 
                     else -> {

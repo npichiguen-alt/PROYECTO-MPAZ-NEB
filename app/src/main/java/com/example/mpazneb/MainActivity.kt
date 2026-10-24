@@ -27,6 +27,7 @@ import com.example.mpazneb.viewmodel.EstudianteViewModel
 import com.example.mpazneb.ui.screens.asistente.AsistenteScreen
 import com.example.mpazneb.repository.asistente.DemoAsistenteDataSource
 
+import com.example.mpazneb.ui.screens.administracion.NuevaActividadConRoomScreen
 // Tema de la aplicación
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
 
@@ -124,6 +125,13 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
+                        "ADMINISTRACION" -> {
+                            Box(
+                                modifier = Modifier.padding(innerPadding)
+                            ) {
+                                NuevaActividadConRoomScreen()
+                            }
+                        }
 
                         // ==========================
                         // SELECCIÓN DE PERFILES
@@ -144,6 +152,9 @@ class MainActivity : ComponentActivity() {
 
                                 onContinuarAsistente = {
                                     pantallaActual = "ASISTENTE"
+                                },
+                                onContinuarAdministracion = {
+                                    pantallaActual = "ADMINISTRACION"
                                 }
                             )
                         }
