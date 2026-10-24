@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.mpazneb.data.local.AsignacionDatabase
 import com.example.mpazneb.repository.asignacion.AsignacionRepository
 import com.example.mpazneb.repository.estudiante.RoomEstudianteRepository
+import com.example.mpazneb.repository.estudiante.RespuestaRepository
 
 class EstudianteViewModelFactory(
     private val context: Context
@@ -17,30 +18,52 @@ class EstudianteViewModelFactory(
         modelClass: Class<T>
     ): T {
 
-        if (modelClass.isAssignableFrom(
+        if (
+            modelClass.isAssignableFrom(
                 EstudianteViewModel::class.java
             )
         ) {
 
-            // Obtener la base de datos Room
+            // ====================================
+            // 1. OBTENER LA BASE DE DATOS ROOM
+            // ====================================
+
             val database =
                 AsignacionDatabase.obtenerInstancia(context)
 
-            // Repositorio de asignaciones
+            // ====================================
+            // 2. REPOSITORIO DE ASIGNACIONES
+            // ====================================
+
             val asignacionRepository = AsignacionRepository(
                 database.asignacionDao()
             )
 
-            // Repositorio del estudiante
+            // ====================================
+            // 3. REPOSITORIO DEL ESTUDIANTE
+            // ====================================
+
             val estudianteRepository = RoomEstudianteRepository(
                 asignacionRepository = asignacionRepository,
                 resultadoDao = database.resultadoDao()
             )
 
-            // Crear ViewModel con Room
+            // ====================================
+            // 4. REPOSITORIO DE RESPUESTAS
+            // ====================================
+
+            val respuestaRepository = RespuestaRepository(
+                database.respuestaDao()
+            )
+
+            // ====================================
+            // 5. CREAR VIEWMODEL CON ROOM
+            // ====================================
+
             @Suppress("UNCHECKED_CAST")
             return EstudianteViewModel(
-                estudianteRepository
+                repositorio = estudianteRepository,
+                respuestaRepository = respuestaRepository
             ) as T
         }
 

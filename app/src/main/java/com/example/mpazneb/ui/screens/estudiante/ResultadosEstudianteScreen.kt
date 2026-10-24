@@ -1,3 +1,4 @@
+
 package com.example.mpazneb.ui.screens.estudiante
 
 import androidx.compose.foundation.layout.*
@@ -9,14 +10,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+
 import com.example.mpazneb.model.Resultado
+import com.example.mpazneb.model.Respuesta
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
 
 @Composable
 fun ResultadosEstudianteScreen(
     resultados: List<Resultado> = emptyList(),
+    respuestas: List<Respuesta> = emptyList(),
     modifier: Modifier = Modifier
 ) {
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -24,6 +29,10 @@ fun ResultadosEstudianteScreen(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+        // ====================================
+        // ENCABEZADO
+        // ====================================
 
         Text(
             text = "MPAZ NEB",
@@ -40,18 +49,31 @@ fun ResultadosEstudianteScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Consulta el progreso de tus actividades."
+            text = "Consulta tu progreso y las respuestas de tus actividades."
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        // ====================================
+        // RESULTADOS FINALES
+        // ====================================
+
+        Text(
+            text = "Resultados finales",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         if (resultados.isEmpty()) {
 
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
+
                 Text(
-                    text = "Todavía no hay resultados registrados.",
+                    text = "Todavía no hay actividades completadas.",
                     modifier = Modifier.padding(20.dp)
                 )
             }
@@ -63,6 +85,7 @@ fun ResultadosEstudianteScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth()
                 ) {
+
                     Column(
                         modifier = Modifier.padding(20.dp)
                     ) {
@@ -90,14 +113,127 @@ fun ResultadosEstudianteScreen(
                             Spacer(modifier = Modifier.height(8.dp))
 
                             Text(
-                                text = resultado.observacion,
-                                style = MaterialTheme.typography.bodyMedium
+                                text = resultado.observacion
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        HorizontalDivider()
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // ====================================
+        // HISTORIAL DE RESPUESTAS
+        // ====================================
+
+        Text(
+            text = "Historial de respuestas",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (respuestas.isEmpty()) {
+
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                Text(
+                    text = "Todavía no hay respuestas registradas.",
+                    modifier = Modifier.padding(20.dp)
+                )
+            }
+
+        } else {
+
+            // Contar respuestas correctas e incorrectas
+            val respuestasCorrectas =
+                respuestas.count { it.esCorrecta }
+
+            val respuestasIncorrectas =
+                respuestas.count { !it.esCorrecta }
+
+            Text(
+                text = "Correctas: $respuestasCorrectas  |  " +
+                        "Incorrectas: $respuestasIncorrectas",
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            respuestas.forEach { respuesta ->
+
+                // Identificar la actividad de demostración
+                val nombreActividad = when (
+                    respuesta.actividadId
+                ) {
+
+                    1 -> "Lectura"
+
+                    2 -> "Matemática"
+
+                    else -> "Actividad ${respuesta.actividadId}"
+                }
+
+                // Determinar si fue correcta
+                val textoResultado = if (
+                    respuesta.esCorrecta
+                ) {
+                    "Correcta ✓"
+                } else {
+                    "Incorrecta ✗"
+                }
+
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+
+                        Text(
+                            text = nombreActividad,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Pregunta N.º ${respuesta.preguntaId}"
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Intento N.º ${respuesta.numeroIntento}"
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Respuesta: ${respuesta.respuestaSeleccionada}"
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Resultado: $textoResultado",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
 
@@ -109,6 +245,10 @@ fun ResultadosEstudianteScreen(
         )
     }
 }
+
+// ====================================
+// VISTA PREVIA
+// ====================================
 
 @Preview(showBackground = true)
 @Composable
@@ -122,20 +262,37 @@ fun ResultadosEstudiantePreview() {
             totalPreguntas = 1,
             intentos = 2,
             observacion = "Actividad de Lectura (demostración)"
+        )
+    )
+
+    val respuestasPrueba = listOf(
+        Respuesta(
+            id = 1,
+            asignacionId = 1,
+            actividadId = 1,
+            preguntaId = 1,
+            respuestaSeleccionada = "Un perro",
+            esCorrecta = false,
+            numeroIntento = 1,
+            fechaRespuesta = System.currentTimeMillis()
         ),
-        Resultado(
+        Respuesta(
             id = 2,
-            asignacionId = 2,
-            aciertos = 1,
-            totalPreguntas = 1,
-            intentos = 3,
-            observacion = "Actividad de Matemática (demostración)"
+            asignacionId = 1,
+            actividadId = 1,
+            preguntaId = 1,
+            respuestaSeleccionada = "Un gato",
+            esCorrecta = true,
+            numeroIntento = 2,
+            fechaRespuesta = System.currentTimeMillis()
         )
     )
 
     MPAZNEBTheme {
+
         ResultadosEstudianteScreen(
-            resultados = resultadosPrueba
+            resultados = resultadosPrueba,
+            respuestas = respuestasPrueba
         )
     }
 }

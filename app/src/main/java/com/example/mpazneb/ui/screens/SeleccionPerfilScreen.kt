@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+
 import com.example.mpazneb.model.PerfilUsuario
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
 
@@ -18,7 +19,8 @@ import com.example.mpazneb.ui.theme.MPAZNEBTheme
 fun SeleccionPerfilScreen(
     modifier: Modifier = Modifier,
     onContinuarEstudiante: () -> Unit = {},
-    onContinuarAsistente: () -> Unit = {}
+    onContinuarAsistente: () -> Unit = {},
+    onContinuarAdministracion: () -> Unit = {}
 ) {
 
     // Guarda el perfil seleccionado
@@ -87,12 +89,19 @@ fun SeleccionPerfilScreen(
 
                 when (perfilSeleccionado) {
 
+                    // PERFIL ESTUDIANTE
                     PerfilUsuario.ESTUDIANTE.nombreVisible -> {
                         onContinuarEstudiante()
                     }
 
+                    // PERFIL ASISTENTE
                     PerfilUsuario.ASISTENTE_AULA.nombreVisible -> {
                         onContinuarAsistente()
+                    }
+
+                    // PERFIL ADMINISTRACIÓN
+                    PerfilUsuario.ADMINISTRACION_PEDAGOGICA.nombreVisible -> {
+                        onContinuarAdministracion()
                     }
 
                     else -> {
@@ -100,6 +109,7 @@ fun SeleccionPerfilScreen(
                     }
                 }
             },
+
             enabled = perfilSeleccionado.isNotEmpty(),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -126,12 +136,20 @@ fun SeleccionPerfilScreen(
     }
 }
 
-// Vista previa de la pantalla
+// ====================================
+// VISTA PREVIA
+// ====================================
+
 @Preview(showBackground = true)
 @Composable
 fun SeleccionPerfilPreview() {
 
     MPAZNEBTheme {
-        SeleccionPerfilScreen()
+
+        SeleccionPerfilScreen(
+            onContinuarEstudiante = {},
+            onContinuarAsistente = {},
+            onContinuarAdministracion = {}
+        )
     }
 }

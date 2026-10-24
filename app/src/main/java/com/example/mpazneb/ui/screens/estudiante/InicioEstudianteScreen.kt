@@ -1,3 +1,4 @@
+
 package com.example.mpazneb.ui.screens.estudiante
 
 import androidx.compose.foundation.clickable
@@ -10,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
 
 @Composable
@@ -17,13 +19,27 @@ fun InicioEstudianteScreen(
     modifier: Modifier = Modifier,
     lecturaCompletada: Boolean = false,
     matematicaCompletada: Boolean = false,
+    mostrarLectura: Boolean = true,
+    mostrarMatematica: Boolean = true,
     onAbrirLectura: () -> Unit = {},
     onAbrirMatematica: () -> Unit = {},
     onAbrirResultados: () -> Unit = {}
 ) {
+
+    // Contar solamente las actividades asignadas
+    val totalAsignadas =
+        (if (mostrarLectura) 1 else 0) +
+                (if (mostrarMatematica) 1 else 0)
+
     val totalCompletadas =
-        listOf(lecturaCompletada, matematicaCompletada)
-            .count { it }
+        (if (mostrarLectura && lecturaCompletada) 1 else 0) +
+                (if (mostrarMatematica && matematicaCompletada) 1 else 0)
+
+    val progreso = if (totalAsignadas > 0) {
+        totalCompletadas.toFloat() / totalAsignadas
+    } else {
+        0f
+    }
 
     Column(
         modifier = modifier
@@ -54,14 +70,15 @@ fun InicioEstudianteScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Actividades completadas: $totalCompletadas de 2",
+            text = "Actividades completadas: " +
+                    "$totalCompletadas de $totalAsignadas",
             style = MaterialTheme.typography.titleMedium
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         LinearProgressIndicator(
-            progress = { totalCompletadas / 2f },
+            progress = { progreso },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -74,117 +91,133 @@ fun InicioEstudianteScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // TARJETA DE LECTURA
+        // ====================================
+        // ACTIVIDAD DE LECTURA
+        // ====================================
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    onAbrirLectura()
-                }
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
+        if (mostrarLectura) {
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        onAbrirLectura()
+                    }
             ) {
 
-                Text(
-                    text = "Lectura",
-                    style = MaterialTheme.typography.titleLarge
-                )
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Lectura",
+                        style = MaterialTheme.typography.titleLarge
+                    )
 
-                Text(
-                    text = "Actividades de comprensión lectora."
-                )
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Actividades de comprensión lectora."
+                    )
 
-                Text(
-                    text = if (lecturaCompletada) {
-                        "Estado: Completada"
-                    } else {
-                        "Estado: Pendiente"
-                    },
-                    color = if (lecturaCompletada) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    style = MaterialTheme.typography.labelLarge
-                )
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = if (lecturaCompletada) {
+                            "Estado: Completada"
+                        } else {
+                            "Estado: Pendiente"
+                        },
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelLarge
+                    )
 
-                Text(
-                    text = if (lecturaCompletada) {
-                        "Presiona para revisar la actividad"
-                    } else {
-                        "Presiona para comenzar"
-                    },
-                    style = MaterialTheme.typography.bodySmall
-                )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = if (lecturaCompletada) {
+                            "Presiona para revisar la actividad"
+                        } else {
+                            "Presiona para comenzar"
+                        },
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // ====================================
+        // ACTIVIDAD DE MATEMÁTICA
+        // ====================================
 
-        // TARJETA DE MATEMÁTICA
+        if (mostrarMatematica) {
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    onAbrirMatematica()
-                }
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        onAbrirMatematica()
+                    }
             ) {
 
-                Text(
-                    text = "Matemática",
-                    style = MaterialTheme.typography.titleLarge
-                )
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Matemática",
+                        style = MaterialTheme.typography.titleLarge
+                    )
 
-                Text(
-                    text = "Actividades y ejercicios matemáticos."
-                )
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Actividades y ejercicios matemáticos."
+                    )
 
-                Text(
-                    text = if (matematicaCompletada) {
-                        "Estado: Completada"
-                    } else {
-                        "Estado: Pendiente"
-                    },
-                    color = if (matematicaCompletada) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    style = MaterialTheme.typography.labelLarge
-                )
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = if (matematicaCompletada) {
+                            "Estado: Completada"
+                        } else {
+                            "Estado: Pendiente"
+                        },
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelLarge
+                    )
 
-                Text(
-                    text = if (matematicaCompletada) {
-                        "Presiona para revisar la actividad"
-                    } else {
-                        "Presiona para comenzar"
-                    },
-                    style = MaterialTheme.typography.bodySmall
-                )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = if (matematicaCompletada) {
+                            "Presiona para revisar la actividad"
+                        } else {
+                            "Presiona para comenzar"
+                        },
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // Mensaje cuando no hay actividades asignadas
+        if (totalAsignadas == 0) {
 
-        // TARJETA DE RESULTADOS
+            Text(
+                text = "No tienes actividades asignadas."
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // ====================================
+        // MIS RESULTADOS
+        // ====================================
 
         Card(
             modifier = Modifier
@@ -193,6 +226,7 @@ fun InicioEstudianteScreen(
                     onAbrirResultados()
                 }
         ) {
+
             Column(
                 modifier = Modifier.padding(20.dp)
             ) {
@@ -220,7 +254,7 @@ fun InicioEstudianteScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Vista de demostración con datos ficticios",
+            text = "Datos ficticios para uso académico",
             style = MaterialTheme.typography.bodySmall
         )
     }
@@ -229,10 +263,14 @@ fun InicioEstudianteScreen(
 @Preview(showBackground = true)
 @Composable
 fun InicioEstudiantePreview() {
+
     MPAZNEBTheme {
+
         InicioEstudianteScreen(
-            lecturaCompletada = true,
-            matematicaCompletada = false
+            lecturaCompletada = false,
+            matematicaCompletada = false,
+            mostrarLectura = true,
+            mostrarMatematica = false
         )
     }
 }
