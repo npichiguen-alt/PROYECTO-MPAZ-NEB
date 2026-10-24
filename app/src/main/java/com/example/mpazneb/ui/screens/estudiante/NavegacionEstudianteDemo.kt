@@ -22,25 +22,69 @@ import com.example.mpazneb.viewmodel.EstudianteViewModel
 @Composable
 fun NavegacionEstudianteDemo() {
 
-    // Pantalla que se está mostrando
+    // ====================================
+    // 1. PANTALLA ACTUAL
+    // ====================================
+
     var pantallaActual by rememberSaveable {
         mutableStateOf("inicio")
     }
 
-    // Usar el mismo ViewModel de MainActivity
+    // Compartir el ViewModel de MainActivity
     val estudianteViewModel: EstudianteViewModel = viewModel()
 
-    // Estados de Lectura, Matemática y Resultados
+    // ====================================
+    // 2. INFORMACIÓN DEL ESTUDIANTE
+    // ====================================
+
+    val estadoIngreso by
+    estudianteViewModel.estado.collectAsState()
+
+    // Obtener la asignación activa
+    val asignacionActiva = estadoIngreso.asignacionActiva
+
+    // ====================================
+    // 3. ACTIVIDADES ASIGNADAS
+    // ====================================
+
+    // ID 1 = Lectura
+    // ID 2 = Matemática
+
+    val mostrarLectura =
+        asignacionActiva?.actividadId == 1
+
+    val mostrarMatematica =
+        asignacionActiva?.actividadId == 2
+
+    // ====================================
+    // 4. ESTADOS DE LAS ACTIVIDADES
+    // ====================================
+
     val estadoLectura by
     estudianteViewModel.estadoLectura.collectAsState()
 
     val estadoMatematica by
     estudianteViewModel.estadoMatematica.collectAsState()
 
+    // ====================================
+    // 5. RESULTADOS DEL ESTUDIANTE
+    // ====================================
+
     val resultados by
     estudianteViewModel.resultados.collectAsState()
 
-    // Regresar con el botón Atrás del teléfono
+    // ====================================
+    // 6. HISTORIAL DE RESPUESTAS
+    // ====================================
+
+    // NUEVO: observar las respuestas guardadas en Room
+    val respuestas by
+    estudianteViewModel.respuestas.collectAsState()
+
+    // ====================================
+    // 7. BOTÓN ATRÁS
+    // ====================================
+
     BackHandler(
         enabled = pantallaActual != "inicio"
     ) {
@@ -63,8 +107,15 @@ fun NavegacionEstudianteDemo() {
             }
         }
 
-        // Navegación entre las pantallas
+        // ====================================
+        // 8. NAVEGACIÓN ENTRE PANTALLAS
+        // ====================================
+
         when (pantallaActual) {
+
+            // ====================================
+            // PANTALLA DE INICIO
+            // ====================================
 
             "inicio" -> {
 
@@ -75,12 +126,20 @@ fun NavegacionEstudianteDemo() {
                     matematicaCompletada =
                         estadoMatematica.finalizada,
 
+                    // Mostrar solo la actividad asignada
+                    mostrarLectura = mostrarLectura,
+                    mostrarMatematica = mostrarMatematica,
+
                     onAbrirLectura = {
-                        pantallaActual = "lectura"
+                        if (mostrarLectura) {
+                            pantallaActual = "lectura"
+                        }
                     },
 
                     onAbrirMatematica = {
-                        pantallaActual = "matematica"
+                        if (mostrarMatematica) {
+                            pantallaActual = "matematica"
+                        }
                     },
 
                     onAbrirResultados = {
@@ -89,26 +148,78 @@ fun NavegacionEstudianteDemo() {
                 )
             }
 
+            // ====================================
+            // ACTIVIDAD DE LECTURA
+            // ====================================
+
             "lectura" -> {
 
-                ActividadLecturaConViewModel(
-                    estudianteViewModel = estudianteViewModel
-                )
+                if (mostrarLectura) {
+
+                    ActividadLecturaConViewModel(
+                        estudianteViewModel = estudianteViewModel
+                    )
+
+                } else {
+
+                    Text(
+                        "Esta actividad no está asignada."
+                    )
+
+                    TextButton(
+                        onClick = {
+                            pantallaActual = "inicio"
+                        }
+                    ) {
+                        Text("Volver al inicio")
+                    }
+                }
             }
+
+            // ====================================
+            // ACTIVIDAD DE MATEMÁTICA
+            // ====================================
 
             "matematica" -> {
 
-                ActividadMatematicaConViewModel(
-                    estudianteViewModel = estudianteViewModel
-                )
+                if (mostrarMatematica) {
+
+                    ActividadMatematicaConViewModel(
+                        estudianteViewModel = estudianteViewModel
+                    )
+
+                } else {
+
+                    Text(
+                        "Esta actividad no está asignada."
+                    )
+
+                    TextButton(
+                        onClick = {
+                            pantallaActual = "inicio"
+                        }
+                    ) {
+                        Text("Volver al inicio")
+                    }
+                }
             }
+
+            // ====================================
+            // MIS RESULTADOS
+            // ====================================
 
             "resultados" -> {
 
+                // NUEVO: mostrar resultados e historial
                 ResultadosEstudianteScreen(
-                    resultados = resultados
+                    resultados = resultados,
+                    respuestas = respuestas
                 )
             }
+
+            // ====================================
+            // PANTALLA DESCONOCIDA
+            // ====================================
 
             else -> {
 
@@ -124,6 +235,7 @@ fun NavegacionEstudianteDemo() {
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
 fun NavegacionEstudianteDemoPreview() {
@@ -132,4 +244,3 @@ fun NavegacionEstudianteDemoPreview() {
         NavegacionEstudianteDemo()
     }
 }
-

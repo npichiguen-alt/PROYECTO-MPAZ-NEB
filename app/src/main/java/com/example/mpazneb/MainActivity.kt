@@ -22,12 +22,15 @@ import com.example.mpazneb.ui.screens.SeleccionPerfilScreen
 import com.example.mpazneb.ui.screens.estudiante.IngresoEstudianteScreen
 import com.example.mpazneb.ui.screens.estudiante.NavegacionEstudianteDemo
 import com.example.mpazneb.viewmodel.EstudianteViewModel
+import com.example.mpazneb.viewmodel.EstudianteViewModelFactory
 
 // Módulo Asistente
 import com.example.mpazneb.ui.screens.asistente.AsistenteScreen
 import com.example.mpazneb.repository.asistente.DemoAsistenteDataSource
 
+// Módulo Administración
 import com.example.mpazneb.ui.screens.administracion.NuevaActividadConRoomScreen
+
 // Tema de la aplicación
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
 
@@ -38,9 +41,14 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-        // ViewModel del estudiante
-        val estudianteViewModel =
-            ViewModelProvider(this)[EstudianteViewModel::class.java]
+        // ====================================
+        // VIEWMODEL ESTUDIANTE CON ROOM
+        // ====================================
+
+        val estudianteViewModel = ViewModelProvider(
+            this,
+            EstudianteViewModelFactory(applicationContext)
+        )[EstudianteViewModel::class.java]
 
         setContent {
 
@@ -51,11 +59,11 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf("PERFILES")
                 }
 
-                // Observa el estado del ingreso
+                // Observa el ingreso del estudiante
                 val estadoEstudiante by
                 estudianteViewModel.estado.collectAsState()
 
-                // Datos ficticios del asistente
+                // Datos ficticios del Asistente
                 val fuenteAsistente = remember {
                     DemoAsistenteDataSource()
                 }
@@ -73,18 +81,20 @@ class MainActivity : ComponentActivity() {
 
                     when (pantallaActual) {
 
-                        // ==========================
+                        // ====================================
                         // PERFIL ESTUDIANTE
-                        // ==========================
+                        // ====================================
 
                         "ESTUDIANTE" -> {
 
                             if (estadoEstudiante.ingresoValidado) {
 
                                 // Código correcto:
-                                // mostrar el módulo del estudiante
+                                // mostrar el módulo Estudiante
                                 Box(
-                                    modifier = Modifier.padding(innerPadding)
+                                    modifier = Modifier.padding(
+                                        innerPadding
+                                    )
                                 ) {
                                     NavegacionEstudianteDemo()
                                 }
@@ -106,46 +116,61 @@ class MainActivity : ComponentActivity() {
                                             .intentarIngresar()
                                     },
 
-                                    modifier = Modifier.padding(innerPadding)
+                                    modifier = Modifier.padding(
+                                        innerPadding
+                                    )
                                 )
                             }
                         }
 
-                        // ==========================
-                        // PERFIL ASISTENTE DE AULA
-                        // ==========================
+                        // ====================================
+                        // PERFIL ASISTENTE
+                        // ====================================
 
                         "ASISTENTE" -> {
 
                             Box(
-                                modifier = Modifier.padding(innerPadding)
+                                modifier = Modifier.padding(
+                                    innerPadding
+                                )
                             ) {
                                 AsistenteScreen(
                                     fuente = fuenteAsistente
                                 )
                             }
                         }
+
+                        // ====================================
+                        // PERFIL ADMINISTRACIÓN
+                        // ====================================
+
                         "ADMINISTRACION" -> {
+
                             Box(
-                                modifier = Modifier.padding(innerPadding)
+                                modifier = Modifier.padding(
+                                    innerPadding
+                                )
                             ) {
                                 NuevaActividadConRoomScreen()
                             }
                         }
 
-                        // ==========================
+                        // ====================================
                         // SELECCIÓN DE PERFILES
-                        // ==========================
+                        // ====================================
 
                         else -> {
 
                             SeleccionPerfilScreen(
-                                modifier = Modifier.padding(innerPadding),
+                                modifier = Modifier.padding(
+                                    innerPadding
+                                ),
 
                                 onContinuarEstudiante = {
 
-                                    // Reiniciar código anterior
-                                    estudianteViewModel.actualizarCodigo("")
+                                    // Limpiar la sesión anterior
+                                    estudianteViewModel
+                                        .actualizarCodigo("")
 
                                     pantallaActual = "ESTUDIANTE"
                                 },
@@ -153,6 +178,7 @@ class MainActivity : ComponentActivity() {
                                 onContinuarAsistente = {
                                     pantallaActual = "ASISTENTE"
                                 },
+
                                 onContinuarAdministracion = {
                                     pantallaActual = "ADMINISTRACION"
                                 }
