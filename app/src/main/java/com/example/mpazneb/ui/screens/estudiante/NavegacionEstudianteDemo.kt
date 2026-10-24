@@ -1,3 +1,4 @@
+
 package com.example.mpazneb.ui.screens.estudiante
 
 import androidx.activity.compose.BackHandler
@@ -9,11 +10,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
 import com.example.mpazneb.viewmodel.EstudianteViewModel
 
@@ -25,10 +27,8 @@ fun NavegacionEstudianteDemo() {
         mutableStateOf("inicio")
     }
 
-    // ViewModel compartido entre las pantallas
-    val estudianteViewModel = remember {
-        EstudianteViewModel()
-    }
+    // Usar el mismo ViewModel de MainActivity
+    val estudianteViewModel: EstudianteViewModel = viewModel()
 
     // Estados de Lectura, Matemática y Resultados
     val estadoLectura by
@@ -132,3 +132,4 @@ fun NavegacionEstudianteDemoPreview() {
         NavegacionEstudianteDemo()
     }
 }
+
