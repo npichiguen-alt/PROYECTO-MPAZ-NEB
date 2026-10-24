@@ -41,10 +41,6 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-        // ====================================
-        // VIEWMODEL ESTUDIANTE CON ROOM
-        // ====================================
-
         val estudianteViewModel = ViewModelProvider(
             this,
             EstudianteViewModelFactory(applicationContext)

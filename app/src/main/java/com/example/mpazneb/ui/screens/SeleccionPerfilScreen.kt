@@ -22,12 +22,13 @@ fun SeleccionPerfilScreen(
     onContinuarAsistente: () -> Unit = {},
     onContinuarAdministracion: () -> Unit = {}
 ) {
+
     // Guarda el perfil seleccionado
     var perfilSeleccionado by rememberSaveable {
         mutableStateOf("")
     }
 
-    // Guarda los mensajes que aparecen en pantalla
+    // Guarda los mensajes de la pantalla
     var mensaje by rememberSaveable {
         mutableStateOf("")
     }
@@ -82,7 +83,7 @@ fun SeleccionPerfilScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Botón para continuar al perfil seleccionado
+        // Botón para continuar
         Button(
             onClick = {
 
@@ -96,9 +97,6 @@ fun SeleccionPerfilScreen(
                     // PERFIL ASISTENTE
                     PerfilUsuario.ASISTENTE_AULA.nombreVisible -> {
                         onContinuarAsistente()
-                    }
-                    PerfilUsuario.ADMINISTRACION_PEDAGOGICA.nombreVisible -> {
-                        onContinuarAdministracion()
                     }
 
                     // PERFIL ADMINISTRACIÓN
@@ -115,11 +113,10 @@ fun SeleccionPerfilScreen(
             enabled = perfilSeleccionado.isNotEmpty(),
             modifier = Modifier.fillMaxWidth()
         ) {
-
             Text("Continuar")
         }
 
-        // Mostrar mensaje cuando corresponda
+        // Mostrar mensajes cuando corresponda
         if (mensaje.isNotEmpty()) {
 
             Spacer(modifier = Modifier.height(16.dp))
