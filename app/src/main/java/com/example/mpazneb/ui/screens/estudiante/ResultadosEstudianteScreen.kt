@@ -1,19 +1,40 @@
 
 package com.example.mpazneb.ui.screens.estudiante
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 import com.example.mpazneb.model.Resultado
 import com.example.mpazneb.model.Respuesta
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
+
+// ====================================
+// COLORES DEL MÓDULO ESTUDIANTE
+// ====================================
+
+private val CelestePastel = Color(0xFFE1F2FA)
+private val Rosa = Color(0xFFEA3677)
+private val RosaSuave = Color(0xFFFFE8F1)
+private val Azul = Color(0xFF248ED8)
+private val AzulSuave = Color(0xFFE7F5FE)
+private val AzulOscuro = Color(0xFF242B57)
+private val GrisTexto = Color(0xFF57637E)
+private val Blanco = Color.White
+private val RojoError = Color(0xFFB3264D)
+
+// ====================================
+// 1. PANTALLA DE RESULTADOS
+// ====================================
 
 @Composable
 fun ResultadosEstudianteScreen(
@@ -25,57 +46,76 @@ fun ResultadosEstudianteScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(CelestePastel)
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
 
         // ====================================
-        // ENCABEZADO
+        // 2. ENCABEZADO
         // ====================================
 
-        Text(
-            text = "MPAZ NEB",
-            style = MaterialTheme.typography.headlineMedium
-        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "MPAZ NEB",
+                style = MaterialTheme.typography.titleMedium,
+                color = Rosa
+            )
 
-        Text(
-            text = "Mis resultados",
-            style = MaterialTheme.typography.titleLarge
-        )
+            Text(
+                text = "Mis resultados",
+                style = MaterialTheme.typography.headlineMedium,
+                color = AzulOscuro
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Consulta tu progreso y las respuestas de tus actividades."
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "Consulta tu progreso y las respuestas de tus actividades.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = GrisTexto
+            )
+        }
 
         // ====================================
-        // RESULTADOS FINALES
+        // 3. RESULTADOS FINALES
         // ====================================
 
         Text(
             text = "Resultados finales",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.fillMaxWidth()
+            style = MaterialTheme.typography.titleLarge,
+            color = AzulOscuro
         )
-
-        Spacer(modifier = Modifier.height(12.dp))
 
         if (resultados.isEmpty()) {
 
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Blanco
+                )
             ) {
 
-                Text(
-                    text = "Todavía no hay actividades completadas.",
-                    modifier = Modifier.padding(20.dp)
-                )
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+
+                    Text(
+                        text = "Sin resultados todavía",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = AzulOscuro
+                    )
+
+                    Text(
+                        text = "Todavía no hay actividades completadas.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = GrisTexto
+                    )
+                }
             }
 
         } else {
@@ -83,171 +123,376 @@ fun ResultadosEstudianteScreen(
             resultados.forEach { resultado ->
 
                 Card(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Blanco
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
+                    )
                 ) {
 
                     Column(
-                        modifier = Modifier.padding(20.dp)
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
 
+                        // Identificación de la asignación
                         Text(
                             text = "Asignación N.º ${resultado.asignacionId}",
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleLarge,
+                            color = AzulOscuro
                         )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider(
+                            color = AzulSuave
+                        )
+
+                        // Aciertos
+                        Text(
+                            text = "Aciertos",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = GrisTexto
+                        )
 
                         Text(
-                            text = "Aciertos: ${resultado.aciertos} " +
-                                    "de ${resultado.totalPreguntas}"
+                            text = "${resultado.aciertos} de ${resultado.totalPreguntas}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = Rosa
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        // Barra visual del resultado
+                        val progreso =
+                            if (resultado.totalPreguntas > 0) {
+                                (
+                                        resultado.aciertos.toFloat() /
+                                                resultado.totalPreguntas
+                                        ).coerceIn(0f, 1f)
+                            } else {
+                                0f
+                            }
 
-                        Text(
-                            text = "Intentos: ${resultado.intentos}"
+                        LinearProgressIndicator(
+                            progress = { progreso },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(10.dp),
+                            color = Rosa,
+                            trackColor = RosaSuave
                         )
 
-                        if (resultado.observacion.isNotEmpty()) {
-
-                            Spacer(modifier = Modifier.height(8.dp))
+                        // Intentos realizados
+                        Surface(
+                            color = AzulSuave,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
 
                             Text(
-                                text = resultado.observacion
+                                text = "Intentos realizados: ${resultado.intentos}",
+                                modifier = Modifier.padding(
+                                    horizontal = 14.dp,
+                                    vertical = 10.dp
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = AzulOscuro
+                            )
+                        }
+
+                        // Observación del resultado
+                        if (resultado.observacion.isNotEmpty()) {
+
+                            Text(
+                                text = "Observación",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Azul
+                            )
+
+                            Text(
+                                text = resultado.observacion,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = GrisTexto
                             )
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        HorizontalDivider()
-
-        Spacer(modifier = Modifier.height(24.dp))
-
         // ====================================
-        // HISTORIAL DE RESPUESTAS
+        // 4. HISTORIAL DE RESPUESTAS
         // ====================================
+
+        HorizontalDivider(
+            color = Azul.copy(alpha = 0.25f)
+        )
 
         Text(
             text = "Historial de respuestas",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.fillMaxWidth()
+            style = MaterialTheme.typography.titleLarge,
+            color = AzulOscuro
         )
-
-        Spacer(modifier = Modifier.height(12.dp))
 
         if (respuestas.isEmpty()) {
 
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Blanco
+                )
             ) {
 
-                Text(
-                    text = "Todavía no hay respuestas registradas.",
-                    modifier = Modifier.padding(20.dp)
-                )
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+
+                    Text(
+                        text = "Sin respuestas registradas",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = AzulOscuro
+                    )
+
+                    Text(
+                        text = "Todavía no hay respuestas registradas.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = GrisTexto
+                    )
+                }
             }
 
         } else {
 
-            // Contar respuestas correctas e incorrectas
+            // ====================================
+            // 5. RESUMEN DE RESPUESTAS
+            // ====================================
+
             val respuestasCorrectas =
                 respuestas.count { it.esCorrecta }
 
             val respuestasIncorrectas =
                 respuestas.count { !it.esCorrecta }
 
-            Text(
-                text = "Correctas: $respuestasCorrectas  |  " +
-                        "Incorrectas: $respuestasIncorrectas",
-                modifier = Modifier.fillMaxWidth()
-            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Blanco
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 2.dp
+                )
+            ) {
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+
+                    Text(
+                        text = "Resumen de respuestas",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = AzulOscuro
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement =
+                            Arrangement.spacedBy(12.dp)
+                    ) {
+
+                        Surface(
+                            modifier = Modifier.weight(1f),
+                            color = AzulSuave,
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+
+                            Column(
+                                modifier = Modifier.padding(14.dp),
+                                verticalArrangement =
+                                    Arrangement.spacedBy(5.dp)
+                            ) {
+
+                                Text(
+                                    text = "$respuestasCorrectas",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    color = Azul
+                                )
+
+                                Text(
+                                    text = "Correctas",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = AzulOscuro
+                                )
+                            }
+                        }
+
+                        Surface(
+                            modifier = Modifier.weight(1f),
+                            color = RosaSuave,
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+
+                            Column(
+                                modifier = Modifier.padding(14.dp),
+                                verticalArrangement =
+                                    Arrangement.spacedBy(5.dp)
+                            ) {
+
+                                Text(
+                                    text = "$respuestasIncorrectas",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    color = Rosa
+                                )
+
+                                Text(
+                                    text = "Incorrectas",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = AzulOscuro
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ====================================
+            // 6. DETALLE DE CADA RESPUESTA
+            // ====================================
 
             respuestas.forEach { respuesta ->
 
                 // Identificar la actividad de demostración
-                val nombreActividad = when (
-                    respuesta.actividadId
-                ) {
+                val nombreActividad =
+                    when (respuesta.actividadId) {
+                        1 -> "Lectura"
+                        2 -> "Matemática"
+                        else ->
+                            "Actividad ${respuesta.actividadId}"
+                    }
 
-                    1 -> "Lectura"
+                val textoResultado =
+                    if (respuesta.esCorrecta) {
+                        "Correcta"
+                    } else {
+                        "Incorrecta"
+                    }
 
-                    2 -> "Matemática"
+                val colorResultado =
+                    if (respuesta.esCorrecta) {
+                        Azul
+                    } else {
+                        RojoError
+                    }
 
-                    else -> "Actividad ${respuesta.actividadId}"
-                }
-
-                // Determinar si fue correcta
-                val textoResultado = if (
-                    respuesta.esCorrecta
-                ) {
-                    "Correcta ✓"
-                } else {
-                    "Incorrecta ✗"
-                }
+                val fondoResultado =
+                    if (respuesta.esCorrecta) {
+                        AzulSuave
+                    } else {
+                        RosaSuave
+                    }
 
                 Card(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Blanco
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
+                    )
                 ) {
 
                     Column(
-                        modifier = Modifier.padding(20.dp)
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement =
+                            Arrangement.spacedBy(12.dp)
                     ) {
 
+                        // Nombre de la actividad
                         Text(
                             text = nombreActividad,
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleLarge,
+                            color = AzulOscuro
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider(
+                            color = AzulSuave
+                        )
 
+                        // Número de pregunta
                         Text(
-                            text = "Pregunta N.º ${respuesta.preguntaId}"
+                            text = "Pregunta N.º ${respuesta.preguntaId}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = GrisTexto
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
+                        // Número de intento
                         Text(
-                            text = "Intento N.º ${respuesta.numeroIntento}"
+                            text = "Intento N.º ${respuesta.numeroIntento}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = GrisTexto
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
+                        // Respuesta seleccionada
                         Text(
-                            text = "Respuesta: ${respuesta.respuestaSeleccionada}"
+                            text = "Respuesta seleccionada",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = GrisTexto
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = AzulSuave,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
 
-                        Text(
-                            text = "Resultado: $textoResultado",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                            Text(
+                                text = respuesta.respuestaSeleccionada,
+                                modifier = Modifier.padding(14.dp),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = AzulOscuro
+                            )
+                        }
+
+                        // Estado de la respuesta
+                        Surface(
+                            color = fondoResultado,
+                            shape = RoundedCornerShape(50.dp)
+                        ) {
+
+                            Text(
+                                text = textoResultado,
+                                modifier = Modifier.padding(
+                                    horizontal = 16.dp,
+                                    vertical = 8.dp
+                                ),
+                                color = colorResultado,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        // ====================================
+        // 7. PIE DE PÁGINA
+        // ====================================
 
         Text(
             text = "Datos ficticios para uso académico",
-            style = MaterialTheme.typography.bodySmall
+            modifier = Modifier.fillMaxWidth(),
+            style = MaterialTheme.typography.bodySmall,
+            color = GrisTexto,
+            textAlign = TextAlign.Center
         )
     }
 }
 
 // ====================================
-// VISTA PREVIA
+// 8. VISTA PREVIA
 // ====================================
 
 @Preview(showBackground = true)
@@ -289,7 +534,6 @@ fun ResultadosEstudiantePreview() {
     )
 
     MPAZNEBTheme {
-
         ResultadosEstudianteScreen(
             resultados = resultadosPrueba,
             respuestas = respuestasPrueba
