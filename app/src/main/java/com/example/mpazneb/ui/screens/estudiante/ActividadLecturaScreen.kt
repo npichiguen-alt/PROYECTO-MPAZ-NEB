@@ -352,13 +352,6 @@ fun ActividadLecturaScreen(
             }
         }
 
-        Text(
-            text = "Actividad ficticia de demostración",
-            modifier = Modifier.fillMaxWidth(),
-            style = MaterialTheme.typography.bodySmall,
-            color = GrisTexto,
-            textAlign = TextAlign.Center
-        )
     }
 }
 

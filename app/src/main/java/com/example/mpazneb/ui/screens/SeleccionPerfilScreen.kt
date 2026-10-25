@@ -230,16 +230,6 @@ fun SeleccionPerfilScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // ====================================
-        // PIE DE PÁGINA
-        // ====================================
-
-        Text(
-            text = "Datos ficticios para uso académico",
-            style = MaterialTheme.typography.bodySmall,
-            color = GrisTexto,
-            textAlign = TextAlign.Center
-        )
     }
 }
 

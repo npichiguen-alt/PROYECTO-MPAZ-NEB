@@ -477,17 +477,6 @@ fun ResultadosEstudianteScreen(
             }
         }
 
-        // ====================================
-        // 7. PIE DE PÁGINA
-        // ====================================
-
-        Text(
-            text = "Datos ficticios para uso académico",
-            modifier = Modifier.fillMaxWidth(),
-            style = MaterialTheme.typography.bodySmall,
-            color = GrisTexto,
-            textAlign = TextAlign.Center
-        )
     }
 }
 

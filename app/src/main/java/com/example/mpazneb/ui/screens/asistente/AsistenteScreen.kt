@@ -14,6 +14,18 @@ import com.example.mpazneb.repository.asistente.AsistenteDataSource
 import com.example.mpazneb.viewmodel.AsistenteViewModel
 import com.example.mpazneb.viewmodel.AsistenteViewModelFactory
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.Assessment
 @Composable
 fun AsistenteScreen(
     fuente: AsistenteDataSource
@@ -43,13 +55,15 @@ fun AsistenteScreen(
     }
 
     // OPCIONES DEL MENU
+
     val opciones = listOf(
-        "INICIO" to "Inicio",
-        "CATALOGO" to "Catálogo",
-        "ESTUDIANTES" to "Estud.",
-        "ASIGNAR" to "Asignar",
-        "SEGUIMIENTO" to "Seguimiento"
+        Triple("INICIO", "Inicio", Icons.Filled.Home),
+        Triple("CATALOGO", "Catálogo", Icons.Filled.MenuBook),
+        Triple("ESTUDIANTES", "Estud.", Icons.Filled.People),
+        Triple("ASIGNAR", "Asignar", Icons.Filled.Assignment),
+        Triple("SEGUIMIENTO", "Seguimiento", Icons.Filled.Assessment)
     )
+
 
     Scaffold(
 
@@ -58,7 +72,7 @@ fun AsistenteScreen(
 
             NavigationBar {
 
-                opciones.forEach { (clave, etiqueta) ->
+                opciones.forEach { (clave, etiqueta, icono) ->
 
                     NavigationBarItem(
                         selected = seccion == clave,
@@ -69,7 +83,10 @@ fun AsistenteScreen(
                         },
 
                         icon = {
-                            Text(etiqueta.take(1))
+                            Icon(
+                                imageVector = icono,
+                                contentDescription = etiqueta
+                            )
                         },
 
                         label = {
@@ -89,7 +106,13 @@ fun AsistenteScreen(
         ) {
 
             // MOSTRAR MENSAJES DEL VIEWMODEL
-            if (vm.mensaje.isNotBlank()) {
+
+            // MOSTRAR MENSAJES CON ANIMACIÓN
+            AnimatedVisibility(
+                visible = vm.mensaje.isNotBlank(),
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
 
                 Surface(
                     color = MaterialTheme.colorScheme.secondaryContainer
