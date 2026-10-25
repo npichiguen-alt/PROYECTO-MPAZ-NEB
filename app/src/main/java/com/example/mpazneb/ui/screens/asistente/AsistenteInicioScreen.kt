@@ -78,10 +78,5 @@ fun AsistenteInicioScreen(
             onClick = irResultados
         )
 
-        // MENSAJE INFORMATIVO
-        Text(
-            text = "Datos ficticios para uso académico.",
-            style = MaterialTheme.typography.bodySmall
-        )
     }
 }

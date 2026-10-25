@@ -127,10 +127,7 @@ fun InicioActividadAsignadaScreen(
             Text("Mis resultados")
         }
 
-        Text(
-            text = "Datos ficticios para uso académico.",
-            style = MaterialTheme.typography.bodySmall
-        )
+
     }
 }
 

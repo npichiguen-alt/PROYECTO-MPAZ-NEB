@@ -56,5 +56,6 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     implementation("androidx.room:room-runtime:2.8.5")
     ksp("androidx.room:room-compiler:2.8.5")
+    implementation("androidx.compose.material:material-icons-extended")
 
 }

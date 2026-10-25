@@ -283,15 +283,6 @@ fun InicioEstudianteScreen(
             }
         }
 
-        // ====================================
-        // 7. PIE DE PÁGINA
-        // ====================================
-
-        Text(
-            text = "Datos ficticios para uso académico",
-            style = MaterialTheme.typography.bodySmall,
-            color = GrisTexto
-        )
     }
 }
 
