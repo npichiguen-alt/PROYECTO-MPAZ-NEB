@@ -16,7 +16,10 @@ import androidx.compose.ui.unit.dp
 import com.example.mpazneb.model.asistente.AsignacionAula
 import com.example.mpazneb.model.asistente.ResultadoAula
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
-
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 @Composable
 fun SeguimientoAsistenteScreen(
     asignaciones: List<AsignacionAula>,
@@ -24,6 +27,7 @@ fun SeguimientoAsistenteScreen(
     trabajando: Boolean,
     onGuardarObservacion: (Int, String) -> Unit
 ) {
+    val contexto = LocalContext.current
 
     // ESTADO DEL FILTRO
     var filtroEstado by rememberSaveable {
@@ -183,9 +187,61 @@ fun SeguimientoAsistenteScreen(
                         )
 
                         Text(
-                            text = "Código de demostración: ${asignacion.codigoTemporal}",
+                            text = "Código de asignación: ${asignacion.codigoTemporal}",
                             style = MaterialTheme.typography.bodySmall
                         )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+
+                            // BOTÓN PARA COPIAR EL CÓDIGO
+                            OutlinedButton(
+                                onClick = {
+
+                                    val portapapeles =
+                                        contexto.getSystemService(
+                                            ClipboardManager::class.java
+                                        )
+
+                                    portapapeles?.setPrimaryClip(
+                                        ClipData.newPlainText(
+                                            "Código MPAZ NEB",
+                                            asignacion.codigoTemporal
+                                        )
+                                    )
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Copiar código")
+                            }
+
+                            // BOTÓN PARA COMPARTIR EL CÓDIGO
+                            Button(
+                                onClick = {
+
+                                    val intent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+
+                                        putExtra(
+                                            Intent.EXTRA_TEXT,
+                                            "Código temporal MPAZ NEB: " +
+                                                    asignacion.codigoTemporal
+                                        )
+                                    }
+
+                                    contexto.startActivity(
+                                        Intent.createChooser(
+                                            intent,
+                                            "Compartir código"
+                                        )
+                                    )
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Compartir")
+                            }
+                        }
 
                         HorizontalDivider()
 

@@ -220,7 +220,19 @@ fun AsignarActividadScreen(
                 }
             }
         }
-
+        // ERROR VISUAL SI NO SE SELECCIONA UNA ACTIVIDAD
+        if (
+            errorFormulario.isNotBlank() &&
+            actividadesDisponibles.none {
+                it.id == formulario.actividadId
+            }
+        ) {
+            Text(
+                text = "Debes seleccionar una actividad disponible.",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
         // 5. SELECCIONAR ESTUDIANTE
         Text(
             text = "5. Selecciona un estudiante",
@@ -263,7 +275,19 @@ fun AsignarActividadScreen(
                 }
             }
         }
-
+        // ERROR VISUAL SI NO SE SELECCIONA UN ESTUDIANTE
+        if (
+            errorFormulario.isNotBlank() &&
+            estudiantesActivos.none {
+                it.alias == formulario.estudianteAlias
+            }
+        ) {
+            Text(
+                text = "Debes seleccionar un estudiante activo.",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
         // MOSTRAR ERROR DE VALIDACION
         if (errorFormulario.isNotBlank()) {
 

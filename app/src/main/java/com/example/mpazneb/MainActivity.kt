@@ -29,7 +29,9 @@ import com.example.mpazneb.viewmodel.EstudianteViewModelFactory
 
 // Módulo Asistente
 import com.example.mpazneb.ui.screens.asistente.AsistenteScreen
-import com.example.mpazneb.repository.asistente.DemoAsistenteDataSource
+import com.example.mpazneb.data.local.ActividadDatabase
+import com.example.mpazneb.repository.asistente.RoomAsistenteDataSource
+
 
 // Módulo Administración
 import com.example.mpazneb.ui.screens.administracion.NuevaActividadConRoomScreen
@@ -69,10 +71,16 @@ class MainActivity : ComponentActivity() {
                 val estadoEstudiante by
                 estudianteViewModel.estado.collectAsState()
 
-                // Datos demostrativos del Asistente
+
+                // Actividades reales de Administración mediante Room
                 val fuenteAsistente = remember {
-                    DemoAsistenteDataSource()
+                    RoomAsistenteDataSource(
+                        actividadDao = ActividadDatabase
+                            .obtenerInstancia(applicationContext)
+                            .actividadDao()
+                    )
                 }
+
 
                 // ====================================
                 // VOLVER A SELECCIÓN DE PERFILES
