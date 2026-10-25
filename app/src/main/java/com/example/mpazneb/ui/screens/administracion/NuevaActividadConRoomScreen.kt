@@ -19,7 +19,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.mpazneb.model.Actividad
 import com.example.mpazneb.data.local.ActividadDatabase
 import com.example.mpazneb.repository.administracion.ActividadRepository
-
+import com.example.mpazneb.data.local.AsignacionDatabase
 @Composable
 fun NuevaActividadConRoomScreen() {
 
@@ -29,11 +29,20 @@ fun NuevaActividadConRoomScreen() {
     // REPOSITORIO CON ROOM
     val repositorio = remember(contexto) {
 
-        val database =
+        // Actividades y preguntas de Administración.
+        val actividadDatabase =
             ActividadDatabase.obtenerInstancia(contexto)
 
+        // Asignaciones del módulo Asistente.
+        val asignacionDatabase =
+            AsignacionDatabase.obtenerInstancia(contexto)
+
         ActividadRepository(
-            database.actividadDao()
+            actividadDao =
+                actividadDatabase.actividadDao(),
+
+            asignacionDao =
+                asignacionDatabase.asignacionDao()
         )
     }
 
@@ -73,7 +82,9 @@ fun NuevaActividadConRoomScreen() {
 
         if (
             mensajeActual == "Actividad editada correctamente." ||
-            mensajeActual == "No se pudo editar la actividad." ||
+            mensajeActual.startsWith(
+                "No se pudo editar la actividad."
+            ) ||
             mensajeActual == "No se encontró la actividad para editar."
         ) {
             snackbarHostState.showSnackbar(mensajeActual)

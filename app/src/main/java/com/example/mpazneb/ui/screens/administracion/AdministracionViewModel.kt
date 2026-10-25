@@ -175,18 +175,27 @@ class AdministracionViewModel(
     // ====================================
     // 3. ACTIVAR O DESACTIVAR ACTIVIDAD
     // ====================================
-
     fun cambiarEstadoActividad(
         actividad: Actividad
-    ) {
+     ) {
 
-        val repo = repositorio ?: return
+        if (guardando) return
+
+        val repo = repositorio ?: run {
+            mensaje = "No hay conexión con Room."
+            return
+        }
+
+        guardando = true
 
         viewModelScope.launch {
 
             try {
 
                 val nuevoEstado = !actividad.activa
+
+                // El DAO impide activar una actividad
+                // que todavía no tiene preguntas.
 
                 val actualizado =
                     repo.actualizarEstadoActividad(
@@ -196,7 +205,7 @@ class AdministracionViewModel(
 
                 if (actualizado) {
 
-                    // Refrescar actividades desde Room
+                    // Actualizar listado después del cambio.
                     actividades = repo.listarActividades()
 
                     mensaje = if (nuevoEstado) {
@@ -207,7 +216,13 @@ class AdministracionViewModel(
 
                 } else {
 
-                    mensaje = "No se encontró la actividad."
+                    mensaje = if (nuevoEstado) {
+                        "No se pudo activar la actividad. " +
+                                "Comprueba que exista y agrega " +
+                                "al menos una pregunta."
+                    } else {
+                        "No se encontró la actividad."
+                    }
                 }
 
             } catch (error: CancellationException) {
@@ -216,7 +231,12 @@ class AdministracionViewModel(
 
             } catch (error: Exception) {
 
-                mensaje = "No se pudo actualizar la actividad."
+                mensaje =
+                    "No se pudo actualizar el estado de la actividad."
+
+            } finally {
+
+                guardando = false
             }
         }
     }
@@ -224,6 +244,7 @@ class AdministracionViewModel(
     // ====================================
     // 4. EDITAR ACTIVIDAD EXISTENTE
     // ====================================
+
 
     fun editarActividad(
         actividad: Actividad,
@@ -237,29 +258,23 @@ class AdministracionViewModel(
 
         if (guardando) return
 
-        // Validar los seis campos
         if (
             titulo.isBlank() ||
             descripcion.isBlank() ||
             objetivo.isBlank() ||
             instrucciones.isBlank()
         ) {
-
             mensaje =
                 "Completa el título, descripción, " +
                         "objetivo e instrucciones."
-
             return
         }
 
-        // Validar curso
         if (curso !in 1..4) {
-
             mensaje = "Selecciona un curso válido."
             return
         }
 
-        // Validar dificultad
         if (
             dificultad !in listOf(
                 "Básica",
@@ -267,13 +282,12 @@ class AdministracionViewModel(
                 "Avanzada"
             )
         ) {
-
-            mensaje = "Selecciona una dificultad válida."
+            mensaje =
+                "Selecciona una dificultad válida."
             return
         }
 
         val repo = repositorio ?: run {
-
             mensaje = "No hay conexión con Room."
             return
         }
@@ -285,7 +299,6 @@ class AdministracionViewModel(
 
             try {
 
-                // Actualizar los seis campos en Room
                 val actualizado = repo.editarActividad(
                     id = actividad.id,
                     titulo = titulo.trim(),
@@ -298,9 +311,7 @@ class AdministracionViewModel(
 
                 if (actualizado) {
 
-                    // Recuperar las actividades actualizadas
                     actividades = repo.listarActividades()
-
                     mensaje = "Actividad editada correctamente."
 
                 } else {
@@ -313,9 +324,16 @@ class AdministracionViewModel(
 
                 throw error
 
+            } catch (error: IllegalStateException) {
+
+                mensaje =
+                    "No se pudo editar la actividad. " +
+                            (error.message ?: "Edición bloqueada.")
+
             } catch (error: Exception) {
 
-                mensaje = "No se pudo editar la actividad."
+                mensaje =
+                    "No se pudo editar la actividad."
 
             } finally {
 
@@ -323,4 +341,5 @@ class AdministracionViewModel(
             }
         }
     }
+
 }
