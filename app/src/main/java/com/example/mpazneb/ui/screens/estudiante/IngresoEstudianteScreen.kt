@@ -176,14 +176,6 @@ fun IngresoEstudianteScreen(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = "Datos ficticios para uso académico",
-            style = MaterialTheme.typography.bodySmall,
-            color = GrisTexto,
-            textAlign = TextAlign.Center
-        )
     }
 }
 

@@ -156,7 +156,7 @@ class AsistenteViewModel(
                 )
 
                 mensaje =
-                    "Actividad asignada. Código de demostración: $codigo"
+                    "Actividad asignada correctamente. Código:  $codigo"
 
                 // LIMPIAR EL FORMULARIO
                 formulario = FormularioAsignacion()
@@ -204,7 +204,7 @@ class AsistenteViewModel(
                 )
 
                 mensaje =
-                    "Observación ficticia guardada."
+                    "Observación guardada correctamente."
 
             } catch (e: Exception) {
 
