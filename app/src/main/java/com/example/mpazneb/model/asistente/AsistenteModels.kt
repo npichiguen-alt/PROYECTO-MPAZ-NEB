@@ -82,7 +82,7 @@ object ValidadorAsignacion {
         }
 
         if (form.estudianteAlias.isBlank()) {
-            return "Selecciona un estudiante ficticio."
+            return "Selecciona un estudiante."
         }
 
         if (estudiantes.none {
@@ -97,7 +97,7 @@ object ValidadorAsignacion {
 
     fun validarObservacion(texto: String): String? {
         if (texto.isBlank()) {
-            return "Escribe una observación ficticia."
+            return "Escribe una observación."
         }
 
         if (texto.trim().length > 250) {

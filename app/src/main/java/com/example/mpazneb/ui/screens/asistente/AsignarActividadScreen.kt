@@ -68,7 +68,7 @@ fun AsignarActividadScreen(
 
         TituloAsistente(
             titulo = "Asignar actividad",
-            descripcion = "Selecciona una actividad y un estudiante ficticio."
+            descripcion = "Selecciona una actividad y un estudiante."
         )
 
         // 1. SELECCIONAR MODULO
@@ -220,19 +220,7 @@ fun AsignarActividadScreen(
                 }
             }
         }
-        // ERROR VISUAL SI NO SE SELECCIONA UNA ACTIVIDAD
-        if (
-            errorFormulario.isNotBlank() &&
-            actividadesDisponibles.none {
-                it.id == formulario.actividadId
-            }
-        ) {
-            Text(
-                text = "Debes seleccionar una actividad disponible.",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
+
         // 5. SELECCIONAR ESTUDIANTE
         Text(
             text = "5. Selecciona un estudiante",
@@ -242,7 +230,7 @@ fun AsignarActividadScreen(
         if (estudiantesActivos.isEmpty()) {
 
             Text(
-                text = "No hay estudiantes activos disponibles."
+                text = "No hay estudiantes disponibles."
             )
 
         } else {
@@ -275,19 +263,7 @@ fun AsignarActividadScreen(
                 }
             }
         }
-        // ERROR VISUAL SI NO SE SELECCIONA UN ESTUDIANTE
-        if (
-            errorFormulario.isNotBlank() &&
-            estudiantesActivos.none {
-                it.alias == formulario.estudianteAlias
-            }
-        ) {
-            Text(
-                text = "Debes seleccionar un estudiante activo.",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
+
         // MOSTRAR ERROR DE VALIDACION
         if (errorFormulario.isNotBlank()) {
 
@@ -324,10 +300,6 @@ fun AsignarActividadScreen(
             )
         }
 
-        Text(
-            text = "Se utilizan únicamente datos ficticios para esta demostración.",
-            style = MaterialTheme.typography.bodySmall
-        )
     }
 
     // VENTANA DE CONFIRMACION
