@@ -40,4 +40,15 @@ interface PreguntaDao {
     suspend fun eliminarPregunta(
         id: Int
     ): Int
+    // Buscar una pregunta específica por su ID
+    @Query(
+        """
+        SELECT * FROM preguntas
+        WHERE id = :id
+        LIMIT 1
+        """
+    )
+    suspend fun obtenerPreguntaPorId(
+        id: Int
+    ): PreguntaEntity?
 }

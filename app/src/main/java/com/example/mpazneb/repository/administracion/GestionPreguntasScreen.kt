@@ -27,18 +27,21 @@ fun GestionPreguntasScreen(
 
     val contexto = LocalContext.current.applicationContext
 
-    // Conectar con la misma base de datos de actividades
     val repositorio = remember(contexto) {
         PreguntaRepository(
             ActividadDatabase
                 .obtenerInstancia(contexto)
-                .preguntaDao()
+                .preguntaDao(),
+            context = contexto
         )
     }
 
     val scope = rememberCoroutineScope()
 
-    // Actividad seleccionada
+    // ====================================
+    // 1. SELECCIÓN DE ACTIVIDAD
+    // ====================================
+
     var actividadIdSeleccionada by rememberSaveable {
         mutableIntStateOf(0)
     }
@@ -47,36 +50,80 @@ fun GestionPreguntasScreen(
         mutableStateOf(false)
     }
 
-    // Campos de la pregunta
-    var enunciado by rememberSaveable(actividadIdSeleccionada) {
+    val actividadSeleccionada =
+        actividades.firstOrNull {
+            it.id == actividadIdSeleccionada
+        }
+
+    // Para evitar cambiar preguntas mientras
+    // la actividad está disponible para estudiantes.
+    val puedeModificar =
+        actividadSeleccionada?.activa == false
+
+    // ====================================
+    // 2. FORMULARIO DE PREGUNTAS
+    // ====================================
+
+    var enunciado by rememberSaveable(
+        actividadIdSeleccionada
+    ) {
         mutableStateOf("")
     }
 
-    var alternativaA by rememberSaveable(actividadIdSeleccionada) {
+    var alternativaA by rememberSaveable(
+        actividadIdSeleccionada
+    ) {
         mutableStateOf("")
     }
 
-    var alternativaB by rememberSaveable(actividadIdSeleccionada) {
+    var alternativaB by rememberSaveable(
+        actividadIdSeleccionada
+    ) {
         mutableStateOf("")
     }
 
-    var alternativaC by rememberSaveable(actividadIdSeleccionada) {
+    var alternativaC by rememberSaveable(
+        actividadIdSeleccionada
+    ) {
         mutableStateOf("")
     }
 
-    var alternativaD by rememberSaveable(actividadIdSeleccionada) {
+    var alternativaD by rememberSaveable(
+        actividadIdSeleccionada
+    ) {
         mutableStateOf("")
     }
 
-    var respuestaCorrecta by rememberSaveable(actividadIdSeleccionada) {
+    var respuestaCorrecta by rememberSaveable(
+        actividadIdSeleccionada
+    ) {
         mutableStateOf("A")
     }
 
-    var retroalimentacion by rememberSaveable(actividadIdSeleccionada) {
+    var retroalimentacion by rememberSaveable(
+        actividadIdSeleccionada
+    ) {
         mutableStateOf("")
     }
 
-    // Preguntas recuperadas de Room
+    // Si es null, estamos creando una pregunta.
+    // Si no es null, estamos editando una existente.
+    var preguntaEnEdicion by remember(
+        actividadIdSeleccionada
+    ) {
+        mutableStateOf<PreguntaEntity?>(null)
+    }
+
+    var preguntaAEliminar by remember(
+        actividadIdSeleccionada
+    ) {
+        mutableStateOf<PreguntaEntity?>(null)
+    }
+
+    // ====================================
+    // 3. ESTADOS DE ROOM
+    // ====================================
+
     var preguntas by remember {
         mutableStateOf<List<PreguntaEntity>>(emptyList())
     }
@@ -93,38 +140,58 @@ fun GestionPreguntasScreen(
         mutableStateOf("")
     }
 
-    // Seleccionar automáticamente la primera actividad
+    // ====================================
+    // 4. LIMPIAR FORMULARIO
+    // ====================================
+
+    fun limpiarFormulario() {
+        preguntaEnEdicion = null
+
+        enunciado = ""
+        alternativaA = ""
+        alternativaB = ""
+        alternativaC = ""
+        alternativaD = ""
+
+        respuestaCorrecta = "A"
+        retroalimentacion = ""
+    }
+
+    // ====================================
+    // 5. SELECCIONAR ACTIVIDAD INICIAL
+    // ====================================
+
     LaunchedEffect(actividades) {
 
-        if (actividades.none {
+        if (
+            actividades.none {
                 it.id == actividadIdSeleccionada
-            }) {
-
+            }
+        ) {
             actividadIdSeleccionada =
                 actividades.firstOrNull()?.id ?: 0
         }
     }
 
-    val actividadSeleccionada =
-        actividades.firstOrNull {
-            it.id == actividadIdSeleccionada
-        }
+    // ====================================
+    // 6. CARGAR PREGUNTAS DESDE ROOM
+    // ====================================
 
-    // Recuperar las preguntas cada vez que
-    // se selecciona otra actividad
     LaunchedEffect(actividadIdSeleccionada) {
 
         preguntas = emptyList()
         mensaje = ""
 
-        if (actividadIdSeleccionada != 0) {
+        val idActividad = actividadIdSeleccionada
+
+        if (idActividad != 0) {
 
             cargandoPreguntas = true
 
             try {
 
                 preguntas = repositorio.listarPreguntas(
-                    actividadIdSeleccionada
+                    idActividad
                 )
 
             } catch (error: CancellationException) {
@@ -133,7 +200,8 @@ fun GestionPreguntasScreen(
 
             } catch (error: Exception) {
 
-                mensaje = "No se pudieron cargar las preguntas."
+                mensaje =
+                    "No se pudieron cargar las preguntas."
 
             } finally {
 
@@ -142,13 +210,22 @@ fun GestionPreguntasScreen(
         }
     }
 
+    // ====================================
+    // 7. VALIDAR FORMULARIO
+    // ====================================
+
     val formularioValido =
         enunciado.isNotBlank() &&
                 alternativaA.isNotBlank() &&
                 alternativaB.isNotBlank() &&
                 alternativaC.isNotBlank() &&
                 alternativaD.isNotBlank() &&
+                respuestaCorrecta in listOf("A", "B", "C", "D") &&
                 retroalimentacion.isNotBlank()
+
+    // ====================================
+    // 8. PANTALLA PRINCIPAL
+    // ====================================
 
     Column(
         modifier = Modifier
@@ -165,8 +242,8 @@ fun GestionPreguntasScreen(
         )
 
         Text(
-            text = "Agrega preguntas a las actividades de Lectura y Matemática.",
-            style = MaterialTheme.typography.bodyMedium
+            text = "Crea, consulta y corrige las preguntas " +
+                    "de las actividades de Lectura y Matemática."
         )
 
         if (actividades.isEmpty()) {
@@ -178,9 +255,12 @@ fun GestionPreguntasScreen(
 
         } else {
 
+            // ====================================
             // SELECCIONAR ACTIVIDAD
+            // ====================================
+
             Text(
-                text = "Actividad",
+                text = "Selecciona una actividad",
                 style = MaterialTheme.typography.titleMedium
             )
 
@@ -190,6 +270,7 @@ fun GestionPreguntasScreen(
                     onClick = {
                         menuAbierto = true
                     },
+                    enabled = !guardando,
                     modifier = Modifier.fillMaxWidth()
                 ) {
 
@@ -216,8 +297,8 @@ fun GestionPreguntasScreen(
                                             "(${actividad.modulo})"
                                 )
                             },
-                            onClick = {
 
+                            onClick = {
                                 actividadIdSeleccionada =
                                     actividad.id
 
@@ -231,18 +312,74 @@ fun GestionPreguntasScreen(
             if (actividadSeleccionada != null) {
 
                 Text(
-                    text = "Curso: ${actividadSeleccionada.curso}° básico",
-                    style = MaterialTheme.typography.bodySmall
+                    text =
+                        "Curso: ${actividadSeleccionada.curso}° básico"
                 )
+
+                Text(
+                    text = if (actividadSeleccionada.activa) {
+                        "Estado: Activa"
+                    } else {
+                        "Estado: Borrador"
+                    }
+                )
+
+                // ====================================
+                // PROTECCIÓN DE ACTIVIDADES ACTIVAS
+                // ====================================
+
+                if (!puedeModificar) {
+
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor =
+                                MaterialTheme.colorScheme
+                                    .secondaryContainer
+                        )
+                    ) {
+
+                        Text(
+                            text = "Para agregar, editar o eliminar " +
+                                    "preguntas, primero desactiva " +
+                                    "esta actividad desde su módulo.",
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
 
                 HorizontalDivider()
 
+                // ====================================
+                // FORMULARIO
+                // ====================================
+
                 Text(
-                    text = "Nueva pregunta",
+                    text = if (preguntaEnEdicion == null) {
+                        "Nueva pregunta"
+                    } else {
+                        "Editar pregunta"
+                    },
                     style = MaterialTheme.typography.titleLarge
                 )
 
-                // ENUNCIADO
+                if (preguntaEnEdicion != null) {
+
+                    Text(
+                        text = "Estás modificando una pregunta " +
+                                "que ya existe en Room."
+                    )
+
+                    OutlinedButton(
+                        onClick = {
+                            limpiarFormulario()
+                            mensaje = ""
+                        },
+                        enabled = !guardando
+                    ) {
+                        Text("Cancelar edición")
+                    }
+                }
+
                 OutlinedTextField(
                     value = enunciado,
                     onValueChange = {
@@ -251,14 +388,11 @@ fun GestionPreguntasScreen(
                     label = {
                         Text("Enunciado de la pregunta")
                     },
-                    placeholder = {
-                        Text("Ej.: ¿Cuánto es 8 + 5?")
-                    },
                     minLines = 2,
+                    enabled = puedeModificar && !guardando,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // ALTERNATIVA A
                 OutlinedTextField(
                     value = alternativaA,
                     onValueChange = {
@@ -267,10 +401,10 @@ fun GestionPreguntasScreen(
                     label = {
                         Text("Alternativa A")
                     },
+                    enabled = puedeModificar && !guardando,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // ALTERNATIVA B
                 OutlinedTextField(
                     value = alternativaB,
                     onValueChange = {
@@ -279,10 +413,10 @@ fun GestionPreguntasScreen(
                     label = {
                         Text("Alternativa B")
                     },
+                    enabled = puedeModificar && !guardando,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // ALTERNATIVA C
                 OutlinedTextField(
                     value = alternativaC,
                     onValueChange = {
@@ -291,10 +425,10 @@ fun GestionPreguntasScreen(
                     label = {
                         Text("Alternativa C")
                     },
+                    enabled = puedeModificar && !guardando,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // ALTERNATIVA D
                 OutlinedTextField(
                     value = alternativaD,
                     onValueChange = {
@@ -303,12 +437,12 @@ fun GestionPreguntasScreen(
                     label = {
                         Text("Alternativa D")
                     },
+                    enabled = puedeModificar && !guardando,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // RESPUESTA CORRECTA
                 Text(
-                    text = "Selecciona la respuesta correcta",
+                    text = "Respuesta correcta",
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -324,10 +458,16 @@ fun GestionPreguntasScreen(
                             letra ->
 
                         FilterChip(
-                            selected = respuestaCorrecta == letra,
+                            selected =
+                                respuestaCorrecta == letra,
+
                             onClick = {
                                 respuestaCorrecta = letra
                             },
+
+                            enabled =
+                                puedeModificar && !guardando,
+
                             label = {
                                 Text(letra)
                             }
@@ -335,68 +475,120 @@ fun GestionPreguntasScreen(
                     }
                 }
 
-                // RETROALIMENTACIÓN
                 OutlinedTextField(
                     value = retroalimentacion,
                     onValueChange = {
                         retroalimentacion = it
                     },
                     label = {
-                        Text("Retroalimentación")
-                    },
-                    placeholder = {
-                        Text("Ej.: ¡Muy bien! 8 + 5 = 13.")
+                        Text("Retroalimentación pedagógica")
                     },
                     minLines = 2,
+                    enabled = puedeModificar && !guardando,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // GUARDAR PREGUNTA
+                // ====================================
+                // GUARDAR O EDITAR PREGUNTA
+                // ====================================
+
                 Button(
                     onClick = {
 
                         val idActividad =
                             actividadSeleccionada.id
 
+                        val preguntaAnterior =
+                            preguntaEnEdicion
+
+                        val pregunta = PreguntaEntity(
+                            id = preguntaAnterior?.id ?: 0,
+                            actividadId = idActividad,
+                            enunciado = enunciado.trim(),
+                            alternativaA = alternativaA.trim(),
+                            alternativaB = alternativaB.trim(),
+                            alternativaC = alternativaC.trim(),
+                            alternativaD = alternativaD.trim(),
+                            respuestaCorrecta = respuestaCorrecta,
+                            retroalimentacion =
+                                retroalimentacion.trim()
+                        )
+
                         guardando = true
-                        mensaje = "Guardando pregunta..."
+
+                        mensaje = if (
+                            preguntaAnterior == null
+                        ) {
+                            "Guardando pregunta..."
+                        } else {
+                            "Guardando cambios..."
+                        }
 
                         scope.launch {
 
                             try {
 
-                                val pregunta = PreguntaEntity(
-                                    actividadId = idActividad,
-                                    enunciado = enunciado.trim(),
-                                    alternativaA = alternativaA.trim(),
-                                    alternativaB = alternativaB.trim(),
-                                    alternativaC = alternativaC.trim(),
-                                    alternativaD = alternativaD.trim(),
-                                    respuestaCorrecta = respuestaCorrecta,
-                                    retroalimentacion =
-                                        retroalimentacion.trim()
-                                )
+                                // Verificar el estado actual
+                                // antes de modificar Room.
+                                val actividadEnRoom =
+                                    ActividadDatabase
+                                        .obtenerInstancia(contexto)
+                                        .actividadDao()
+                                        .obtenerActividades()
+                                        .firstOrNull {
+                                            it.id == idActividad
+                                        }
 
-                                repositorio.guardarPregunta(
-                                    pregunta
-                                )
+                                if (actividadEnRoom == null) {
 
-                                preguntas =
-                                    repositorio.listarPreguntas(
+                                    mensaje =
+                                        "La actividad ya no existe."
+
+                                } else if (actividadEnRoom.activa) {
+
+                                    mensaje =
+                                        "Desactiva la actividad " +
+                                                "antes de modificar preguntas."
+
+                                } else {
+
+                                    if (preguntaAnterior == null) {
+
+                                        repositorio.guardarPregunta(
+                                            pregunta
+                                        )
+
+                                        mensaje =
+                                            "Pregunta creada correctamente."
+
+                                    } else {
+
+                                        val actualizado =
+                                            repositorio.editarPregunta(
+                                                pregunta
+                                            )
+
+                                        mensaje =
+                                            if (actualizado) {
+                                                "Pregunta editada correctamente."
+                                            } else {
+                                                "No se encontró la pregunta."
+                                            }
+                                    }
+
+                                    if (
+                                        actividadIdSeleccionada ==
                                         idActividad
-                                    )
+                                    ) {
 
-                                // Limpiar formulario
-                                enunciado = ""
-                                alternativaA = ""
-                                alternativaB = ""
-                                alternativaC = ""
-                                alternativaD = ""
-                                respuestaCorrecta = "A"
-                                retroalimentacion = ""
+                                        preguntas =
+                                            repositorio.listarPreguntas(
+                                                idActividad
+                                            )
 
-                                mensaje =
-                                    "Pregunta guardada correctamente."
+                                        limpiarFormulario()
+                                    }
+                                }
 
                             } catch (
                                 error: CancellationException
@@ -416,7 +608,11 @@ fun GestionPreguntasScreen(
                         }
                     },
 
-                    enabled = formularioValido && !guardando,
+                    enabled =
+                        formularioValido &&
+                                puedeModificar &&
+                                !guardando &&
+                                !cargandoPreguntas,
 
                     modifier = Modifier
                         .fillMaxWidth()
@@ -424,10 +620,15 @@ fun GestionPreguntasScreen(
                 ) {
 
                     Text(
-                        if (guardando) {
-                            "Guardando..."
-                        } else {
-                            "Guardar pregunta"
+                        when {
+                            guardando ->
+                                "Guardando..."
+
+                            preguntaEnEdicion != null ->
+                                "Guardar cambios"
+
+                            else ->
+                                "Guardar pregunta"
                         }
                     )
                 }
@@ -436,16 +637,19 @@ fun GestionPreguntasScreen(
 
                     Text(
                         text = mensaje,
-                        style = MaterialTheme.typography.bodyMedium
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
 
                 HorizontalDivider()
 
-                // PREGUNTAS GUARDADAS
+                // ====================================
+                // PREGUNTAS REGISTRADAS
+                // ====================================
+
                 Text(
                     text = "Preguntas guardadas: ${preguntas.size}",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleLarge
                 )
 
                 if (cargandoPreguntas) {
@@ -470,7 +674,7 @@ fun GestionPreguntasScreen(
                             Column(
                                 modifier = Modifier.padding(16.dp),
                                 verticalArrangement =
-                                    Arrangement.spacedBy(6.dp)
+                                    Arrangement.spacedBy(8.dp)
                             ) {
 
                                 Text(
@@ -481,27 +685,229 @@ fun GestionPreguntasScreen(
 
                                 Text(pregunta.enunciado)
 
-                                Text("A. ${pregunta.alternativaA}")
-                                Text("B. ${pregunta.alternativaB}")
-                                Text("C. ${pregunta.alternativaC}")
-                                Text("D. ${pregunta.alternativaD}")
+                                Text(
+                                    text = "A. ${pregunta.alternativaA}"
+                                )
+
+                                Text(
+                                    text = "B. ${pregunta.alternativaB}"
+                                )
+
+                                Text(
+                                    text = "C. ${pregunta.alternativaC}"
+                                )
+
+                                Text(
+                                    text = "D. ${pregunta.alternativaD}"
+                                )
 
                                 Text(
                                     text = "Respuesta correcta: " +
-                                            pregunta.respuestaCorrecta,
-                                    color =
-                                        MaterialTheme.colorScheme.primary
+                                            pregunta.respuestaCorrecta
                                 )
 
                                 Text(
                                     text = "Retroalimentación: " +
                                             pregunta.retroalimentacion
                                 )
+
+                                HorizontalDivider()
+
+                                // ====================================
+                                // EDITAR PREGUNTA
+                                // ====================================
+
+                                OutlinedButton(
+                                    onClick = {
+
+                                        preguntaEnEdicion = pregunta
+
+                                        enunciado =
+                                            pregunta.enunciado
+
+                                        alternativaA =
+                                            pregunta.alternativaA
+
+                                        alternativaB =
+                                            pregunta.alternativaB
+
+                                        alternativaC =
+                                            pregunta.alternativaC
+
+                                        alternativaD =
+                                            pregunta.alternativaD
+
+                                        respuestaCorrecta =
+                                            pregunta.respuestaCorrecta
+
+                                        retroalimentacion =
+                                            pregunta.retroalimentacion
+
+                                        mensaje =
+                                            "Editando pregunta ${indice + 1}. " +
+                                                    "Modifica el formulario " +
+                                                    "de la parte superior."
+                                    },
+
+                                    enabled =
+                                        puedeModificar && !guardando,
+
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Editar pregunta")
+                                }
+
+                                // ====================================
+                                // ELIMINAR PREGUNTA
+                                // ====================================
+
+                                OutlinedButton(
+                                    onClick = {
+                                        preguntaAEliminar = pregunta
+                                    },
+
+                                    enabled =
+                                        puedeModificar && !guardando,
+
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Eliminar pregunta")
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    // ====================================
+    // 9. CONFIRMAR ELIMINACIÓN
+    // ====================================
+
+    val pendiente = preguntaAEliminar
+
+    if (pendiente != null) {
+
+        AlertDialog(
+            onDismissRequest = {
+                preguntaAEliminar = null
+            },
+
+            title = {
+                Text("Eliminar pregunta")
+            },
+
+            text = {
+                Text(
+                    "¿Seguro que deseas eliminar esta pregunta?\n\n" +
+                            pendiente.enunciado +
+                            "\n\nEsta acción no se puede deshacer."
+                )
+            },
+
+            confirmButton = {
+
+                TextButton(
+                    onClick = {
+
+                        preguntaAEliminar = null
+                        guardando = true
+
+                        val idActividad = pendiente.actividadId
+
+                        scope.launch {
+
+                            try {
+
+                                val actividadEnRoom =
+                                    ActividadDatabase
+                                        .obtenerInstancia(contexto)
+                                        .actividadDao()
+                                        .obtenerActividades()
+                                        .firstOrNull {
+                                            it.id == idActividad
+                                        }
+
+                                if (actividadEnRoom == null) {
+
+                                    mensaje =
+                                        "La actividad ya no existe."
+
+                                } else if (actividadEnRoom.activa) {
+
+                                    mensaje =
+                                        "Desactiva la actividad " +
+                                                "antes de eliminar preguntas."
+
+                                } else {
+
+                                    val eliminada =
+                                        repositorio.eliminarPregunta(
+                                            pendiente.id
+                                        )
+
+                                    mensaje =
+                                        if (eliminada) {
+                                            "Pregunta eliminada correctamente."
+                                        } else {
+                                            "No se encontró la pregunta."
+                                        }
+
+                                    if (
+                                        actividadIdSeleccionada ==
+                                        idActividad
+                                    ) {
+
+                                        preguntas =
+                                            repositorio.listarPreguntas(
+                                                idActividad
+                                            )
+
+                                        if (
+                                            preguntaEnEdicion?.id ==
+                                            pendiente.id
+                                        ) {
+                                            limpiarFormulario()
+                                        }
+                                    }
+                                }
+
+                            } catch (
+                                error: CancellationException
+                            ) {
+
+                                throw error
+
+                            } catch (error: Exception) {
+
+                                mensaje =
+                                    "No se pudo eliminar la pregunta."
+
+                            } finally {
+
+                                guardando = false
+                            }
+                        }
+                    },
+
+                    enabled = !guardando
+                ) {
+
+                    Text("Eliminar")
+                }
+            },
+
+            dismissButton = {
+
+                TextButton(
+                    onClick = {
+                        preguntaAEliminar = null
+                    }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
