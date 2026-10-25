@@ -2,9 +2,9 @@
 package com.example.mpazneb.ui.screens.administracion
 
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -15,45 +15,40 @@ import androidx.compose.ui.unit.dp
 import com.example.mpazneb.model.Actividad
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
 
-// PANTALLA PARA GESTIONAR MATEMÁTICA
 @Composable
 fun GestionMatematicaScreen(
     actividades: List<Actividad>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCambiarEstado: (Actividad) -> Unit = {},
+    onEditar: (Actividad) -> Unit = {}
 ) {
 
-    // 1. RECORDAR EL TEXTO DEL BUSCADOR
     var busqueda by rememberSaveable {
         mutableStateOf("")
     }
 
-    // 2. RECORDAR EL CURSO ELEGIDO
-    // El valor 0 significa "Todos"
     var cursoSeleccionado by rememberSaveable {
-        mutableStateOf(0)
+        mutableIntStateOf(0)
     }
 
-    // 3. FILTRAR LAS ACTIVIDADES
+    // FILTRAR ACTIVIDADES DE MATEMÁTICA
     val actividadesMatematica = actividades.filter { actividad ->
-
         actividad.modulo == "Matemática" &&
-
                 actividad.titulo.contains(
                     busqueda.trim(),
                     ignoreCase = true
                 ) &&
-
-                (cursoSeleccionado == 0 ||
-                        actividad.curso == cursoSeleccionado)
+                (
+                        cursoSeleccionado == 0 ||
+                                actividad.curso == cursoSeleccionado
+                        )
     }
 
-    // 4. CONTENIDO DE LA PANTALLA
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
@@ -63,27 +58,24 @@ fun GestionMatematicaScreen(
         )
 
         Text(
-            text = "Consulta las actividades de Matemática.",
+            text = "Consulta, activa y edita las actividades de Matemática.",
             style = MaterialTheme.typography.bodyMedium
         )
 
-        // 5. BUSCADOR
+        // BUSCADOR
         OutlinedTextField(
             value = busqueda,
-
-            onValueChange = { textoNuevo ->
-                busqueda = textoNuevo
+            onValueChange = {
+                busqueda = it
             },
-
             label = {
                 Text("Buscar actividad de matemática")
             },
-
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
 
-        // 6. FILTROS POR CURSO
+        // FILTROS POR CURSO
         Text(
             text = "Filtrar por curso",
             style = MaterialTheme.typography.titleMedium
@@ -93,7 +85,6 @@ fun GestionMatematicaScreen(
             modifier = Modifier.horizontalScroll(
                 rememberScrollState()
             ),
-
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
@@ -101,11 +92,9 @@ fun GestionMatematicaScreen(
 
                 FilterChip(
                     selected = cursoSeleccionado == curso,
-
                     onClick = {
                         cursoSeleccionado = curso
                     },
-
                     label = {
                         Text(
                             if (curso == 0) {
@@ -119,13 +108,12 @@ fun GestionMatematicaScreen(
             }
         }
 
-        // 7. CONTADOR DE ACTIVIDADES
         Text(
             text = "Actividades encontradas: ${actividadesMatematica.size}",
             style = MaterialTheme.typography.bodyMedium
         )
 
-        // 8. MOSTRAR ACTIVIDADES
+        // LISTA DE ACTIVIDADES
         if (actividadesMatematica.isEmpty()) {
 
             Text(
@@ -142,34 +130,104 @@ fun GestionMatematicaScreen(
 
                     Column(
                         modifier = Modifier.padding(16.dp),
-
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
 
+                        // TÍTULO
                         Text(
                             text = actividad.titulo,
                             style = MaterialTheme.typography.titleMedium
                         )
 
+                        // DESCRIPCIÓN
                         Text(
-                            text = actividad.descripcion
+                            text = actividad.descripcion,
+                            style = MaterialTheme.typography.bodyMedium
                         )
 
+                        // NUEVO: OBJETIVO DE APRENDIZAJE
+                        if (actividad.objetivo.isNotBlank()) {
+
+                            HorizontalDivider()
+
+                            Text(
+                                text = "Objetivo de aprendizaje",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            Text(
+                                text = actividad.objetivo,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
+                        // NUEVO: INSTRUCCIONES
+                        if (actividad.instrucciones.isNotBlank()) {
+
+                            Text(
+                                text = "Instrucciones para el estudiante",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            Text(
+                                text = actividad.instrucciones,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
+                        // CURSO
                         Text(
                             text = "${actividad.curso}° básico"
                         )
 
+                        // DIFICULTAD
                         Text(
                             text = "Dificultad: ${actividad.dificultad}"
                         )
 
+                        // ESTADO DE LA ACTIVIDAD
                         Text(
                             text = if (actividad.activa) {
                                 "Estado: Activa"
                             } else {
                                 "Estado: Borrador"
+                            },
+                            color = if (actividad.activa) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
                             }
                         )
+
+                        // ACTIVAR O DESACTIVAR
+                        OutlinedButton(
+                            onClick = {
+                                onCambiarEstado(actividad)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+
+                            Text(
+                                if (actividad.activa) {
+                                    "Desactivar actividad"
+                                } else {
+                                    "Activar actividad"
+                                }
+                            )
+                        }
+
+                        // EDITAR ACTIVIDAD
+                        OutlinedButton(
+                            onClick = {
+                                onEditar(actividad)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+
+                            Text("Editar actividad")
+                        }
                     }
                 }
             }
@@ -177,7 +235,7 @@ fun GestionMatematicaScreen(
     }
 }
 
-// VISTA PREVIA CON DATOS FICTICIOS
+// VISTA PREVIA
 @Preview(showBackground = true)
 @Composable
 fun GestionMatematicaPreview() {
@@ -189,12 +247,14 @@ fun GestionMatematicaPreview() {
 
                 Actividad(
                     id = 1,
-                    titulo = "Resolver sumas",
+                    titulo = "Pruebas de sumas Matías",
                     modulo = "Matemática",
                     curso = 2,
-                    dificultad = "Básica",
-                    descripcion = "Practicar sumas de números naturales.",
-                    activa = true
+                    dificultad = "Media",
+                    descripcion = "Actividad práctica de matemáticas.",
+                    activa = false,
+                    objetivo = "Resolver sumas de números naturales hasta 20.",
+                    instrucciones = "Lee cada suma y selecciona la respuesta correcta."
                 ),
 
                 Actividad(
@@ -202,33 +262,11 @@ fun GestionMatematicaPreview() {
                     titulo = "Problemas cotidianos",
                     modulo = "Matemática",
                     curso = 3,
-                    dificultad = "Media",
-                    descripcion = "Resolver problemas usando sumas y restas.",
-                    activa = true
-                ),
-
-                Actividad(
-                    id = 3,
-                    titulo = "Patrones y secuencias",
-                    modulo = "Matemática",
-                    curso = 4,
-                    dificultad = "Avanzada",
-                    descripcion = "Reconocer secuencias numéricas.",
-                    activa = false
-                ),
-
-                // Esta actividad NO debe mostrarse
-                Actividad(
-                    id = 4,
-                    titulo = "Cuento del bosque",
-                    modulo = "Lectura",
-                    curso = 2,
                     dificultad = "Básica",
-                    descripcion = "Comprensión de lectura.",
-                    activa = true
+                    descripcion = "Resolver problemas con sumas y restas.",
+                    activa = false
                 )
             )
         )
     }
 }
-

@@ -1,3 +1,4 @@
+
 package com.example.mpazneb.data.local
 
 import androidx.room.Entity
@@ -14,5 +15,9 @@ data class ActividadEntity(
     val curso: Int,
     val dificultad: String,
     val descripcion: String,
-    val activa: Boolean = false
+    val activa: Boolean = false,
+
+    // Nuevos campos almacenados en Room
+    val objetivo: String = "",
+    val instrucciones: String = ""
 )

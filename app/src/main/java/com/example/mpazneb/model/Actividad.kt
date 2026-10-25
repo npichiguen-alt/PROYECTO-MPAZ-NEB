@@ -1,3 +1,4 @@
+
 package com.example.mpazneb.model
 
 data class Actividad(
@@ -7,5 +8,9 @@ data class Actividad(
     val curso: Int,
     val dificultad: String,
     val descripcion: String,
-    val activa: Boolean = false
+    val activa: Boolean = false,
+
+    // Nuevos campos pedagógicos
+    val objetivo: String = "",
+    val instrucciones: String = ""
 )

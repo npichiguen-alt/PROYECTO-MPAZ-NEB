@@ -18,38 +18,39 @@ import com.example.mpazneb.ui.theme.MPAZNEBTheme
 @Composable
 fun GestionLecturaScreen(
     actividades: List<Actividad>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCambiarEstado: (Actividad) -> Unit = {},
+    onEditar: (Actividad) -> Unit = {}
 ) {
 
-    // 1. GUARDAR LO QUE ESCRIBE EL USUARIO
+    // Guardar la búsqueda del usuario
     var busqueda by rememberSaveable {
         mutableStateOf("")
     }
+
+    // Guardar el curso seleccionado
     var cursoSeleccionado by rememberSaveable {
-        mutableStateOf(0)
+        mutableIntStateOf(0)
     }
 
-    // FILTRAR POR MODULO, NOMBRE Y CURSO
+    // Filtrar las actividades de Lectura
     val actividadesLectura = actividades.filter { actividad ->
-
         actividad.modulo == "Lectura" &&
-
                 actividad.titulo.contains(
                     busqueda.trim(),
                     ignoreCase = true
                 ) &&
-
-                (cursoSeleccionado == 0 ||
-                        actividad.curso == cursoSeleccionado)
+                (
+                        cursoSeleccionado == 0 ||
+                                actividad.curso == cursoSeleccionado
+                        )
     }
 
-    // 3. ORGANIZAR LOS ELEMENTOS DE LA PANTALLA
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
@@ -59,37 +60,31 @@ fun GestionLecturaScreen(
         )
 
         Text(
-            text = "Consulta las actividades de Lectura.",
+            text = "Consulta y administra las actividades de Lectura.",
             style = MaterialTheme.typography.bodyMedium
         )
 
-        // 4. CAMPO DE BUSQUEDA
+        // Buscador
         OutlinedTextField(
             value = busqueda,
-
-            onValueChange = { textoNuevo ->
-                busqueda = textoNuevo
-            },
-
+            onValueChange = { busqueda = it },
             label = {
                 Text("Buscar actividad de lectura")
             },
-
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
-        // TITULO DE LOS FILTROS
+
         Text(
             text = "Filtrar por curso",
             style = MaterialTheme.typography.titleMedium
         )
 
-// BOTONES PARA SELECCIONAR CURSO
+        // Filtros de curso
         Row(
             modifier = Modifier.horizontalScroll(
                 rememberScrollState()
             ),
-
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
@@ -97,11 +92,9 @@ fun GestionLecturaScreen(
 
                 FilterChip(
                     selected = cursoSeleccionado == curso,
-
                     onClick = {
                         cursoSeleccionado = curso
                     },
-
                     label = {
                         Text(
                             if (curso == 0) {
@@ -115,13 +108,12 @@ fun GestionLecturaScreen(
             }
         }
 
-        // 5. MOSTRAR CANTIDAD DE RESULTADOS
         Text(
             text = "Actividades encontradas: ${actividadesLectura.size}",
             style = MaterialTheme.typography.bodyMedium
         )
 
-        // 6. MOSTRAR MENSAJE SI NO HAY RESULTADOS
+        // Mostrar actividades
         if (actividadesLectura.isEmpty()) {
 
             Text(
@@ -130,7 +122,6 @@ fun GestionLecturaScreen(
 
         } else {
 
-            // 7. MOSTRAR LAS ACTIVIDADES EN TARJETAS
             actividadesLectura.forEach { actividad ->
 
                 Card(
@@ -142,30 +133,98 @@ fun GestionLecturaScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
 
+                        // Nombre de la actividad
                         Text(
                             text = actividad.titulo,
                             style = MaterialTheme.typography.titleMedium
                         )
 
+                        // Descripción
                         Text(
                             text = actividad.descripcion
                         )
 
+                        if (actividad.objetivo.isNotBlank()) {
+
+                            HorizontalDivider()
+
+                            Text(
+                                text = "Objetivo de aprendizaje",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            Text(
+                                text = actividad.objetivo,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
+                        if (actividad.instrucciones.isNotBlank()) {
+
+                            Text(
+                                text = "Instrucciones para el estudiante",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            Text(
+                                text = actividad.instrucciones,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
+
+                        // Curso
                         Text(
                             text = "${actividad.curso}° básico"
                         )
 
+                        // Dificultad
                         Text(
                             text = "Dificultad: ${actividad.dificultad}"
                         )
 
+                        // Estado actual
                         Text(
                             text = if (actividad.activa) {
                                 "Estado: Activa"
                             } else {
                                 "Estado: Borrador"
+                            },
+                            color = if (actividad.activa) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
                             }
                         )
+
+                        // NUEVO: ACTIVAR O DESACTIVAR
+                        OutlinedButton(
+                            onClick = {
+                                onCambiarEstado(actividad)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+
+                            Text(
+                                text = if (actividad.activa) {
+                                    "Desactivar actividad"
+                                } else {
+                                    "Activar actividad"
+                                }
+                            )
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                onEditar(actividad)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Editar actividad")
+                        }
+
                     }
                 }
             }
@@ -173,7 +232,7 @@ fun GestionLecturaScreen(
     }
 }
 
-// DATOS FICTICIOS PARA LA VISTA PREVIA
+// VISTA PREVIA
 @Preview(showBackground = true)
 @Composable
 fun GestionLecturaPreview() {
