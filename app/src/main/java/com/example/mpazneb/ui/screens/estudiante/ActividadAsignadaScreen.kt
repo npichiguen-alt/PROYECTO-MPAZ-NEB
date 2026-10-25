@@ -404,7 +404,13 @@ fun ActividadAsignadaScreen(
                         if (pregunta.retroalimentacion.isNotBlank()) {
 
                             Text(
-                                text = pregunta.retroalimentacion
+                                text = "No lograste reponder correctamente est vez. " +
+                                        "Sigue practicando!"
+                            )
+                            Text(
+                                text ="Respuesta correcta: " +
+                                        pregunta.respuestaCorrecta,
+                                style = MaterialTheme.typography.bodyMedium
                             )
                         }
                     }
