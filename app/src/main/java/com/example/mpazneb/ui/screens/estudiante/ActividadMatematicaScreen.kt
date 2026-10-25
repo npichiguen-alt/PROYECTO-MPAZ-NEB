@@ -1,10 +1,10 @@
-
 package com.example.mpazneb.ui.screens.estudiante
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
 import com.example.mpazneb.viewmodel.EstudianteViewModel
 
-// COLORES DEL MÓDULO ESTUDIANTE
+// Colores del módulo Estudiante
 private val CelestePastel = Color(0xFFE1F2FA)
 private val Rosa = Color(0xFFEA3677)
 private val RosaSuave = Color(0xFFFFE8F1)
@@ -33,10 +33,6 @@ private val AzulOscuro = Color(0xFF242B57)
 private val GrisTexto = Color(0xFF57637E)
 private val Blanco = Color.White
 private val RojoError = Color(0xFFB3264D)
-
-// ====================================
-// 1. PANTALLA DE MATEMÁTICA
-// ====================================
 
 @Composable
 fun ActividadMatematicaScreen(
@@ -51,16 +47,19 @@ fun ActividadMatematicaScreen(
     modifier: Modifier = Modifier
 ) {
 
-    // Alternativas originales
+    // Actividad ficticia de demostración
     val alternativas = listOf(
         "10",
         "12",
         "14"
     )
 
-    // Mantener el control original de intentos
+    // Diferenciar respuesta correcta e intentos agotados
     val intentosAgotados =
-        intentos >= maxIntentos && !finalizada
+        intentos >= maxIntentos && esCorrecta != true
+
+    val actividadAprobada =
+        finalizada && esCorrecta == true
 
     val controlesBloqueados =
         finalizada || intentosAgotados
@@ -74,10 +73,7 @@ fun ActividadMatematicaScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
 
-        // ====================================
-        // 2. ENCABEZADO
-        // ====================================
-
+        // ENCABEZADO
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -101,10 +97,7 @@ fun ActividadMatematicaScreen(
             )
         }
 
-        // ====================================
-        // 3. EJERCICIO MATEMÁTICO
-        // ====================================
-
+        // EJERCICIO MATEMÁTICO
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
@@ -149,10 +142,7 @@ fun ActividadMatematicaScreen(
             }
         }
 
-        // ====================================
-        // 4. PREGUNTA Y ALTERNATIVAS
-        // ====================================
-
+        // PREGUNTA Y ALTERNATIVAS
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
@@ -187,7 +177,13 @@ fun ActividadMatematicaScreen(
                         respuestaSeleccionada == alternativa
 
                     Surface(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                enabled = !controlesBloqueados
+                            ) {
+                                onSeleccionarRespuesta(alternativa)
+                            },
                         shape = RoundedCornerShape(14.dp),
                         color = if (seleccionada) {
                             RosaSuave
@@ -207,9 +203,7 @@ fun ActividadMatematicaScreen(
                             RadioButton(
                                 selected = seleccionada,
                                 onClick = {
-                                    onSeleccionarRespuesta(
-                                        alternativa
-                                    )
+                                    onSeleccionarRespuesta(alternativa)
                                 },
                                 enabled = !controlesBloqueados,
                                 colors = RadioButtonDefaults.colors(
@@ -233,10 +227,7 @@ fun ActividadMatematicaScreen(
             }
         }
 
-        // ====================================
-        // 5. CONTADOR DE INTENTOS
-        // ====================================
-
+        // CONTADOR DE INTENTOS
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
@@ -276,7 +267,6 @@ fun ActividadMatematicaScreen(
                     trackColor = RosaSuave
                 )
 
-                // BOTÓN COMPROBAR
                 Button(
                     onClick = onComprobar,
                     enabled =
@@ -302,12 +292,9 @@ fun ActividadMatematicaScreen(
             }
         }
 
-        // ====================================
-        // 6. ACTIVIDAD COMPLETADA
-        // ====================================
-
+        // ÉXITO: SOLO SI RESPONDE CORRECTAMENTE
         AnimatedVisibility(
-            visible = finalizada,
+            visible = actividadAprobada,
             enter = fadeIn() + expandVertically()
         ) {
 
@@ -327,11 +314,11 @@ fun ActividadMatematicaScreen(
             }
         }
 
-        // ====================================
-        // 7. INTENTOS AGOTADOS
-        // ====================================
-
-        if (intentosAgotados) {
+        // INTENTOS AGOTADOS SIN ACERTAR
+        AnimatedVisibility(
+            visible = intentosAgotados,
+            enter = fadeIn() + expandVertically()
+        ) {
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -343,15 +330,13 @@ fun ActividadMatematicaScreen(
                     text = "No quedan intentos disponibles.",
                     modifier = Modifier.padding(18.dp),
                     color = RojoError,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center
                 )
             }
         }
 
-        // ====================================
-        // 8. MENSAJE DE RESPUESTA
-        // ====================================
-
+        // MENSAJE DE RETROALIMENTACIÓN
         if (mensaje.isNotEmpty()) {
 
             Surface(
@@ -373,10 +358,6 @@ fun ActividadMatematicaScreen(
             }
         }
 
-        // ====================================
-        // 9. PIE DE PÁGINA
-        // ====================================
-
         Text(
             text = "Actividad ficticia de demostración",
             modifier = Modifier.fillMaxWidth(),
@@ -387,10 +368,7 @@ fun ActividadMatematicaScreen(
     }
 }
 
-// ====================================
-// 10. CONEXIÓN CON EL VIEWMODEL
-// ====================================
-
+// CONEXIÓN CON EL VIEWMODEL
 @Composable
 fun ActividadMatematicaConViewModel(
     estudianteViewModel: EstudianteViewModel,
@@ -410,28 +388,19 @@ fun ActividadMatematicaConViewModel(
         },
 
         onComprobar = {
-            estudianteViewModel
-                .comprobarRespuestaMatematica()
+            estudianteViewModel.comprobarRespuestaMatematica()
         },
 
         mensaje = estadoMatematica.mensaje,
-
         esCorrecta = estadoMatematica.esCorrecta,
-
         finalizada = estadoMatematica.finalizada,
-
         intentos = estadoMatematica.intentos,
-
         maxIntentos = 3,
-
         modifier = modifier
     )
 }
 
-// ====================================
-// 11. VISTA PREVIA
-// ====================================
-
+// VISTA PREVIA
 @Preview(showBackground = true)
 @Composable
 fun ActividadMatematicaPreview() {

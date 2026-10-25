@@ -26,49 +26,55 @@ class RoomEstudianteRepository(
             .trim()
             .uppercase(Locale.ROOT)
 
-        // Buscar primero en la base de datos Room
+        // Buscar primero en Room
         var asignacion =
             asignacionRepository.buscarPorCodigo(codigoLimpio)
 
         // ====================================
-        // DATOS FICTICIOS PARA PRUEBAS
+        // 2. CÓDIGOS DE DEMOSTRACIÓN
         // ====================================
 
-        // Preparar el código de demostración
-        // solamente si todavía no existe en Room
+        // EST-123 conserva la prueba anterior.
+        // EST-PRUEBA crea una asignación nueva
+        // para probar los tres intentos.
+
         if (
             asignacion == null &&
-            codigoLimpio == "EST-123"
+            codigoLimpio in listOf(
+                "EST-123",
+                "EST-PRUEBA",
+                "EST-FALLOS"
+            )
         ) {
 
             val asignacionPrueba = AsignacionEntity(
                 actividadId = 1,
                 actividadTitulo = "Cuento del bosque",
                 estudianteAlias = "Estudiante de prueba",
-                codigoTemporal = "EST-123",
+                codigoTemporal = codigoLimpio,
                 asistenteAlias = "ASISTENTE_DEMO",
                 curso = 2,
                 estado = "Pendiente"
             )
 
-            // Guardar la asignación ficticia en Room
+            // Guardar la nueva asignación en Room
             asignacionRepository.guardarAsignacion(
                 asignacionPrueba
             )
 
-            // Recuperar la asignación guardada
+            // Recuperarla con su ID real
             asignacion =
                 asignacionRepository.buscarPorCodigo(
                     codigoLimpio
                 )
         }
 
-        // Si el código no existe, no permitir el ingreso
+        // No permitir códigos desconocidos
         if (asignacion == null) {
             return null
         }
 
-        // Convertir la entidad al modelo Estudiante
+        // Convertir a modelo del Estudiante
         return Asignacion(
             id = asignacion.id,
             actividadId = asignacion.actividadId,
@@ -79,7 +85,7 @@ class RoomEstudianteRepository(
     }
 
     // ====================================
-    // 2. GUARDAR RESULTADO EN ROOM
+    // 3. GUARDAR RESULTADO EN ROOM
     // ====================================
 
     override suspend fun guardarResultado(
@@ -100,7 +106,7 @@ class RoomEstudianteRepository(
     }
 
     // ====================================
-    // 3. RECUPERAR RESULTADOS DE ROOM
+    // 4. RECUPERAR RESULTADOS DE ROOM
     // ====================================
 
     override suspend fun obtenerResultados(

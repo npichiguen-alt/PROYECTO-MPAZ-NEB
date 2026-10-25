@@ -1,4 +1,3 @@
-
 package com.example.mpazneb.ui.screens.estudiante
 
 import androidx.activity.compose.BackHandler
@@ -30,7 +29,7 @@ fun NavegacionEstudianteDemo() {
         mutableStateOf("inicio")
     }
 
-    // Compartir el ViewModel de MainActivity
+    // Utilizar el ViewModel del Estudiante
     val estudianteViewModel: EstudianteViewModel = viewModel()
 
     // ====================================
@@ -40,13 +39,14 @@ fun NavegacionEstudianteDemo() {
     val estadoIngreso by
     estudianteViewModel.estado.collectAsState()
 
-    // Obtener la asignación activa
-    val asignacionActiva = estadoIngreso.asignacionActiva
+    val asignacionActiva =
+        estadoIngreso.asignacionActiva
 
     // ====================================
     // 3. ACTIVIDADES ASIGNADAS
     // ====================================
 
+    // IDs utilizados en la demostración
     // ID 1 = Lectura
     // ID 2 = Matemática
 
@@ -67,7 +67,7 @@ fun NavegacionEstudianteDemo() {
     estudianteViewModel.estadoMatematica.collectAsState()
 
     // ====================================
-    // 5. RESULTADOS DEL ESTUDIANTE
+    // 5. RESULTADOS
     // ====================================
 
     val resultados by
@@ -77,7 +77,6 @@ fun NavegacionEstudianteDemo() {
     // 6. HISTORIAL DE RESPUESTAS
     // ====================================
 
-    // NUEVO: observar las respuestas guardadas en Room
     val respuestas by
     estudianteViewModel.respuestas.collectAsState()
 
@@ -95,7 +94,6 @@ fun NavegacionEstudianteDemo() {
         modifier = Modifier.fillMaxSize()
     ) {
 
-        // Botón para volver al inicio
         if (pantallaActual != "inicio") {
 
             TextButton(
@@ -120,11 +118,24 @@ fun NavegacionEstudianteDemo() {
             "inicio" -> {
 
                 InicioEstudianteScreen(
+
+                    // La actividad terminó:
+                    // por acierto o por intentos agotados
                     lecturaCompletada =
                         estadoLectura.finalizada,
 
                     matematicaCompletada =
                         estadoMatematica.finalizada,
+
+                    // La actividad terminó
+                    // con una respuesta correcta
+                    lecturaAprobada =
+                        estadoLectura.finalizada &&
+                                estadoLectura.esCorrecta == true,
+
+                    matematicaAprobada =
+                        estadoMatematica.finalizada &&
+                                estadoMatematica.esCorrecta == true,
 
                     // Mostrar solo la actividad asignada
                     mostrarLectura = mostrarLectura,
@@ -157,7 +168,8 @@ fun NavegacionEstudianteDemo() {
                 if (mostrarLectura) {
 
                     ActividadLecturaConViewModel(
-                        estudianteViewModel = estudianteViewModel
+                        estudianteViewModel =
+                            estudianteViewModel
                     )
 
                 } else {
@@ -185,7 +197,8 @@ fun NavegacionEstudianteDemo() {
                 if (mostrarMatematica) {
 
                     ActividadMatematicaConViewModel(
-                        estudianteViewModel = estudianteViewModel
+                        estudianteViewModel =
+                            estudianteViewModel
                     )
 
                 } else {
@@ -210,7 +223,6 @@ fun NavegacionEstudianteDemo() {
 
             "resultados" -> {
 
-                // NUEVO: mostrar resultados e historial
                 ResultadosEstudianteScreen(
                     resultados = resultados,
                     respuestas = respuestas
@@ -235,6 +247,9 @@ fun NavegacionEstudianteDemo() {
     }
 }
 
+// ====================================
+// 9. VISTA PREVIA
+// ====================================
 
 @Preview(showBackground = true)
 @Composable

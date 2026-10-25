@@ -1,4 +1,3 @@
-
 package com.example.mpazneb.ui.screens.estudiante
 
 import androidx.compose.animation.AnimatedVisibility
@@ -35,10 +34,6 @@ private val GrisTexto = Color(0xFF57637E)
 private val Blanco = Color.White
 private val RojoError = Color(0xFFB3264D)
 
-// ====================================
-// 1. PANTALLA DE LECTURA
-// ====================================
-
 @Composable
 fun ActividadLecturaScreen(
     respuestaSeleccionada: String? = null,
@@ -52,16 +47,19 @@ fun ActividadLecturaScreen(
     modifier: Modifier = Modifier
 ) {
 
-    // Alternativas originales de demostración
+    // Actividad ficticia de demostración
     val alternativas = listOf(
         "Un gato",
         "Un perro",
         "Un pájaro"
     )
 
-    // Control original de intentos
+    // Diferenciar éxito de intentos agotados
     val intentosAgotados =
-        intentos >= maxIntentos && !finalizada
+        intentos >= maxIntentos && esCorrecta != true
+
+    val actividadAprobada =
+        finalizada && esCorrecta == true
 
     val controlesBloqueados =
         finalizada || intentosAgotados
@@ -75,10 +73,7 @@ fun ActividadLecturaScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
 
-        // ====================================
-        // 2. ENCABEZADO
-        // ====================================
-
+        // ENCABEZADO
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -102,10 +97,7 @@ fun ActividadLecturaScreen(
             )
         }
 
-        // ====================================
-        // 3. CUENTO DE LECTURA
-        // ====================================
-
+        // CUENTO
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
@@ -134,9 +126,7 @@ fun ActividadLecturaScreen(
                     color = AzulOscuro
                 )
 
-                HorizontalDivider(
-                    color = AzulSuave
-                )
+                HorizontalDivider(color = AzulSuave)
 
                 Text(
                     text = "Tomás es un gato pequeño que vive " +
@@ -149,10 +139,7 @@ fun ActividadLecturaScreen(
             }
         }
 
-        // ====================================
-        // 4. PREGUNTA Y ALTERNATIVAS
-        // ====================================
-
+        // PREGUNTA
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
@@ -181,7 +168,6 @@ fun ActividadLecturaScreen(
                     color = AzulOscuro
                 )
 
-                // Mantener las tres alternativas originales
                 alternativas.forEach { alternativa ->
 
                     val seleccionada =
@@ -238,10 +224,7 @@ fun ActividadLecturaScreen(
             }
         }
 
-        // ====================================
-        // 5. INTENTOS Y BOTÓN
-        // ====================================
-
+        // INTENTOS Y BOTÓN
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
@@ -261,7 +244,6 @@ fun ActividadLecturaScreen(
                     color = AzulOscuro
                 )
 
-                // Barra visual del contador de intentos
                 LinearProgressIndicator(
                     progress = {
                         if (maxIntentos > 0) {
@@ -304,12 +286,9 @@ fun ActividadLecturaScreen(
             }
         }
 
-        // ====================================
-        // 6. ACTIVIDAD COMPLETADA
-        // ====================================
-
+        // ÉXITO: SOLO CUANDO ACIERTA
         AnimatedVisibility(
-            visible = finalizada,
+            visible = actividadAprobada,
             enter = fadeIn() + expandVertically()
         ) {
 
@@ -329,11 +308,11 @@ fun ActividadLecturaScreen(
             }
         }
 
-        // ====================================
-        // 7. INTENTOS AGOTADOS
-        // ====================================
-
-        if (intentosAgotados) {
+        // AGOTÓ LOS INTENTOS SIN ACERTAR
+        AnimatedVisibility(
+            visible = intentosAgotados,
+            enter = fadeIn() + expandVertically()
+        ) {
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -345,15 +324,13 @@ fun ActividadLecturaScreen(
                     text = "No quedan intentos disponibles.",
                     modifier = Modifier.padding(18.dp),
                     color = RojoError,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center
                 )
             }
         }
 
-        // ====================================
-        // 8. MENSAJE DE RESPUESTA
-        // ====================================
-
+        // MENSAJE DE RETROALIMENTACIÓN
         if (mensaje.isNotEmpty()) {
 
             Surface(
@@ -366,21 +343,14 @@ fun ActividadLecturaScreen(
                     text = mensaje,
                     modifier = Modifier.padding(18.dp),
                     color = when (esCorrecta) {
-
                         true -> Azul
-
                         false -> RojoError
-
                         null -> GrisTexto
                     },
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
         }
-
-        // ====================================
-        // 9. PIE DE PÁGINA
-        // ====================================
 
         Text(
             text = "Actividad ficticia de demostración",
@@ -392,10 +362,7 @@ fun ActividadLecturaScreen(
     }
 }
 
-// ====================================
-// 10. CONEXIÓN CON EL VIEWMODEL
-// ====================================
-
+// CONEXIÓN CON EL VIEWMODEL
 @Composable
 fun ActividadLecturaConViewModel(
     estudianteViewModel: EstudianteViewModel,
@@ -415,28 +382,19 @@ fun ActividadLecturaConViewModel(
         },
 
         onComprobar = {
-            estudianteViewModel
-                .comprobarRespuestaLectura()
+            estudianteViewModel.comprobarRespuestaLectura()
         },
 
         mensaje = estadoLectura.mensaje,
-
         esCorrecta = estadoLectura.esCorrecta,
-
         finalizada = estadoLectura.finalizada,
-
         intentos = estadoLectura.intentos,
-
         maxIntentos = 3,
-
         modifier = modifier
     )
 }
 
-// ====================================
-// 11. VISTA PREVIA
-// ====================================
-
+// VISTA PREVIA
 @Preview(showBackground = true)
 @Composable
 fun ActividadLecturaPreview() {

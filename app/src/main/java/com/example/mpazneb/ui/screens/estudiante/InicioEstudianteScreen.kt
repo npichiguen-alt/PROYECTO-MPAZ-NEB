@@ -1,4 +1,3 @@
-
 package com.example.mpazneb.ui.screens.estudiante
 
 import androidx.compose.foundation.background
@@ -29,26 +28,45 @@ private val Blanco = Color.White
 @Composable
 fun InicioEstudianteScreen(
     modifier: Modifier = Modifier,
+
+    // Indican si la actividad ya terminó
     lecturaCompletada: Boolean = false,
     matematicaCompletada: Boolean = false,
+
+    // Indican si terminó con respuesta correcta
+    lecturaAprobada: Boolean = false,
+    matematicaAprobada: Boolean = false,
+
     mostrarLectura: Boolean = true,
     mostrarMatematica: Boolean = true,
+
     onAbrirLectura: () -> Unit = {},
     onAbrirMatematica: () -> Unit = {},
     onAbrirResultados: () -> Unit = {}
 ) {
 
-    // Contar solamente las actividades asignadas
+    // ====================================
+    // 1. CALCULAR PROGRESO
+    // ====================================
+
+    // Contar solamente actividades asignadas
     val totalAsignadas =
         (if (mostrarLectura) 1 else 0) +
                 (if (mostrarMatematica) 1 else 0)
 
-    val totalCompletadas =
+    // Actividades finalizadas:
+    // correctas o con intentos agotados
+    val totalFinalizadas =
         (if (mostrarLectura && lecturaCompletada) 1 else 0) +
                 (if (mostrarMatematica && matematicaCompletada) 1 else 0)
 
+    // Actividades respondidas correctamente
+    val totalAprobadas =
+        (if (mostrarLectura && lecturaAprobada) 1 else 0) +
+                (if (mostrarMatematica && matematicaAprobada) 1 else 0)
+
     val progreso = if (totalAsignadas > 0) {
-        totalCompletadas.toFloat() / totalAsignadas
+        totalFinalizadas.toFloat() / totalAsignadas
     } else {
         0f
     }
@@ -62,7 +80,10 @@ fun InicioEstudianteScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
 
-        // ENCABEZADO
+        // ====================================
+        // 2. ENCABEZADO
+        // ====================================
+
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -86,7 +107,10 @@ fun InicioEstudianteScreen(
             )
         }
 
-        // TARJETA DE PROGRESO
+        // ====================================
+        // 3. TARJETA MI PROGRESO
+        // ====================================
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
@@ -110,11 +134,12 @@ fun InicioEstudianteScreen(
                 )
 
                 Text(
-                    text = "$totalCompletadas de $totalAsignadas actividades completadas",
+                    text = "$totalFinalizadas de $totalAsignadas actividades finalizadas",
                     style = MaterialTheme.typography.bodyMedium,
                     color = GrisTexto
                 )
 
+                // Barra de progreso de actividades terminadas
                 LinearProgressIndicator(
                     progress = { progreso },
                     modifier = Modifier
@@ -124,13 +149,19 @@ fun InicioEstudianteScreen(
                     trackColor = RosaSuave
                 )
 
+                // Mensaje según cómo terminó la actividad
                 Text(
                     text = when {
+
                         totalAsignadas == 0 ->
                             "Pronto podrás comenzar tus actividades."
 
-                        totalCompletadas == totalAsignadas ->
-                            "¡Muy bien! Completaste tus actividades."
+                        totalFinalizadas == totalAsignadas &&
+                                totalAprobadas == totalAsignadas ->
+                            "¡Muy bien! Respondiste correctamente tus actividades."
+
+                        totalFinalizadas == totalAsignadas ->
+                            "Terminaste tus actividades. Revisa tus resultados."
 
                         else ->
                             "Sigue practicando y avanzando."
@@ -141,7 +172,10 @@ fun InicioEstudianteScreen(
             }
         }
 
-        // ACTIVIDADES
+        // ====================================
+        // 4. MIS ACTIVIDADES
+        // ====================================
+
         Text(
             text = "Mis actividades",
             style = MaterialTheme.typography.titleLarge,
@@ -155,6 +189,7 @@ fun InicioEstudianteScreen(
                 titulo = "Lectura",
                 descripcion = "Lee historias y desarrolla tu comprensión.",
                 completada = lecturaCompletada,
+                aprobada = lecturaAprobada,
                 colorPrincipal = Rosa,
                 colorEtiqueta = RosaSuave,
                 onClick = onAbrirLectura
@@ -168,13 +203,17 @@ fun InicioEstudianteScreen(
                 titulo = "Matemática",
                 descripcion = "Practica operaciones y resuelve ejercicios.",
                 completada = matematicaCompletada,
+                aprobada = matematicaAprobada,
                 colorPrincipal = Azul,
                 colorEtiqueta = AzulSuave,
                 onClick = onAbrirMatematica
             )
         }
 
-        // SIN ACTIVIDADES
+        // ====================================
+        // 5. SIN ACTIVIDADES ASIGNADAS
+        // ====================================
+
         if (totalAsignadas == 0) {
 
             Card(
@@ -193,7 +232,10 @@ fun InicioEstudianteScreen(
             }
         }
 
-        // MIS RESULTADOS
+        // ====================================
+        // 6. MIS RESULTADOS
+        // ====================================
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -241,7 +283,10 @@ fun InicioEstudianteScreen(
             }
         }
 
-        // PIE DE PÁGINA
+        // ====================================
+        // 7. PIE DE PÁGINA
+        // ====================================
+
         Text(
             text = "Datos ficticios para uso académico",
             style = MaterialTheme.typography.bodySmall,
@@ -250,12 +295,21 @@ fun InicioEstudianteScreen(
     }
 }
 
-// TARJETA PARA LECTURA Y MATEMÁTICA
+// ====================================
+// 8. TARJETA DE ACTIVIDAD
+// ====================================
+
 @Composable
 private fun TarjetaActividadEstudiante(
     titulo: String,
     descripcion: String,
+
+    // Finalizada por acierto o por intentos agotados
     completada: Boolean,
+
+    // Finalizada con respuesta correcta
+    aprobada: Boolean,
+
     colorPrincipal: Color,
     colorEtiqueta: Color,
     onClick: () -> Unit
@@ -313,16 +367,26 @@ private fun TarjetaActividadEstudiante(
                 }
             }
 
+            // ====================================
+            // ESTADO DE LA ACTIVIDAD
+            // ====================================
+
             Surface(
                 color = colorEtiqueta,
                 shape = RoundedCornerShape(50.dp)
             ) {
 
                 Text(
-                    text = if (completada) {
-                        "Completada"
-                    } else {
-                        "Pendiente"
+                    text = when {
+
+                        !completada ->
+                            "Pendiente"
+
+                        aprobada ->
+                            "Completada"
+
+                        else ->
+                            "Intentos agotados"
                     },
                     modifier = Modifier.padding(
                         horizontal = 14.dp,
@@ -332,6 +396,10 @@ private fun TarjetaActividadEstudiante(
                     style = MaterialTheme.typography.labelLarge
                 )
             }
+
+            // ====================================
+            // ACCIÓN DE LA TARJETA
+            // ====================================
 
             Text(
                 text = if (completada) {
@@ -346,7 +414,10 @@ private fun TarjetaActividadEstudiante(
     }
 }
 
-// VISTA PREVIA
+// ====================================
+// 9. VISTA PREVIA
+// ====================================
+
 @Preview(showBackground = true)
 @Composable
 fun InicioEstudiantePreview() {
@@ -354,7 +425,9 @@ fun InicioEstudiantePreview() {
     MPAZNEBTheme {
         InicioEstudianteScreen(
             lecturaCompletada = true,
+            lecturaAprobada = true,
             matematicaCompletada = false,
+            matematicaAprobada = false,
             mostrarLectura = true,
             mostrarMatematica = false
         )

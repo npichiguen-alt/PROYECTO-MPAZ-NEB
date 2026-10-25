@@ -13,18 +13,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-// ====================================
-// 1. CONFIGURACIÓN DE LA DEMOSTRACIÓN
-// ====================================
-
-// Máximo de intentos permitidos por actividad.
-// Es un valor provisional para las pruebas.
+// Máximo de intentos de la demostración
 private const val MAX_INTENTOS_DEMO = 3
 
-// ====================================
-// 2. ESTADOS DEL ESTUDIANTE
-// ====================================
-
+// ESTADO DEL INGRESO
 data class IngresoEstudianteUiState(
     val codigoTemporal: String = "",
     val mensaje: String = "",
@@ -32,6 +24,7 @@ data class IngresoEstudianteUiState(
     val asignacionActiva: Asignacion? = null
 )
 
+// ESTADO DE LECTURA
 data class LecturaUiState(
     val respuestaSeleccionada: String? = null,
     val mensaje: String = "",
@@ -40,6 +33,7 @@ data class LecturaUiState(
     val finalizada: Boolean = false
 )
 
+// ESTADO DE MATEMÁTICA
 data class MatematicaUiState(
     val respuestaSeleccionada: String? = null,
     val mensaje: String = "",
@@ -48,10 +42,6 @@ data class MatematicaUiState(
     val finalizada: Boolean = false
 )
 
-// ====================================
-// 3. VIEWMODEL DEL ESTUDIANTE
-// ====================================
-
 class EstudianteViewModel(
     private val repositorio: EstudianteRepository =
         DemoEstudianteRepository(),
@@ -59,10 +49,7 @@ class EstudianteViewModel(
     private val respuestaRepository: RespuestaRepository? = null
 ) : ViewModel() {
 
-    // ====================================
-    // 4. ESTADO DEL INGRESO
-    // ====================================
-
+    // ESTADO DEL INGRESO
     private val _estado = MutableStateFlow(
         IngresoEstudianteUiState()
     )
@@ -70,32 +57,21 @@ class EstudianteViewModel(
     val estado: StateFlow<IngresoEstudianteUiState> =
         _estado
 
-    // ====================================
-    // 5. RESULTADOS FINALES
-    // ====================================
-
-    private val _resultados = MutableStateFlow<List<Resultado>>(
-        emptyList()
-    )
+    // RESULTADOS FINALES
+    private val _resultados =
+        MutableStateFlow<List<Resultado>>(emptyList())
 
     val resultados: StateFlow<List<Resultado>> =
         _resultados
 
-    // ====================================
-    // 6. HISTORIAL DE RESPUESTAS
-    // ====================================
-
-    private val _respuestas = MutableStateFlow<List<Respuesta>>(
-        emptyList()
-    )
+    // HISTORIAL DE RESPUESTAS
+    private val _respuestas =
+        MutableStateFlow<List<Respuesta>>(emptyList())
 
     val respuestas: StateFlow<List<Respuesta>> =
         _respuestas
 
-    // ====================================
-    // 7. ESTADO DE LECTURA
-    // ====================================
-
+    // ESTADO DE LECTURA
     private val _estadoLectura = MutableStateFlow(
         LecturaUiState()
     )
@@ -103,10 +79,7 @@ class EstudianteViewModel(
     val estadoLectura: StateFlow<LecturaUiState> =
         _estadoLectura
 
-    // ====================================
-    // 8. ESTADO DE MATEMÁTICA
-    // ====================================
-
+    // ESTADO DE MATEMÁTICA
     private val _estadoMatematica = MutableStateFlow(
         MatematicaUiState()
     )
@@ -115,7 +88,7 @@ class EstudianteViewModel(
         _estadoMatematica
 
     // ====================================
-    // 9. ACTUALIZAR CÓDIGO
+    // 1. ACTUALIZAR CÓDIGO DE INGRESO
     // ====================================
 
     fun actualizarCodigo(codigo: String) {
@@ -127,7 +100,7 @@ class EstudianteViewModel(
             asignacionActiva = null
         )
 
-        // Limpiar la sesión anterior
+        // Limpiar sesión anterior
         _estadoLectura.value = LecturaUiState()
         _estadoMatematica.value = MatematicaUiState()
 
@@ -136,7 +109,7 @@ class EstudianteViewModel(
     }
 
     // ====================================
-    // 10. VALIDAR INGRESO
+    // 2. VALIDAR INGRESO Y RECUPERAR ROOM
     // ====================================
 
     fun intentarIngresar() {
@@ -158,155 +131,19 @@ class EstudianteViewModel(
 
             try {
 
-                // Buscar la asignación usando el código
                 val asignacion =
-                    repositorio.buscarAsignacionPorCodigo(codigo)
+                    repositorio.buscarAsignacionPorCodigo(
+                        codigo
+                    )
 
-                // Evitar utilizar una búsqueda anterior
-                if (_estado.value.codigoTemporal.trim() != codigo) {
+                // Evitar resultados de otra búsqueda
+                if (
+                    _estado.value.codigoTemporal.trim() != codigo
+                ) {
                     return@launch
                 }
 
-                if (asignacion != null) {
-
-                    // ====================================
-                    // RECUPERAR RESULTADOS FINALES
-                    // ====================================
-
-                    val resultadosGuardados =
-                        repositorio.obtenerResultados(
-                            asignacion.id
-                        )
-
-                    // ====================================
-                    // RECUPERAR RESPUESTAS INDIVIDUALES
-                    // ====================================
-
-                    val respuestasGuardadas =
-                        respuestaRepository
-                            ?.obtenerRespuestasParaMostrar(
-                                asignacion.id
-                            )
-                            ?: emptyList()
-
-                    // Evitar mezclar datos de otra sesión
-                    if (
-                        _estado.value.codigoTemporal.trim() != codigo
-                    ) {
-                        return@launch
-                    }
-
-                    _resultados.value = resultadosGuardados
-                    _respuestas.value = respuestasGuardadas
-
-                    // ====================================
-                    // RECUPERAR INTENTOS DE LECTURA
-                    // ====================================
-
-                    val ultimoIntentoLectura =
-                        respuestasGuardadas
-                            .filter {
-                                it.actividadId == 1 &&
-                                        it.preguntaId == 1
-                            }
-                            .maxOfOrNull {
-                                it.numeroIntento
-                            } ?: 0
-
-                    // ====================================
-                    // RECUPERAR INTENTOS DE MATEMÁTICA
-                    // ====================================
-
-                    val ultimoIntentoMatematica =
-                        respuestasGuardadas
-                            .filter {
-                                it.actividadId == 2 &&
-                                        it.preguntaId == 1
-                            }
-                            .maxOfOrNull {
-                                it.numeroIntento
-                            } ?: 0
-
-                    // Recuperar intentos de resultados
-                    // antiguos que no tengan respuestas
-                    // individuales registradas
-                    val intentosResultadoAnterior =
-                        resultadosGuardados
-                            .maxOfOrNull {
-                                it.intentos
-                            } ?: 0
-
-                    // ====================================
-                    // RESTAURAR PROGRESO DE LECTURA
-                    // ====================================
-
-                    val intentosLectura =
-                        if (asignacion.actividadId == 1) {
-                            maxOf(
-                                ultimoIntentoLectura,
-                                intentosResultadoAnterior
-                            )
-                        } else {
-                            0
-                        }
-
-                    _estadoLectura.value = LecturaUiState(
-                        intentos = intentosLectura,
-                        finalizada =
-                            asignacion.actividadId == 1 &&
-                                    resultadosGuardados.isNotEmpty(),
-                        mensaje = if (
-                            asignacion.actividadId == 1 &&
-                            resultadosGuardados.isEmpty() &&
-                            intentosLectura >= MAX_INTENTOS_DEMO
-                        ) {
-                            "Has agotado los 3 intentos permitidos."
-                        } else {
-                            ""
-                        }
-                    )
-
-                    // ====================================
-                    // RESTAURAR PROGRESO DE MATEMÁTICA
-                    // ====================================
-
-                    val intentosMatematica =
-                        if (asignacion.actividadId == 2) {
-                            maxOf(
-                                ultimoIntentoMatematica,
-                                intentosResultadoAnterior
-                            )
-                        } else {
-                            0
-                        }
-
-                    _estadoMatematica.value = MatematicaUiState(
-                        intentos = intentosMatematica,
-                        finalizada =
-                            asignacion.actividadId == 2 &&
-                                    resultadosGuardados.isNotEmpty(),
-                        mensaje = if (
-                            asignacion.actividadId == 2 &&
-                            resultadosGuardados.isEmpty() &&
-                            intentosMatematica >= MAX_INTENTOS_DEMO
-                        ) {
-                            "Has agotado los 3 intentos permitidos."
-                        } else {
-                            ""
-                        }
-                    )
-
-                    // ====================================
-                    // PERMITIR INGRESO
-                    // ====================================
-
-                    _estado.value = _estado.value.copy(
-                        mensaje = "Código válido. Asignación encontrada.",
-                        ingresoValidado = true,
-                        asignacionActiva = asignacion
-                    )
-
-                } else {
+                if (asignacion == null) {
 
                     _resultados.value = emptyList()
                     _respuestas.value = emptyList()
@@ -316,7 +153,171 @@ class EstudianteViewModel(
                         ingresoValidado = false,
                         asignacionActiva = null
                     )
+
+                    return@launch
                 }
+
+                // Recuperar resultados guardados
+                val resultadosGuardados =
+                    repositorio.obtenerResultados(
+                        asignacion.id
+                    )
+
+                // Recuperar respuestas guardadas
+                val respuestasGuardadas =
+                    respuestaRepository
+                        ?.obtenerRespuestasParaMostrar(
+                            asignacion.id
+                        )
+                        ?: emptyList()
+
+                // Comprobar que siga siendo el mismo código
+                if (
+                    _estado.value.codigoTemporal.trim() != codigo
+                ) {
+                    return@launch
+                }
+
+                _resultados.value = resultadosGuardados
+                _respuestas.value = respuestasGuardadas
+
+                // Recuperar el último intento de Lectura
+                val ultimoIntentoLectura =
+                    respuestasGuardadas
+                        .filter {
+                            it.actividadId == 1 &&
+                                    it.preguntaId == 1
+                        }
+                        .maxOfOrNull {
+                            it.numeroIntento
+                        } ?: 0
+
+                // Recuperar el último intento de Matemática
+                val ultimoIntentoMatematica =
+                    respuestasGuardadas
+                        .filter {
+                            it.actividadId == 2 &&
+                                    it.preguntaId == 1
+                        }
+                        .maxOfOrNull {
+                            it.numeroIntento
+                        } ?: 0
+
+                // Compatibilidad con resultados anteriores
+                val intentosResultadoAnterior =
+                    resultadosGuardados
+                        .maxOfOrNull {
+                            it.intentos
+                        } ?: 0
+
+                // Resultado final más reciente, si existe
+                val resultadoFinal =
+                    resultadosGuardados.firstOrNull()
+
+                // Saber si respondió correctamente
+                val acerto =
+                    resultadoFinal?.aciertos?.let {
+                        it > 0
+                    }
+
+                // ====================================
+                // RESTAURAR LECTURA
+                // ====================================
+
+                val intentosLectura =
+                    if (asignacion.actividadId == 1) {
+
+                        maxOf(
+                            ultimoIntentoLectura,
+                            intentosResultadoAnterior
+                        )
+
+                    } else {
+                        0
+                    }
+
+                val lecturaAgotada =
+                    asignacion.actividadId == 1 &&
+                            intentosLectura >= MAX_INTENTOS_DEMO &&
+                            acerto != true
+
+                _estadoLectura.value = LecturaUiState(
+                    intentos = intentosLectura,
+
+                    esCorrecta =
+                        if (asignacion.actividadId == 1) {
+                            acerto
+                        } else {
+                            null
+                        },
+
+                    finalizada =
+                        asignacion.actividadId == 1 &&
+                                (
+                                        resultadoFinal != null ||
+                                                lecturaAgotada
+                                        ),
+
+                    mensaje =
+                        if (lecturaAgotada) {
+                            "Has agotado los 3 intentos permitidos."
+                        } else {
+                            ""
+                        }
+                )
+
+                // ====================================
+                // RESTAURAR MATEMÁTICA
+                // ====================================
+
+                val intentosMatematica =
+                    if (asignacion.actividadId == 2) {
+
+                        maxOf(
+                            ultimoIntentoMatematica,
+                            intentosResultadoAnterior
+                        )
+
+                    } else {
+                        0
+                    }
+
+                val matematicaAgotada =
+                    asignacion.actividadId == 2 &&
+                            intentosMatematica >= MAX_INTENTOS_DEMO &&
+                            acerto != true
+
+                _estadoMatematica.value = MatematicaUiState(
+                    intentos = intentosMatematica,
+
+                    esCorrecta =
+                        if (asignacion.actividadId == 2) {
+                            acerto
+                        } else {
+                            null
+                        },
+
+                    finalizada =
+                        asignacion.actividadId == 2 &&
+                                (
+                                        resultadoFinal != null ||
+                                                matematicaAgotada
+                                        ),
+
+                    mensaje =
+                        if (matematicaAgotada) {
+                            "Has agotado los 3 intentos permitidos."
+                        } else {
+                            ""
+                        }
+                )
+
+                // Ingreso correcto
+                _estado.value = _estado.value.copy(
+                    mensaje = "Código válido. Asignación encontrada.",
+                    ingresoValidado = true,
+                    asignacionActiva = asignacion
+                )
 
             } catch (e: CancellationException) {
                 throw e
@@ -338,29 +339,25 @@ class EstudianteViewModel(
     }
 
     // ====================================
-    // 11. ACTIVIDAD DE LECTURA
+    // 3. SELECCIONAR RESPUESTA DE LECTURA
     // ====================================
 
     fun seleccionarRespuestaLectura(respuesta: String) {
 
-        val estadoActual = _estadoLectura.value
+        val actual = _estadoLectura.value
 
-        // No permitir cambiar la respuesta
-        // si ya terminó la actividad
-        if (estadoActual.finalizada) return
+        if (actual.finalizada) return
 
-        // No permitir seleccionar más respuestas
-        // si agotó los intentos
-        if (estadoActual.intentos >= MAX_INTENTOS_DEMO) {
+        if (actual.intentos >= MAX_INTENTOS_DEMO) {
 
-            _estadoLectura.value = estadoActual.copy(
+            _estadoLectura.value = actual.copy(
                 mensaje = "Has agotado los 3 intentos permitidos."
             )
 
             return
         }
 
-        _estadoLectura.value = estadoActual.copy(
+        _estadoLectura.value = actual.copy(
             respuestaSeleccionada = respuesta,
             mensaje = "",
             esCorrecta = null
@@ -368,7 +365,7 @@ class EstudianteViewModel(
     }
 
     // ====================================
-    // 12. COMPROBAR RESPUESTA DE LECTURA
+    // 4. COMPROBAR RESPUESTA DE LECTURA
     // ====================================
 
     fun comprobarRespuestaLectura() {
@@ -376,32 +373,27 @@ class EstudianteViewModel(
         val asignacion =
             _estado.value.asignacionActiva ?: return
 
-        // ID 1 = Lectura en la demostración
+        // ID 1 corresponde a Lectura en la demostración
         if (asignacion.actividadId != 1) return
 
-        val estadoActual = _estadoLectura.value
+        val actual = _estadoLectura.value
 
-        // No repetir una actividad completada
-        if (estadoActual.finalizada) return
+        if (actual.finalizada) return
 
-        // ====================================
-        // CONTROL DEL LÍMITE DE INTENTOS
-        // ====================================
+        if (actual.intentos >= MAX_INTENTOS_DEMO) {
 
-        if (estadoActual.intentos >= MAX_INTENTOS_DEMO) {
-
-            _estadoLectura.value = estadoActual.copy(
+            _estadoLectura.value = actual.copy(
                 mensaje = "Has agotado los 3 intentos permitidos."
             )
 
             return
         }
 
-        val respuesta = estadoActual.respuestaSeleccionada
+        val respuesta = actual.respuestaSeleccionada
 
         if (respuesta == null) {
 
-            _estadoLectura.value = estadoActual.copy(
+            _estadoLectura.value = actual.copy(
                 mensaje = "Selecciona una respuesta.",
                 esCorrecta = null
             )
@@ -409,43 +401,39 @@ class EstudianteViewModel(
             return
         }
 
-        // Continuar desde el último intento guardado
-        val nuevosIntentos = estadoActual.intentos + 1
+        val nuevosIntentos = actual.intentos + 1
 
-        // Respuesta correcta del ejercicio
+        // Respuesta correcta de la actividad demostrativa
         val correcta = respuesta == "Un gato"
+
+        // Termina al acertar o agotar los intentos
+        val terminaActividad =
+            correcta || nuevosIntentos >= MAX_INTENTOS_DEMO
 
         val mensajeResultado = when {
 
-            correcta -> {
+            correcta ->
                 "¡Muy bien! Respuesta correcta."
-            }
 
-            nuevosIntentos >= MAX_INTENTOS_DEMO -> {
+            nuevosIntentos >= MAX_INTENTOS_DEMO ->
                 "Respuesta incorrecta. Has agotado los 3 intentos permitidos."
-            }
 
-            else -> {
+            else ->
                 "Respuesta incorrecta. Inténtalo nuevamente."
-            }
         }
 
-        // Actualizar progreso
-        _estadoLectura.value = estadoActual.copy(
+        _estadoLectura.value = actual.copy(
             mensaje = mensajeResultado,
             esCorrecta = correcta,
             intentos = nuevosIntentos,
-            finalizada = correcta
+            finalizada = terminaActividad
         )
 
         viewModelScope.launch {
 
             try {
 
-                // ====================================
-                // GUARDAR CADA RESPUESTA EN ROOM
-                // ====================================
-
+                // Guardar cada respuesta en Room
                 if (respuestaRepository != null) {
 
                     respuestaRepository.guardarRespuesta(
@@ -457,7 +445,6 @@ class EstudianteViewModel(
                         numeroIntento = nuevosIntentos
                     )
 
-                    // Recuperar historial actualizado
                     val respuestasGuardadas =
                         respuestaRepository
                             .obtenerRespuestasParaMostrar(
@@ -468,24 +455,22 @@ class EstudianteViewModel(
                         _estado.value.asignacionActiva?.id ==
                         asignacion.id
                     ) {
-
                         _respuestas.value = respuestasGuardadas
                     }
                 }
 
-                // ====================================
-                // GUARDAR RESULTADO FINAL
-                // ====================================
-
-                if (correcta) {
+                // Guardar resultado final al acertar
+                // o al agotar tres intentos
+                if (terminaActividad) {
 
                     val nuevoResultado = Resultado(
                         id = 0,
                         asignacionId = asignacion.id,
-                        aciertos = 1,
+                        aciertos = if (correcta) 1 else 0,
                         totalPreguntas = 1,
                         intentos = nuevosIntentos,
-                        observacion = "Actividad de Lectura (demostración)"
+                        observacion =
+                            "Actividad de Lectura (demostración)"
                     )
 
                     repositorio.guardarResultado(
@@ -501,7 +486,6 @@ class EstudianteViewModel(
                         _estado.value.asignacionActiva?.id ==
                         asignacion.id
                     ) {
-
                         _resultados.value = resultadosGuardados
                     }
                 }
@@ -518,7 +502,8 @@ class EstudianteViewModel(
 
                     _estadoLectura.value =
                         _estadoLectura.value.copy(
-                            mensaje = "No se pudo guardar el intento o resultado."
+                            mensaje =
+                                "No se pudo guardar el intento o resultado."
                         )
                 }
             }
@@ -526,27 +511,25 @@ class EstudianteViewModel(
     }
 
     // ====================================
-    // 13. ACTIVIDAD DE MATEMÁTICA
+    // 5. SELECCIONAR RESPUESTA DE MATEMÁTICA
     // ====================================
 
     fun seleccionarRespuestaMatematica(respuesta: String) {
 
-        val estadoActual = _estadoMatematica.value
+        val actual = _estadoMatematica.value
 
-        // No cambiar una actividad terminada
-        if (estadoActual.finalizada) return
+        if (actual.finalizada) return
 
-        // Bloquear si agotó los intentos
-        if (estadoActual.intentos >= MAX_INTENTOS_DEMO) {
+        if (actual.intentos >= MAX_INTENTOS_DEMO) {
 
-            _estadoMatematica.value = estadoActual.copy(
+            _estadoMatematica.value = actual.copy(
                 mensaje = "Has agotado los 3 intentos permitidos."
             )
 
             return
         }
 
-        _estadoMatematica.value = estadoActual.copy(
+        _estadoMatematica.value = actual.copy(
             respuestaSeleccionada = respuesta,
             mensaje = "",
             esCorrecta = null
@@ -554,7 +537,7 @@ class EstudianteViewModel(
     }
 
     // ====================================
-    // 14. COMPROBAR RESPUESTA DE MATEMÁTICA
+    // 6. COMPROBAR RESPUESTA DE MATEMÁTICA
     // ====================================
 
     fun comprobarRespuestaMatematica() {
@@ -562,32 +545,27 @@ class EstudianteViewModel(
         val asignacion =
             _estado.value.asignacionActiva ?: return
 
-        // ID 2 = Matemática en la demostración
+        // ID 2 corresponde a Matemática en la demostración
         if (asignacion.actividadId != 2) return
 
-        val estadoActual = _estadoMatematica.value
+        val actual = _estadoMatematica.value
 
-        // No repetir actividad completada
-        if (estadoActual.finalizada) return
+        if (actual.finalizada) return
 
-        // ====================================
-        // CONTROL DEL LÍMITE DE INTENTOS
-        // ====================================
+        if (actual.intentos >= MAX_INTENTOS_DEMO) {
 
-        if (estadoActual.intentos >= MAX_INTENTOS_DEMO) {
-
-            _estadoMatematica.value = estadoActual.copy(
+            _estadoMatematica.value = actual.copy(
                 mensaje = "Has agotado los 3 intentos permitidos."
             )
 
             return
         }
 
-        val respuesta = estadoActual.respuestaSeleccionada
+        val respuesta = actual.respuestaSeleccionada
 
         if (respuesta == null) {
 
-            _estadoMatematica.value = estadoActual.copy(
+            _estadoMatematica.value = actual.copy(
                 mensaje = "Selecciona una respuesta.",
                 esCorrecta = null
             )
@@ -595,43 +573,38 @@ class EstudianteViewModel(
             return
         }
 
-        // Continuar desde el último intento
-        val nuevosIntentos = estadoActual.intentos + 1
+        val nuevosIntentos = actual.intentos + 1
 
-        // Respuesta correcta del ejercicio
+        // Respuesta correcta de la actividad demostrativa
         val correcta = respuesta == "12"
+
+        val terminaActividad =
+            correcta || nuevosIntentos >= MAX_INTENTOS_DEMO
 
         val mensajeResultado = when {
 
-            correcta -> {
+            correcta ->
                 "¡Muy bien! Respuesta correcta."
-            }
 
-            nuevosIntentos >= MAX_INTENTOS_DEMO -> {
+            nuevosIntentos >= MAX_INTENTOS_DEMO ->
                 "Respuesta incorrecta. Has agotado los 3 intentos permitidos."
-            }
 
-            else -> {
+            else ->
                 "Respuesta incorrecta. Inténtalo nuevamente."
-            }
         }
 
-        // Actualizar el estado
-        _estadoMatematica.value = estadoActual.copy(
+        _estadoMatematica.value = actual.copy(
             mensaje = mensajeResultado,
             esCorrecta = correcta,
             intentos = nuevosIntentos,
-            finalizada = correcta
+            finalizada = terminaActividad
         )
 
         viewModelScope.launch {
 
             try {
 
-                // ====================================
-                // GUARDAR RESPUESTA INDIVIDUAL
-                // ====================================
-
+                // Guardar respuesta individual en Room
                 if (respuestaRepository != null) {
 
                     respuestaRepository.guardarRespuesta(
@@ -643,7 +616,6 @@ class EstudianteViewModel(
                         numeroIntento = nuevosIntentos
                     )
 
-                    // Recuperar historial actualizado
                     val respuestasGuardadas =
                         respuestaRepository
                             .obtenerRespuestasParaMostrar(
@@ -654,24 +626,21 @@ class EstudianteViewModel(
                         _estado.value.asignacionActiva?.id ==
                         asignacion.id
                     ) {
-
                         _respuestas.value = respuestasGuardadas
                     }
                 }
 
-                // ====================================
-                // GUARDAR RESULTADO FINAL
-                // ====================================
-
-                if (correcta) {
+                // Guardar resultado final con o sin acierto
+                if (terminaActividad) {
 
                     val nuevoResultado = Resultado(
                         id = 0,
                         asignacionId = asignacion.id,
-                        aciertos = 1,
+                        aciertos = if (correcta) 1 else 0,
                         totalPreguntas = 1,
                         intentos = nuevosIntentos,
-                        observacion = "Actividad de Matemática (demostración)"
+                        observacion =
+                            "Actividad de Matemática (demostración)"
                     )
 
                     repositorio.guardarResultado(
@@ -687,7 +656,6 @@ class EstudianteViewModel(
                         _estado.value.asignacionActiva?.id ==
                         asignacion.id
                     ) {
-
                         _resultados.value = resultadosGuardados
                     }
                 }
@@ -704,7 +672,8 @@ class EstudianteViewModel(
 
                     _estadoMatematica.value =
                         _estadoMatematica.value.copy(
-                            mensaje = "No se pudo guardar el intento o resultado."
+                            mensaje =
+                                "No se pudo guardar el intento o resultado."
                         )
                 }
             }
