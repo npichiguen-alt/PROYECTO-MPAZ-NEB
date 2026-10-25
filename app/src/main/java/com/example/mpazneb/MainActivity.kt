@@ -39,6 +39,8 @@ import com.example.mpazneb.ui.screens.administracion.NuevaActividadConRoomScreen
 // Tema de la aplicación
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
 
+import com.example.mpazneb.data.local.AsignacionDatabase
+
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,13 +75,24 @@ class MainActivity : ComponentActivity() {
 
 
                 // Actividades reales de Administración mediante Room
+
+
                 val fuenteAsistente = remember {
+
+                    val baseAsignaciones =
+                        AsignacionDatabase.obtenerInstancia(applicationContext)
+
                     RoomAsistenteDataSource(
                         actividadDao = ActividadDatabase
                             .obtenerInstancia(applicationContext)
-                            .actividadDao()
+                            .actividadDao(),
+
+                        asignacionDao = baseAsignaciones.asignacionDao(),
+
+                        resultadoDao = baseAsignaciones.resultadoDao()
                     )
                 }
+
 
 
                 // ====================================

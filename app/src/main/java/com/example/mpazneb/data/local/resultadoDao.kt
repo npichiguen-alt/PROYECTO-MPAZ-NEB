@@ -34,4 +34,14 @@ interface resultadoDao {
     fun observarResultados(
         asignacionId: Int
     ): Flow<List<ResultadoEntity>>
+
+    @Query("""
+        UPDATE resultados
+        SET observacion = :texto
+        WHERE id = :resultadoId
+    """)
+    suspend fun actualizarObservacion(
+        resultadoId: Int,
+        texto: String
+    ): Int
 }
