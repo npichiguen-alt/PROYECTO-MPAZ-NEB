@@ -1,22 +1,32 @@
+
 package com.example.mpazneb.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+
 import com.example.mpazneb.model.Asignacion
 import com.example.mpazneb.model.Resultado
 import com.example.mpazneb.model.Respuesta
+
+import com.example.mpazneb.data.local.ActividadEntity
+import com.example.mpazneb.data.local.PreguntaEntity
+
 import com.example.mpazneb.repository.estudiante.DemoEstudianteRepository
 import com.example.mpazneb.repository.estudiante.EstudianteRepository
 import com.example.mpazneb.repository.estudiante.RespuestaRepository
+import com.example.mpazneb.repository.estudiante.ContenidoEstudianteRepository
+
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-// Máximo de intentos de la demostración
 private const val MAX_INTENTOS_DEMO = 3
 
-// ESTADO DEL INGRESO
+// ====================================
+// ESTADOS DEL ESTUDIANTE
+// ====================================
+
 data class IngresoEstudianteUiState(
     val codigoTemporal: String = "",
     val mensaje: String = "",
@@ -24,7 +34,6 @@ data class IngresoEstudianteUiState(
     val asignacionActiva: Asignacion? = null
 )
 
-// ESTADO DE LECTURA
 data class LecturaUiState(
     val respuestaSeleccionada: String? = null,
     val mensaje: String = "",
@@ -33,7 +42,6 @@ data class LecturaUiState(
     val finalizada: Boolean = false
 )
 
-// ESTADO DE MATEMÁTICA
 data class MatematicaUiState(
     val respuestaSeleccionada: String? = null,
     val mensaje: String = "",
@@ -42,47 +50,101 @@ data class MatematicaUiState(
     val finalizada: Boolean = false
 )
 
+// ====================================
+// VIEWMODEL DEL ESTUDIANTE
+// ====================================
+
 class EstudianteViewModel(
     private val repositorio: EstudianteRepository =
         DemoEstudianteRepository(),
 
-    private val respuestaRepository: RespuestaRepository? = null
+    private val respuestaRepository: RespuestaRepository? = null,
+
+    private val contenidoRepository: ContenidoEstudianteRepository? = null
 ) : ViewModel() {
 
-    // ESTADO DEL INGRESO
-    private val _estado = MutableStateFlow(
-        IngresoEstudianteUiState()
-    )
+    // ====================================
+    // ESTADO DE INGRESO
+    // ====================================
+
+    private val _estado =
+        MutableStateFlow(IngresoEstudianteUiState())
 
     val estado: StateFlow<IngresoEstudianteUiState> =
         _estado
 
-    // RESULTADOS FINALES
+    // ====================================
+    // RESULTADOS
+    // ====================================
+
     private val _resultados =
         MutableStateFlow<List<Resultado>>(emptyList())
 
     val resultados: StateFlow<List<Resultado>> =
         _resultados
 
+    // ====================================
     // HISTORIAL DE RESPUESTAS
+    // ====================================
+
     private val _respuestas =
         MutableStateFlow<List<Respuesta>>(emptyList())
 
     val respuestas: StateFlow<List<Respuesta>> =
         _respuestas
 
+    // ====================================
+    // NUEVO: GUARDADO DE PREGUNTAS REALES
+    // ====================================
+
+    private val _guardandoRespuestaAsignada =
+        MutableStateFlow(false)
+
+    val guardandoRespuestaAsignada: StateFlow<Boolean> =
+        _guardandoRespuestaAsignada
+
+    private val _mensajeRespuestaAsignada =
+        MutableStateFlow("")
+
+    val mensajeRespuestaAsignada: StateFlow<String> =
+        _mensajeRespuestaAsignada
+
+    // ====================================
+    // ACTIVIDAD ASIGNADA DESDE ROOM
+    // ====================================
+
+    private val _actividadAsignada =
+        MutableStateFlow<ActividadEntity?>(null)
+
+    val actividadAsignada: StateFlow<ActividadEntity?> =
+        _actividadAsignada
+
+    // ====================================
+    // PREGUNTAS DE LA ACTIVIDAD
+    // ====================================
+
+    private val _preguntasAsignadas =
+        MutableStateFlow<List<PreguntaEntity>>(emptyList())
+
+    val preguntasAsignadas: StateFlow<List<PreguntaEntity>> =
+        _preguntasAsignadas
+
+    // ====================================
     // ESTADO DE LECTURA
-    private val _estadoLectura = MutableStateFlow(
-        LecturaUiState()
-    )
+    // ====================================
+
+    private val _estadoLectura =
+        MutableStateFlow(LecturaUiState())
 
     val estadoLectura: StateFlow<LecturaUiState> =
         _estadoLectura
 
+    // ====================================
     // ESTADO DE MATEMÁTICA
-    private val _estadoMatematica = MutableStateFlow(
-        MatematicaUiState()
-    )
+    // ====================================
+
+    private val _estadoMatematica =
+        MutableStateFlow(MatematicaUiState())
 
     val estadoMatematica: StateFlow<MatematicaUiState> =
         _estadoMatematica
@@ -100,16 +162,21 @@ class EstudianteViewModel(
             asignacionActiva = null
         )
 
-        // Limpiar sesión anterior
+        // Limpiar sesión anterior.
         _estadoLectura.value = LecturaUiState()
         _estadoMatematica.value = MatematicaUiState()
 
         _resultados.value = emptyList()
         _respuestas.value = emptyList()
+
+        _actividadAsignada.value = null
+        _preguntasAsignadas.value = emptyList()
+
+        _mensajeRespuestaAsignada.value = ""
     }
 
     // ====================================
-    // 2. VALIDAR INGRESO Y RECUPERAR ROOM
+    // 2. VALIDAR CÓDIGO Y RECUPERAR ROOM
     // ====================================
 
     fun intentarIngresar() {
@@ -131,12 +198,11 @@ class EstudianteViewModel(
 
             try {
 
+                // La asignación corresponde
+                // al código entregado por el Asistente.
                 val asignacion =
-                    repositorio.buscarAsignacionPorCodigo(
-                        codigo
-                    )
+                    repositorio.buscarAsignacionPorCodigo(codigo)
 
-                // Evitar resultados de otra búsqueda
                 if (
                     _estado.value.codigoTemporal.trim() != codigo
                 ) {
@@ -148,6 +214,9 @@ class EstudianteViewModel(
                     _resultados.value = emptyList()
                     _respuestas.value = emptyList()
 
+                    _actividadAsignada.value = null
+                    _preguntasAsignadas.value = emptyList()
+
                     _estado.value = _estado.value.copy(
                         mensaje = "Código no encontrado.",
                         ingresoValidado = false,
@@ -157,13 +226,44 @@ class EstudianteViewModel(
                     return@launch
                 }
 
-                // Recuperar resultados guardados
+                // ====================================
+                // RECUPERAR ACTIVIDAD DE ADMINISTRACIÓN
+                // ====================================
+
+                val actividadConsultada =
+                    contenidoRepository?.buscarActividad(
+                        asignacion.actividadId
+                    )
+
+                // ====================================
+                // RECUPERAR PREGUNTAS DE LA ACTIVIDAD
+                // ====================================
+
+                val preguntasConsultadas =
+                    if (actividadConsultada != null) {
+
+                        contenidoRepository?.obtenerPreguntas(
+                            asignacion.actividadId
+                        ) ?: emptyList()
+
+                    } else {
+
+                        emptyList()
+                    }
+
+                // ====================================
+                // RECUPERAR RESULTADOS
+                // ====================================
+
                 val resultadosGuardados =
                     repositorio.obtenerResultados(
                         asignacion.id
                     )
 
-                // Recuperar respuestas guardadas
+                // ====================================
+                // RECUPERAR HISTORIAL DE RESPUESTAS
+                // ====================================
+
                 val respuestasGuardadas =
                     respuestaRepository
                         ?.obtenerRespuestasParaMostrar(
@@ -171,7 +271,7 @@ class EstudianteViewModel(
                         )
                         ?: emptyList()
 
-                // Comprobar que siga siendo el mismo código
+                // Evitar mezclar sesiones.
                 if (
                     _estado.value.codigoTemporal.trim() != codigo
                 ) {
@@ -181,7 +281,13 @@ class EstudianteViewModel(
                 _resultados.value = resultadosGuardados
                 _respuestas.value = respuestasGuardadas
 
-                // Recuperar el último intento de Lectura
+                _actividadAsignada.value = actividadConsultada
+                _preguntasAsignadas.value = preguntasConsultadas
+
+                // ====================================
+                // RECUPERAR INTENTOS DE LECTURA DEMO
+                // ====================================
+
                 val ultimoIntentoLectura =
                     respuestasGuardadas
                         .filter {
@@ -192,7 +298,10 @@ class EstudianteViewModel(
                             it.numeroIntento
                         } ?: 0
 
-                // Recuperar el último intento de Matemática
+                // ====================================
+                // RECUPERAR INTENTOS DE MATEMÁTICA DEMO
+                // ====================================
+
                 val ultimoIntentoMatematica =
                     respuestasGuardadas
                         .filter {
@@ -203,25 +312,21 @@ class EstudianteViewModel(
                             it.numeroIntento
                         } ?: 0
 
-                // Compatibilidad con resultados anteriores
                 val intentosResultadoAnterior =
-                    resultadosGuardados
-                        .maxOfOrNull {
-                            it.intentos
-                        } ?: 0
+                    resultadosGuardados.maxOfOrNull {
+                        it.intentos
+                    } ?: 0
 
-                // Resultado final más reciente, si existe
                 val resultadoFinal =
                     resultadosGuardados.firstOrNull()
 
-                // Saber si respondió correctamente
                 val acerto =
                     resultadoFinal?.aciertos?.let {
                         it > 0
                     }
 
                 // ====================================
-                // RESTAURAR LECTURA
+                // RESTAURAR LECTURA DEMOSTRATIVA
                 // ====================================
 
                 val intentosLectura =
@@ -267,7 +372,7 @@ class EstudianteViewModel(
                 )
 
                 // ====================================
-                // RESTAURAR MATEMÁTICA
+                // RESTAURAR MATEMÁTICA DEMOSTRATIVA
                 // ====================================
 
                 val intentosMatematica =
@@ -312,17 +417,21 @@ class EstudianteViewModel(
                         }
                 )
 
-                // Ingreso correcto
+                // ====================================
+                // INGRESO CORRECTO
+                // ====================================
+
                 _estado.value = _estado.value.copy(
                     mensaje = "Código válido. Asignación encontrada.",
                     ingresoValidado = true,
                     asignacionActiva = asignacion
                 )
 
-            } catch (e: CancellationException) {
-                throw e
+            } catch (error: CancellationException) {
 
-            } catch (e: Exception) {
+                throw error
+
+            } catch (error: Exception) {
 
                 if (
                     _estado.value.codigoTemporal.trim() == codigo
@@ -333,6 +442,9 @@ class EstudianteViewModel(
                         ingresoValidado = false,
                         asignacionActiva = null
                     )
+
+                    _actividadAsignada.value = null
+                    _preguntasAsignadas.value = emptyList()
                 }
             }
         }
@@ -373,7 +485,7 @@ class EstudianteViewModel(
         val asignacion =
             _estado.value.asignacionActiva ?: return
 
-        // ID 1 corresponde a Lectura en la demostración
+        // Mantener la actividad demostrativa.
         if (asignacion.actividadId != 1) return
 
         val actual = _estadoLectura.value
@@ -403,10 +515,8 @@ class EstudianteViewModel(
 
         val nuevosIntentos = actual.intentos + 1
 
-        // Respuesta correcta de la actividad demostrativa
         val correcta = respuesta == "Un gato"
 
-        // Termina al acertar o agotar los intentos
         val terminaActividad =
             correcta || nuevosIntentos >= MAX_INTENTOS_DEMO
 
@@ -433,7 +543,7 @@ class EstudianteViewModel(
 
             try {
 
-                // Guardar cada respuesta en Room
+                // Guardar el intento en Room.
                 if (respuestaRepository != null) {
 
                     respuestaRepository.guardarRespuesta(
@@ -455,12 +565,12 @@ class EstudianteViewModel(
                         _estado.value.asignacionActiva?.id ==
                         asignacion.id
                     ) {
+
                         _respuestas.value = respuestasGuardadas
                     }
                 }
 
-                // Guardar resultado final al acertar
-                // o al agotar tres intentos
+                // Guardar resultado cuando termina.
                 if (terminaActividad) {
 
                     val nuevoResultado = Resultado(
@@ -486,14 +596,16 @@ class EstudianteViewModel(
                         _estado.value.asignacionActiva?.id ==
                         asignacion.id
                     ) {
+
                         _resultados.value = resultadosGuardados
                     }
                 }
 
-            } catch (e: CancellationException) {
-                throw e
+            } catch (error: CancellationException) {
 
-            } catch (e: Exception) {
+                throw error
+
+            } catch (error: Exception) {
 
                 if (
                     _estado.value.asignacionActiva?.id ==
@@ -545,7 +657,7 @@ class EstudianteViewModel(
         val asignacion =
             _estado.value.asignacionActiva ?: return
 
-        // ID 2 corresponde a Matemática en la demostración
+        // Mantener la actividad demostrativa.
         if (asignacion.actividadId != 2) return
 
         val actual = _estadoMatematica.value
@@ -575,7 +687,6 @@ class EstudianteViewModel(
 
         val nuevosIntentos = actual.intentos + 1
 
-        // Respuesta correcta de la actividad demostrativa
         val correcta = respuesta == "12"
 
         val terminaActividad =
@@ -604,7 +715,7 @@ class EstudianteViewModel(
 
             try {
 
-                // Guardar respuesta individual en Room
+                // Guardar el intento en Room.
                 if (respuestaRepository != null) {
 
                     respuestaRepository.guardarRespuesta(
@@ -626,11 +737,12 @@ class EstudianteViewModel(
                         _estado.value.asignacionActiva?.id ==
                         asignacion.id
                     ) {
+
                         _respuestas.value = respuestasGuardadas
                     }
                 }
 
-                // Guardar resultado final con o sin acierto
+                // Guardar resultado cuando termina.
                 if (terminaActividad) {
 
                     val nuevoResultado = Resultado(
@@ -656,14 +768,16 @@ class EstudianteViewModel(
                         _estado.value.asignacionActiva?.id ==
                         asignacion.id
                     ) {
+
                         _resultados.value = resultadosGuardados
                     }
                 }
 
-            } catch (e: CancellationException) {
-                throw e
+            } catch (error: CancellationException) {
 
-            } catch (e: Exception) {
+                throw error
+
+            } catch (error: Exception) {
 
                 if (
                     _estado.value.asignacionActiva?.id ==
@@ -676,6 +790,263 @@ class EstudianteViewModel(
                                 "No se pudo guardar el intento o resultado."
                         )
                 }
+            }
+        }
+    }
+
+    // ====================================
+    // 7. RESPONDER PREGUNTAS REALES DE ROOM
+    // ====================================
+
+    fun responderPreguntaAsignada(
+        preguntaId: Int,
+        alternativa: String
+    ) {
+
+        if (_guardandoRespuestaAsignada.value) return
+
+        val asignacion =
+            _estado.value.asignacionActiva ?: return
+
+        if (!_estado.value.ingresoValidado) return
+
+        val actividad =
+            _actividadAsignada.value ?: return
+
+        // La actividad tiene que corresponder
+        // a la asignación del estudiante.
+        if (actividad.id != asignacion.actividadId) {
+
+            _mensajeRespuestaAsignada.value =
+                "La actividad no corresponde a tu asignación."
+
+            return
+        }
+
+        val preguntasActividad =
+            _preguntasAsignadas.value.filter {
+                it.actividadId == actividad.id
+            }
+
+        val pregunta =
+            preguntasActividad.firstOrNull {
+                it.id == preguntaId
+            } ?: return
+
+        val opcion = alternativa.trim().uppercase()
+
+        if (opcion !in listOf("A", "B", "C", "D")) {
+
+            _mensajeRespuestaAsignada.value =
+                "Selecciona una alternativa."
+
+            return
+        }
+
+        val repoRespuestas = respuestaRepository
+
+        if (repoRespuestas == null) {
+
+            _mensajeRespuestaAsignada.value =
+                "No se pueden guardar respuestas."
+
+            return
+        }
+
+        _guardandoRespuestaAsignada.value = true
+        _mensajeRespuestaAsignada.value = ""
+
+        viewModelScope.launch {
+
+            try {
+
+                // ====================================
+                // RECUPERAR INTENTOS GUARDADOS
+                // ====================================
+
+                val anteriores =
+                    repoRespuestas.obtenerRespuestasParaMostrar(
+                        asignacion.id
+                    )
+
+                val intentosPregunta = anteriores.filter {
+                    it.actividadId == actividad.id &&
+                            it.preguntaId == pregunta.id
+                }
+
+                val yaCorrecta =
+                    intentosPregunta.any {
+                        it.esCorrecta
+                    }
+
+                val ultimoIntento =
+                    intentosPregunta.maxOfOrNull {
+                        it.numeroIntento
+                    } ?: 0
+
+                // Si ya acertó o agotó intentos,
+                // no permitir una respuesta adicional.
+                if (
+                    yaCorrecta ||
+                    ultimoIntento >= MAX_INTENTOS_DEMO
+                ) {
+
+                    if (
+                        _estado.value.asignacionActiva?.id ==
+                        asignacion.id
+                    ) {
+                        _respuestas.value = anteriores
+                    }
+
+                    return@launch
+                }
+
+                val nuevoIntento = ultimoIntento + 1
+
+                // ====================================
+                // COMPROBAR RESPUESTA CORRECTA
+                // ====================================
+
+                val esCorrecta =
+                    opcion == pregunta.respuestaCorrecta
+                        .trim()
+                        .uppercase()
+
+                // ====================================
+                // GUARDAR RESPUESTA EN ROOM
+                // ====================================
+
+                repoRespuestas.guardarRespuesta(
+                    asignacionId = asignacion.id,
+                    actividadId = actividad.id,
+                    preguntaId = pregunta.id,
+                    respuestaSeleccionada = opcion,
+                    esCorrecta = esCorrecta,
+                    numeroIntento = nuevoIntento
+                )
+
+                // Recuperar historial actualizado.
+                val nuevasRespuestas =
+                    repoRespuestas.obtenerRespuestasParaMostrar(
+                        asignacion.id
+                    )
+
+                if (
+                    _estado.value.asignacionActiva?.id ==
+                    asignacion.id
+                ) {
+                    _respuestas.value = nuevasRespuestas
+                }
+
+                // ====================================
+                // VERIFICAR FINALIZACIÓN
+                // ====================================
+
+                val todasFinalizadas =
+                    preguntasActividad.isNotEmpty() &&
+                            preguntasActividad.all { item ->
+
+                                val intentosItem =
+                                    nuevasRespuestas.filter {
+                                        it.actividadId == actividad.id &&
+                                                it.preguntaId == item.id
+                                    }
+
+                                val acertada =
+                                    intentosItem.any {
+                                        it.esCorrecta
+                                    }
+
+                                val totalUsados =
+                                    intentosItem.maxOfOrNull {
+                                        it.numeroIntento
+                                    } ?: 0
+
+                                acertada ||
+                                        totalUsados >= MAX_INTENTOS_DEMO
+                            }
+
+                // ====================================
+                // GUARDAR RESULTADO FINAL
+                // ====================================
+
+                if (todasFinalizadas) {
+
+                    val resultadosExistentes =
+                        repositorio.obtenerResultados(
+                            asignacion.id
+                        )
+
+                    // Evitar resultados duplicados.
+                    if (resultadosExistentes.isEmpty()) {
+
+                        val aciertos =
+                            preguntasActividad.count { item ->
+
+                                nuevasRespuestas.any {
+                                    it.actividadId == actividad.id &&
+                                            it.preguntaId == item.id &&
+                                            it.esCorrecta
+                                }
+                            }
+
+                        val idsPreguntas =
+                            preguntasActividad.map {
+                                it.id
+                            }.toSet()
+
+                        val totalIntentos =
+                            nuevasRespuestas.count {
+                                it.actividadId == actividad.id &&
+                                        it.preguntaId in idsPreguntas
+                            }
+
+                        val resultadoFinal = Resultado(
+                            id = 0,
+                            asignacionId = asignacion.id,
+                            aciertos = aciertos,
+                            totalPreguntas = preguntasActividad.size,
+                            intentos = totalIntentos,
+                            observacion =
+                                "Actividad asignada: ${actividad.titulo}"
+                        )
+
+                        repositorio.guardarResultado(
+                            resultadoFinal
+                        )
+                    }
+
+                    val resultadosGuardados =
+                        repositorio.obtenerResultados(
+                            asignacion.id
+                        )
+
+                    if (
+                        _estado.value.asignacionActiva?.id ==
+                        asignacion.id
+                    ) {
+                        _resultados.value = resultadosGuardados
+                    }
+                }
+
+            } catch (error: CancellationException) {
+
+                throw error
+
+            } catch (error: Exception) {
+
+                if (
+                    _estado.value.asignacionActiva?.id ==
+                    asignacion.id
+                ) {
+
+                    _mensajeRespuestaAsignada.value =
+                        "No se pudo guardar la respuesta o el resultado."
+                }
+
+            } finally {
+
+                _guardandoRespuestaAsignada.value = false
             }
         }
     }

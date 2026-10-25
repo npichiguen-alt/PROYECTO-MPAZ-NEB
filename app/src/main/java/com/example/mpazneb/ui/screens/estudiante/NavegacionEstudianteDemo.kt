@@ -1,10 +1,9 @@
+
 package com.example.mpazneb.ui.screens.estudiante
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -12,14 +11,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.unit.dp
 
-import com.example.mpazneb.ui.theme.MPAZNEBTheme
 import com.example.mpazneb.viewmodel.EstudianteViewModel
+import java.util.Locale
 
 @Composable
-fun NavegacionEstudianteDemo() {
+fun NavegacionEstudianteDemo(
+    estudianteViewModel: EstudianteViewModel
+) {
 
     // ====================================
     // 1. PANTALLA ACTUAL
@@ -29,11 +29,8 @@ fun NavegacionEstudianteDemo() {
         mutableStateOf("inicio")
     }
 
-    // Utilizar el ViewModel del Estudiante
-    val estudianteViewModel: EstudianteViewModel = viewModel()
-
     // ====================================
-    // 2. INFORMACIÓN DEL ESTUDIANTE
+    // 2. ASIGNACIÓN DEL ESTUDIANTE
     // ====================================
 
     val estadoIngreso by
@@ -43,21 +40,62 @@ fun NavegacionEstudianteDemo() {
         estadoIngreso.asignacionActiva
 
     // ====================================
-    // 3. ACTIVIDADES ASIGNADAS
+    // 3. CONTENIDO REAL DE ROOM
     // ====================================
 
-    // IDs utilizados en la demostración
-    // ID 1 = Lectura
-    // ID 2 = Matemática
+    val actividadConsultada by
+    estudianteViewModel.actividadAsignada.collectAsState()
+
+    val preguntasAsignadas by
+    estudianteViewModel.preguntasAsignadas.collectAsState()
+
+    // ====================================
+    // 4. CÓDIGOS DE DEMOSTRACIÓN
+    // ====================================
+
+    // Conservamos los códigos anteriores
+    // para no perder las pruebas realizadas.
+
+    val codigoActual =
+        estadoIngreso.codigoTemporal
+            .trim()
+            .uppercase(Locale.ROOT)
+
+    val esCodigoDemostracion =
+        codigoActual in listOf(
+            "EST-123",
+            "EST-PRUEBA",
+            "EST-FALLOS"
+        )
+
+    // ====================================
+    // 5. ACTIVIDAD REAL ASIGNADA
+    // ====================================
+
+    // Se muestra únicamente la actividad
+    // cuyo ID corresponde a la asignación
+    // del código ingresado por el estudiante.
+
+
+    val actividadReal = actividadConsultada?.takeIf { actividad ->
+        !esCodigoDemostracion &&
+                actividad.id == asignacionActiva?.actividadId
+    }
+
+    // ====================================
+    // 6. ACTIVIDADES DEMOSTRATIVAS
+    // ====================================
 
     val mostrarLectura =
-        asignacionActiva?.actividadId == 1
+        esCodigoDemostracion &&
+                asignacionActiva?.actividadId == 1
 
     val mostrarMatematica =
-        asignacionActiva?.actividadId == 2
+        esCodigoDemostracion &&
+                asignacionActiva?.actividadId == 2
 
     // ====================================
-    // 4. ESTADOS DE LAS ACTIVIDADES
+    // 7. ESTADOS DE LECTURA Y MATEMÁTICA
     // ====================================
 
     val estadoLectura by
@@ -67,21 +105,31 @@ fun NavegacionEstudianteDemo() {
     estudianteViewModel.estadoMatematica.collectAsState()
 
     // ====================================
-    // 5. RESULTADOS
+    // 8. RESULTADOS E HISTORIAL
     // ====================================
 
     val resultados by
     estudianteViewModel.resultados.collectAsState()
 
-    // ====================================
-    // 6. HISTORIAL DE RESPUESTAS
-    // ====================================
-
     val respuestas by
     estudianteViewModel.respuestas.collectAsState()
 
     // ====================================
-    // 7. BOTÓN ATRÁS
+    // 9. NUEVO: GUARDADO DE PREGUNTAS REALES
+    // ====================================
+
+    val guardandoRespuestaAsignada by
+    estudianteViewModel
+        .guardandoRespuestaAsignada
+        .collectAsState()
+
+    val mensajeRespuestaAsignada by
+    estudianteViewModel
+        .mensajeRespuestaAsignada
+        .collectAsState()
+
+    // ====================================
+    // 10. BOTÓN ATRÁS
     // ====================================
 
     BackHandler(
@@ -94,6 +142,10 @@ fun NavegacionEstudianteDemo() {
         modifier = Modifier.fillMaxSize()
     ) {
 
+        // ====================================
+        // VOLVER AL INICIO
+        // ====================================
+
         if (pantallaActual != "inicio") {
 
             TextButton(
@@ -101,12 +153,13 @@ fun NavegacionEstudianteDemo() {
                     pantallaActual = "inicio"
                 }
             ) {
+
                 Text("← Volver al inicio")
             }
         }
 
         // ====================================
-        // 8. NAVEGACIÓN ENTRE PANTALLAS
+        // 11. NAVEGACIÓN DEL ESTUDIANTE
         // ====================================
 
         when (pantallaActual) {
@@ -117,50 +170,199 @@ fun NavegacionEstudianteDemo() {
 
             "inicio" -> {
 
-                InicioEstudianteScreen(
+                when {
 
-                    // La actividad terminó:
-                    // por acierto o por intentos agotados
-                    lecturaCompletada =
-                        estadoLectura.finalizada,
+                    // No existe una asignación.
+                    asignacionActiva == null -> {
 
-                    matematicaCompletada =
-                        estadoMatematica.finalizada,
-
-                    // La actividad terminó
-                    // con una respuesta correcta
-                    lecturaAprobada =
-                        estadoLectura.finalizada &&
-                                estadoLectura.esCorrecta == true,
-
-                    matematicaAprobada =
-                        estadoMatematica.finalizada &&
-                                estadoMatematica.esCorrecta == true,
-
-                    // Mostrar solo la actividad asignada
-                    mostrarLectura = mostrarLectura,
-                    mostrarMatematica = mostrarMatematica,
-
-                    onAbrirLectura = {
-                        if (mostrarLectura) {
-                            pantallaActual = "lectura"
-                        }
-                    },
-
-                    onAbrirMatematica = {
-                        if (mostrarMatematica) {
-                            pantallaActual = "matematica"
-                        }
-                    },
-
-                    onAbrirResultados = {
-                        pantallaActual = "resultados"
+                        Text(
+                            text = "No hay una actividad asignada.",
+                            modifier = Modifier.padding(20.dp)
+                        )
                     }
-                )
+
+                    // ====================================
+                    // ACTIVIDAD REAL ENCONTRADA
+                    // ====================================
+
+                    actividadReal != null -> {
+
+                        InicioActividadAsignadaScreen(
+                            actividad = actividadReal,
+
+                            cantidadPreguntas =
+                                preguntasAsignadas.size,
+
+                            onAbrirActividad = {
+                                pantallaActual = "contenido"
+                            },
+
+                            onAbrirResultados = {
+                                pantallaActual = "resultados"
+                            }
+                        )
+                    }
+
+                    // ====================================
+                    // ACTIVIDAD NO DISPONIBLE
+                    // ====================================
+
+                    !esCodigoDemostracion -> {
+
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+
+                            verticalArrangement =
+                                Arrangement.spacedBy(12.dp)
+                        ) {
+
+                            Text(
+                                text = "Actividad no disponible",
+                                style =
+                                    MaterialTheme.typography.headlineSmall
+                            )
+
+                            Text(
+                                text = "Tu código fue reconocido, " +
+                                        "pero la actividad asignada " +
+                                        "todavía no está disponible " +
+                                        "en este dispositivo."
+                            )
+
+                            Text(
+                                text = "Consulta con tu Asistente de Aula."
+                            )
+
+                            OutlinedButton(
+                                onClick = {
+                                    pantallaActual = "resultados"
+                                }
+                            ) {
+
+                                Text("Mis resultados")
+                            }
+                        }
+                    }
+
+                    // ====================================
+                    // INICIO DE DEMOSTRACIÓN
+                    // ====================================
+
+                    else -> {
+
+                        InicioEstudianteScreen(
+
+                            lecturaCompletada =
+                                estadoLectura.finalizada,
+
+                            matematicaCompletada =
+                                estadoMatematica.finalizada,
+
+                            lecturaAprobada =
+                                estadoLectura.finalizada &&
+                                        estadoLectura.esCorrecta == true,
+
+                            matematicaAprobada =
+                                estadoMatematica.finalizada &&
+                                        estadoMatematica.esCorrecta == true,
+
+                            mostrarLectura =
+                                mostrarLectura,
+
+                            mostrarMatematica =
+                                mostrarMatematica,
+
+                            onAbrirLectura = {
+
+                                if (mostrarLectura) {
+                                    pantallaActual = "lectura"
+                                }
+                            },
+
+                            onAbrirMatematica = {
+
+                                if (mostrarMatematica) {
+                                    pantallaActual = "matematica"
+                                }
+                            },
+
+                            onAbrirResultados = {
+                                pantallaActual = "resultados"
+                            }
+                        )
+                    }
+                }
             }
 
             // ====================================
-            // ACTIVIDAD DE LECTURA
+            // 12. PREGUNTAS REALES DE ROOM
+            // ====================================
+
+            "contenido" -> {
+
+                if (actividadReal != null) {
+
+                    ActividadAsignadaScreen(
+
+                        // Datos creados por Administración
+                        actividad = actividadReal,
+                        preguntas = preguntasAsignadas,
+
+                        // Respuestas recuperadas de Room
+                        respuestas = respuestas,
+
+                        // Estado de guardado
+                        guardando =
+                            guardandoRespuestaAsignada,
+
+                        // Mensajes del ViewModel
+                        mensaje =
+                            mensajeRespuestaAsignada,
+
+                        // ====================================
+                        // NUEVO: GUARDAR RESPUESTA
+                        // ====================================
+
+                        onResponder = {
+                                preguntaId,
+                                alternativa ->
+
+                            estudianteViewModel
+                                .responderPreguntaAsignada(
+                                    preguntaId = preguntaId,
+                                    alternativa = alternativa
+                                )
+                        },
+
+                        // ====================================
+                        // IR A RESULTADOS
+                        // ====================================
+
+                        onVerResultados = {
+                            pantallaActual = "resultados"
+                        }
+                    )
+
+                } else {
+
+                    Text(
+                        text = "Esta actividad no está disponible.",
+                        modifier = Modifier.padding(20.dp)
+                    )
+
+                    TextButton(
+                        onClick = {
+                            pantallaActual = "inicio"
+                        }
+                    ) {
+
+                        Text("Volver al inicio")
+                    }
+                }
+            }
+
+            // ====================================
+            // 13. LECTURA DE DEMOSTRACIÓN
             // ====================================
 
             "lectura" -> {
@@ -175,7 +377,7 @@ fun NavegacionEstudianteDemo() {
                 } else {
 
                     Text(
-                        "Esta actividad no está asignada."
+                        text = "Esta actividad no está asignada."
                     )
 
                     TextButton(
@@ -183,13 +385,14 @@ fun NavegacionEstudianteDemo() {
                             pantallaActual = "inicio"
                         }
                     ) {
+
                         Text("Volver al inicio")
                     }
                 }
             }
 
             // ====================================
-            // ACTIVIDAD DE MATEMÁTICA
+            // 14. MATEMÁTICA DE DEMOSTRACIÓN
             // ====================================
 
             "matematica" -> {
@@ -204,7 +407,7 @@ fun NavegacionEstudianteDemo() {
                 } else {
 
                     Text(
-                        "Esta actividad no está asignada."
+                        text = "Esta actividad no está asignada."
                     )
 
                     TextButton(
@@ -212,13 +415,14 @@ fun NavegacionEstudianteDemo() {
                             pantallaActual = "inicio"
                         }
                     ) {
+
                         Text("Volver al inicio")
                     }
                 }
             }
 
             // ====================================
-            // MIS RESULTADOS
+            // 15. RESULTADOS DEL ESTUDIANTE
             // ====================================
 
             "resultados" -> {
@@ -230,7 +434,7 @@ fun NavegacionEstudianteDemo() {
             }
 
             // ====================================
-            // PANTALLA DESCONOCIDA
+            // 16. PANTALLA DESCONOCIDA
             // ====================================
 
             else -> {
@@ -240,22 +444,10 @@ fun NavegacionEstudianteDemo() {
                         pantallaActual = "inicio"
                     }
                 ) {
+
                     Text("Ir al inicio")
                 }
             }
         }
-    }
-}
-
-// ====================================
-// 9. VISTA PREVIA
-// ====================================
-
-@Preview(showBackground = true)
-@Composable
-fun NavegacionEstudianteDemoPreview() {
-
-    MPAZNEBTheme {
-        NavegacionEstudianteDemo()
     }
 }

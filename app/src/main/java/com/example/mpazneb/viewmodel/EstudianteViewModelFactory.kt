@@ -5,8 +5,11 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 
+import com.example.mpazneb.data.local.ActividadDatabase
 import com.example.mpazneb.data.local.AsignacionDatabase
+
 import com.example.mpazneb.repository.asignacion.AsignacionRepository
+import com.example.mpazneb.repository.estudiante.ContenidoEstudianteRepository
 import com.example.mpazneb.repository.estudiante.RoomEstudianteRepository
 import com.example.mpazneb.repository.estudiante.RespuestaRepository
 
@@ -24,46 +27,42 @@ class EstudianteViewModelFactory(
             )
         ) {
 
-            // ====================================
-            // 1. OBTENER LA BASE DE DATOS ROOM
-            // ====================================
-
+            // Base de datos de asignaciones,
+            // resultados y respuestas.
             val database =
                 AsignacionDatabase.obtenerInstancia(context)
 
-            // ====================================
-            // 2. REPOSITORIO DE ASIGNACIONES
-            // ====================================
+            // Base de datos de actividades
+            // y preguntas creadas por Administración.
+            val actividadDatabase =
+                ActividadDatabase.obtenerInstancia(context)
 
+            // Repositorio de asignaciones.
             val asignacionRepository = AsignacionRepository(
                 database.asignacionDao()
             )
 
-            // ====================================
-            // 3. REPOSITORIO DEL ESTUDIANTE
-            // ====================================
-
+            // Repositorio principal del Estudiante.
             val estudianteRepository = RoomEstudianteRepository(
                 asignacionRepository = asignacionRepository,
                 resultadoDao = database.resultadoDao()
             )
 
-            // ====================================
-            // 4. REPOSITORIO DE RESPUESTAS
-            // ====================================
-
+            // Repositorio de respuestas.
             val respuestaRepository = RespuestaRepository(
                 database.respuestaDao()
             )
 
-            // ====================================
-            // 5. CREAR VIEWMODEL CON ROOM
-            // ====================================
+            // NUEVO: repositorio de contenido pedagógico.
+            val contenidoRepository = ContenidoEstudianteRepository(
+                actividadDatabase
+            )
 
             @Suppress("UNCHECKED_CAST")
             return EstudianteViewModel(
                 repositorio = estudianteRepository,
-                respuestaRepository = respuestaRepository
+                respuestaRepository = respuestaRepository,
+                contenidoRepository = contenidoRepository
             ) as T
         }
 

@@ -6,13 +6,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+
 import androidx.lifecycle.ViewModelProvider
 
 // Selección de perfiles
@@ -41,6 +44,10 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
+        // ====================================
+        // VIEWMODEL DEL ESTUDIANTE CON ROOM
+        // ====================================
+
         val estudianteViewModel = ViewModelProvider(
             this,
             EstudianteViewModelFactory(applicationContext)
@@ -50,21 +57,27 @@ class MainActivity : ComponentActivity() {
 
             MPAZNEBTheme {
 
-                // Guarda qué perfil está abierto
+                // ====================================
+                // PANTALLA ACTUAL
+                // ====================================
+
                 var pantallaActual by rememberSaveable {
                     mutableStateOf("PERFILES")
                 }
 
-                // Observa el ingreso del estudiante
+                // Observar el ingreso del estudiante
                 val estadoEstudiante by
                 estudianteViewModel.estado.collectAsState()
 
-                // Datos ficticios del Asistente
+                // Datos demostrativos del Asistente
                 val fuenteAsistente = remember {
                     DemoAsistenteDataSource()
                 }
 
-                // Volver a seleccionar perfil
+                // ====================================
+                // VOLVER A SELECCIÓN DE PERFILES
+                // ====================================
+
                 BackHandler(
                     enabled = pantallaActual != "PERFILES"
                 ) {
@@ -85,20 +98,27 @@ class MainActivity : ComponentActivity() {
 
                             if (estadoEstudiante.ingresoValidado) {
 
-                                // Código correcto:
-                                // mostrar el módulo Estudiante
+                                // Código válido:
+                                // mostrar la actividad asignada.
                                 Box(
                                     modifier = Modifier.padding(
                                         innerPadding
                                     )
                                 ) {
-                                    NavegacionEstudianteDemo()
+
+                                    // IMPORTANTE:
+                                    // Usar el mismo ViewModel
+                                    // que validó el código.
+                                    NavegacionEstudianteDemo(
+                                        estudianteViewModel =
+                                            estudianteViewModel
+                                    )
                                 }
 
                             } else {
 
-                                // Código no validado:
-                                // mostrar pantalla de ingreso
+                                // Código todavía no validado:
+                                // mostrar pantalla de ingreso.
                                 IngresoEstudianteScreen(
                                     estado = estadoEstudiante,
 
@@ -120,7 +140,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         // ====================================
-                        // PERFIL ASISTENTE
+                        // PERFIL ASISTENTE DE AULA
                         // ====================================
 
                         "ASISTENTE" -> {
@@ -130,6 +150,7 @@ class MainActivity : ComponentActivity() {
                                     innerPadding
                                 )
                             ) {
+
                                 AsistenteScreen(
                                     fuente = fuenteAsistente
                                 )
@@ -147,6 +168,7 @@ class MainActivity : ComponentActivity() {
                                     innerPadding
                                 )
                             ) {
+
                                 NuevaActividadConRoomScreen()
                             }
                         }
