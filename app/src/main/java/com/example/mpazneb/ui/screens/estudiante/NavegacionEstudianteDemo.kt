@@ -429,7 +429,10 @@ fun NavegacionEstudianteDemo(
 
                 ResultadosEstudianteScreen(
                     resultados = resultados,
-                    respuestas = respuestas
+                    respuestas = respuestas,
+                    actividad = actividadReal,
+                    preguntas = preguntasAsignadas,
+                    esDemostracion = esCodigoDemostracion
                 )
             }
 

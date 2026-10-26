@@ -6,8 +6,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material3.*
+import androidx.compose.ui.res.painterResource
+
 import androidx.compose.runtime.Composable
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,14 +22,20 @@ import androidx.compose.ui.unit.dp
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
 import com.example.mpazneb.viewmodel.IngresoEstudianteUiState
 
-// Colores del módulo Estudiante
+// ====================================
+// COLORES DEL MÓDULO ESTUDIANTE
+// ====================================
+
 private val CelestePastel = Color(0xFFE1F2FA)
 private val Rosa = Color(0xFFEA3677)
-private val RosaSuave = Color(0xFFFFE8F1)
 private val Azul = Color(0xFF248ED8)
 private val AzulOscuro = Color(0xFF242B57)
 private val GrisTexto = Color(0xFF57637E)
 private val Blanco = Color.White
+
+// ====================================
+// PANTALLA DE INGRESO DEL ESTUDIANTE
+// ====================================
 
 @Composable
 fun IngresoEstudianteScreen(
@@ -35,17 +45,26 @@ fun IngresoEstudianteScreen(
     modifier: Modifier = Modifier
 ) {
 
+    // Mostrar el error visual cuando el ViewModel
+    // informa que el código no fue validado.
+    val hayError = estado.mensaje.isNotBlank() &&
+            !estado.ingresoValidado
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(CelestePastel)
             .verticalScroll(rememberScrollState())
             .padding(24.dp),
+
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
 
-        // Nombre de la aplicación
+        // ====================================
+        // NOMBRE DE LA APLICACIÓN
+        // ====================================
+
         Text(
             text = "MPAZ NEB",
             style = MaterialTheme.typography.titleLarge,
@@ -54,7 +73,10 @@ fun IngresoEstudianteScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Título de la pantalla
+        // ====================================
+        // TÍTULO DE LA PANTALLA
+        // ====================================
+
         Text(
             text = "Ingreso de Estudiante",
             style = MaterialTheme.typography.headlineMedium,
@@ -73,13 +95,18 @@ fun IngresoEstudianteScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Tarjeta blanca para ingresar el código
+        // ====================================
+        // TARJETA PARA INGRESAR EL CÓDIGO
+        // ====================================
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
+
             colors = CardDefaults.cardColors(
                 containerColor = Blanco
             ),
+
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 3.dp
             )
@@ -89,6 +116,7 @@ fun IngresoEstudianteScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp),
+
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
 
@@ -104,36 +132,88 @@ fun IngresoEstudianteScreen(
                     color = GrisTexto
                 )
 
-                // Campo de código temporal
+                // ====================================
+                // CAMPO DE CÓDIGO CON VALIDACIÓN VISUAL
+                // ====================================
+
                 OutlinedTextField(
                     value = estado.codigoTemporal,
+
+                    // Mantiene la conexión con el ViewModel.
                     onValueChange = onCodigoChange,
+
                     label = {
                         Text("Código temporal")
                     },
+
+                    // Activa el borde y los colores de error.
+                    isError = hayError,
+
+                    // Ícono que aparece si el código es inválido.
+                    trailingIcon = {
+                        if (hayError) {
+                            Icon(
+                                painter = painterResource(
+                                    id = android.R.drawable.ic_dialog_alert
+                                ),
+                                contentDescription = "Error en el código",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    },
+
+                    // Mensaje debajo del campo, sin duplicaciones.
+                    supportingText = if (hayError) {
+                        {
+                            Text(
+                                text = estado.mensaje,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    } else {
+                        null
+                    },
+
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
+
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Rosa,
                         unfocusedBorderColor = Azul,
+
                         focusedLabelColor = Rosa,
                         unfocusedLabelColor = GrisTexto,
+
                         focusedTextColor = AzulOscuro,
                         unfocusedTextColor = AzulOscuro,
+
                         cursorColor = Rosa,
+
                         focusedContainerColor = Blanco,
-                        unfocusedContainerColor = Blanco
+                        unfocusedContainerColor = Blanco,
+
+                        // Colores cuando hay un error.
+                        errorBorderColor = MaterialTheme.colorScheme.error,
+                        errorLabelColor = MaterialTheme.colorScheme.error,
+                        errorCursorColor = MaterialTheme.colorScheme.error
                     )
                 )
 
-                // Botón para ingresar
+                // ====================================
+                // BOTÓN INGRESAR
+                // ====================================
+
                 Button(
                     onClick = onIngresar,
+
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
+
                     shape = RoundedCornerShape(14.dp),
+
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Rosa,
                         contentColor = Blanco
@@ -146,28 +226,17 @@ fun IngresoEstudianteScreen(
                     )
                 }
 
-                // Mensaje de validación
-                if (estado.mensaje.isNotEmpty()) {
-
-                    Surface(
-                        color = RosaSuave,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-
-                        Text(
-                            text = estado.mensaje,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            color = AzulOscuro,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
+                // El mensaje de validación se muestra
+                // debajo del campo de código temporal.
+                // No se repite debajo del botón.
             }
         }
 
         Spacer(modifier = Modifier.height(28.dp))
+
+        // ====================================
+        // FRASE FINAL
+        // ====================================
 
         Text(
             text = "Aprende, practica y avanza",
@@ -175,9 +244,12 @@ fun IngresoEstudianteScreen(
             color = AzulOscuro,
             textAlign = TextAlign.Center
         )
-
     }
 }
+
+// ====================================
+// VISTA PREVIA
+// ====================================
 
 @Preview(showBackground = true)
 @Composable

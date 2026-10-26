@@ -15,6 +15,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 import com.example.mpazneb.model.Resultado
+import com.example.mpazneb.data.local.ActividadEntity
+import com.example.mpazneb.data.local.PreguntaEntity
 import com.example.mpazneb.model.Respuesta
 import com.example.mpazneb.ui.theme.MPAZNEBTheme
 
@@ -40,6 +42,9 @@ private val RojoError = Color(0xFFB3264D)
 fun ResultadosEstudianteScreen(
     resultados: List<Resultado> = emptyList(),
     respuestas: List<Respuesta> = emptyList(),
+    actividad: ActividadEntity? = null,
+    preguntas: List<PreguntaEntity> = emptyList(),
+    esDemostracion: Boolean = false,
     modifier: Modifier = Modifier
 ) {
 
@@ -363,14 +368,62 @@ fun ResultadosEstudianteScreen(
 
             respuestas.forEach { respuesta ->
 
-                // Identificar la actividad de demostración
-                val nombreActividad =
-                    when (respuesta.actividadId) {
-                        1 -> "Lectura"
-                        2 -> "Matemática"
-                        else ->
-                            "Actividad ${respuesta.actividadId}"
-                    }
+                // Identificar correctamente la actividad.
+                val nombreActividad = when {
+                    actividad != null &&
+                            actividad.id == respuesta.actividadId ->
+                        "${actividad.modulo}: ${actividad.titulo}"
+
+                    esDemostracion &&
+                            respuesta.actividadId == 1 ->
+                        "Lectura"
+
+                    esDemostracion &&
+                            respuesta.actividadId == 2 ->
+                        "Matemática"
+
+                    else ->
+                        "Actividad ${respuesta.actividadId}"
+                }
+
+// Buscar la pregunta real guardada en Room.
+                val preguntaReal = preguntas.firstOrNull {
+                    it.id == respuesta.preguntaId &&
+                            it.actividadId == respuesta.actividadId
+                }
+
+// Obtener el número real de la pregunta
+// dentro de la actividad, no su ID de Room.
+                val numeroPregunta = if (preguntaReal != null) {
+                    preguntas.indexOfFirst {
+                        it.id == preguntaReal.id
+                    } + 1
+                } else {
+                    respuesta.preguntaId
+                }
+
+// Mostrar el texto completo de la alternativa.
+                val respuestaMostrada = when (
+                    respuesta.respuestaSeleccionada.trim().uppercase()
+                ) {
+                    "A" -> preguntaReal?.let {
+                        "A. ${it.alternativaA}"
+                    } ?: respuesta.respuestaSeleccionada
+
+                    "B" -> preguntaReal?.let {
+                        "B. ${it.alternativaB}"
+                    } ?: respuesta.respuestaSeleccionada
+
+                    "C" -> preguntaReal?.let {
+                        "C. ${it.alternativaC}"
+                    } ?: respuesta.respuestaSeleccionada
+
+                    "D" -> preguntaReal?.let {
+                        "D. ${it.alternativaD}"
+                    } ?: respuesta.respuestaSeleccionada
+
+                    else -> respuesta.respuestaSeleccionada
+                }
 
                 val textoResultado =
                     if (respuesta.esCorrecta) {
@@ -423,7 +476,7 @@ fun ResultadosEstudianteScreen(
 
                         // Número de pregunta
                         Text(
-                            text = "Pregunta N.º ${respuesta.preguntaId}",
+                            text = "Pregunta N.º $numeroPregunta",
                             style = MaterialTheme.typography.bodyMedium,
                             color = GrisTexto
                         )
@@ -449,7 +502,7 @@ fun ResultadosEstudianteScreen(
                         ) {
 
                             Text(
-                                text = respuesta.respuestaSeleccionada,
+                                text = respuestaMostrada,
                                 modifier = Modifier.padding(14.dp),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = AzulOscuro

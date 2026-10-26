@@ -401,12 +401,24 @@ fun ActividadAsignadaScreen(
                         if (pregunta.retroalimentacion.isNotBlank()) {
 
                             Text(
-                                text = "No lograste reponder correctamente est vez. " +
-                                        "Sigue practicando!"
+                                text = "No lograste responder correctamente esta vez. " +
+                                        "¡Sigue practicando!"
                             )
+
+                            val textoRespuestaCorrecta = when (
+                                pregunta.respuestaCorrecta.trim().uppercase()
+                            ) {
+                                "A" -> pregunta.alternativaA
+                                "B" -> pregunta.alternativaB
+                                "C" -> pregunta.alternativaC
+                                "D" -> pregunta.alternativaD
+                                else -> ""
+                            }
+
                             Text(
-                                text ="Respuesta correcta: " +
-                                        pregunta.respuestaCorrecta,
+                                text = "Respuesta correcta: " +
+                                        "${pregunta.respuestaCorrecta}. " +
+                                        textoRespuestaCorrecta,
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
