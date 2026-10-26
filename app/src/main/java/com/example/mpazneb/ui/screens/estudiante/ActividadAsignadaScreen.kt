@@ -401,7 +401,7 @@ fun ActividadAsignadaScreen(
                         if (pregunta.retroalimentacion.isNotBlank()) {
 
                             Text(
-                                text = "No lograste reponder correctamente est vez. " +
+                                text = "No lograste reponder correctamente esta vez. " +
                                         "Sigue practicando!"
                             )
                             Text(
