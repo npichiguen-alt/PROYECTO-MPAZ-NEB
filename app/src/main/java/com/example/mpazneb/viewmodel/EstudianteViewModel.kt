@@ -119,9 +119,7 @@ class EstudianteViewModel(
     val actividadAsignada: StateFlow<ActividadEntity?> =
         _actividadAsignada
 
-    // ====================================
     // PREGUNTAS DE LA ACTIVIDAD
-    // ====================================
 
     private val _preguntasAsignadas =
         MutableStateFlow<List<PreguntaEntity>>(emptyList())
