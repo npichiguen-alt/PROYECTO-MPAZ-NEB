@@ -428,6 +428,48 @@ fun ActividadAsignadaScreen(
                 )
             }
 
+
+            // ====================================
+            // POKÉMON DESPUÉS DE RESPONDER
+            // ====================================
+
+            val ultimoIntento = historialPregunta.maxByOrNull {
+                it.numeroIntento
+            }
+
+            if (ultimoIntento != null && !guardando) {
+
+                val nombrePokemon = when {
+
+                    ultimoIntento.esCorrecta ->
+                        "pikachu"
+
+                    intentosRealizados >= 3 ->
+                        "bulbasaur"
+
+                    else ->
+                        "eevee"
+                }
+
+                val mensajePokemon = when {
+
+                    ultimoIntento.esCorrecta ->
+                        "¡Excelente trabajo! Respondiste correctamente."
+
+                    intentosRealizados >= 3 ->
+                        "¡No te rindas! Cada intento te ayuda a aprender."
+
+                    else ->
+                        "¡Buen intento! Lee nuevamente y prueba otra vez."
+                }
+
+                PokemonAlResponder(
+                    nombrePokemon = nombrePokemon,
+                    mensaje = mensajePokemon
+                )
+            }
+
+
             // Mensaje de problemas al guardar.
             if (mensaje.isNotBlank()) {
 
