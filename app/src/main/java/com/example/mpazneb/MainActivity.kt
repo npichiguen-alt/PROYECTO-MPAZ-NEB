@@ -23,7 +23,7 @@ import com.example.mpazneb.ui.screens.SeleccionPerfilScreen
 
 // Módulo Estudiante
 import com.example.mpazneb.ui.screens.estudiante.IngresoEstudianteScreen
-import com.example.mpazneb.ui.screens.estudiante.NavegacionEstudianteDemo
+import com.example.mpazneb.ui.screens.estudiante.NavegacionEstudianteScreen
 import com.example.mpazneb.viewmodel.EstudianteViewModel
 import com.example.mpazneb.viewmodel.EstudianteViewModelFactory
 
@@ -130,7 +130,7 @@ class MainActivity : ComponentActivity() {
                                     // IMPORTANTE:
                                     // Usar el mismo ViewModel
                                     // que validó el código.
-                                    NavegacionEstudianteDemo(
+                                    NavegacionEstudianteScreen(
                                         estudianteViewModel =
                                             estudianteViewModel
                                     )

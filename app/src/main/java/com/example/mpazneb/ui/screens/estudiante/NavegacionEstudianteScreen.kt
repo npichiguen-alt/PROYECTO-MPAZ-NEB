@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.example.mpazneb.viewmodel.EstudianteViewModel
 
 @Composable
-fun NavegacionEstudianteDemo(
+fun NavegacionEstudianteScreen(
     estudianteViewModel: EstudianteViewModel
 ) {
 
