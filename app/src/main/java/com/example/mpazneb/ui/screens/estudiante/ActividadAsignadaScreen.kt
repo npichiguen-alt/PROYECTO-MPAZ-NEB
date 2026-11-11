@@ -342,39 +342,13 @@ fun ActividadAsignadaScreen(
             }
 
             // ====================================
-            // RETROALIMENTACIÓN
+            // RETROALIMENTACIÓN DE LA PREGUNTA
             // ====================================
 
-            if (fueCorrecta) {
+            // Si agotó los tres intentos,
+            // mostrar la respuesta correcta.
 
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor =
-                            MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement =
-                            Arrangement.spacedBy(8.dp)
-                    ) {
-
-                        Text(
-                            text = "¡Respuesta correcta!",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-
-                        Text(
-                            text = pregunta.retroalimentacion
-                                .ifBlank {
-                                    "¡Muy bien!"
-                                }
-                        )
-                    }
-                }
-
-            } else if (intentosRealizados >= 3) {
+            if (!fueCorrecta && intentosRealizados >= 3) {
 
                 Card(
                     colors = CardDefaults.cardColors(
@@ -393,15 +367,11 @@ fun ActividadAsignadaScreen(
                             text = "Has agotado tus 3 intentos."
                         )
 
-                        if (pregunta.retroalimentacion.isNotBlank()) {
-
-                            Text(
-                                text = "No lograste responder correctamente esta vez. " +
-                                        "¡Sigue practicando!"
-                            )
-
-                            val textoRespuestaCorrecta = when (
-                                pregunta.respuestaCorrecta.trim().uppercase()
+                        val textoRespuestaCorrecta =
+                            when (
+                                pregunta.respuestaCorrecta
+                                    .trim()
+                                    .uppercase()
                             ) {
                                 "A" -> pregunta.alternativaA
                                 "B" -> pregunta.alternativaB
@@ -410,32 +380,30 @@ fun ActividadAsignadaScreen(
                                 else -> ""
                             }
 
+                        Text(
+                            text = "Respuesta correcta: " +
+                                    "${pregunta.respuestaCorrecta}. " +
+                                    textoRespuestaCorrecta
+                        )
+
+                        if (pregunta.retroalimentacion.isNotBlank()) {
+
                             Text(
-                                text = "Respuesta correcta: " +
-                                        "${pregunta.respuestaCorrecta}. " +
-                                        textoRespuestaCorrecta,
-                                style = MaterialTheme.typography.bodyMedium
+                                text = pregunta.retroalimentacion
                             )
                         }
                     }
                 }
-
-            } else if (intentosRealizados > 0) {
-
-                Text(
-                    text = "Respuesta incorrecta. Inténtalo nuevamente.",
-                    color = MaterialTheme.colorScheme.error
-                )
             }
 
-
             // ====================================
-            // POKÉMON DESPUÉS DE RESPONDER
+            // POKÉAPI: RETROALIMENTACIÓN VISUAL
             // ====================================
 
-            val ultimoIntento = historialPregunta.maxByOrNull {
-                it.numeroIntento
-            }
+            val ultimoIntento =
+                historialPregunta.maxByOrNull {
+                    it.numeroIntento
+                }
 
             if (ultimoIntento != null && !guardando) {
 
@@ -454,7 +422,10 @@ fun ActividadAsignadaScreen(
                 val mensajePokemon = when {
 
                     ultimoIntento.esCorrecta ->
-                        "¡Excelente trabajo! Respondiste correctamente."
+                        "¡Respuesta correcta! " +
+                                pregunta.retroalimentacion.ifBlank {
+                                    "¡Excelente trabajo!"
+                                }
 
                     intentosRealizados >= 3 ->
                         "¡No te rindas! Cada intento te ayuda a aprender."
@@ -468,6 +439,8 @@ fun ActividadAsignadaScreen(
                     mensaje = mensajePokemon
                 )
             }
+
+
 
 
             // Mensaje de problemas al guardar.

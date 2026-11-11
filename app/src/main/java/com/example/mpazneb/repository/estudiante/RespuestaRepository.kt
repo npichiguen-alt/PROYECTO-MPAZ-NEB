@@ -88,4 +88,29 @@ class RespuestaRepository(
             asignacionId
         )
     }
+
+
+    // ====================================
+    // GUARDADO SEGURO DE RESPUESTA Y RESULTADO
+    // ====================================
+
+    suspend fun guardarRespuestaYResultado(
+        asignacionId: Int,
+        actividadId: Int,
+        preguntaId: Int,
+        respuestaSeleccionada: String,
+        esCorrecta: Boolean,
+        preguntasIds: List<Int>
+    ): Boolean {
+
+        return respuestaDao.guardarRespuestaYResultado(
+            asignacionId = asignacionId,
+            actividadId = actividadId,
+            preguntaId = preguntaId,
+            respuestaSeleccionada = respuestaSeleccionada,
+            esCorrecta = esCorrecta,
+            preguntasIds = preguntasIds
+        )
+    }
+
 }
