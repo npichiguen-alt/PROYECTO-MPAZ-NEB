@@ -141,11 +141,50 @@ fun ActividadAsignadaScreen(
     onVerResultados: () -> Unit
 ) {
 
-    var indicePregunta by rememberSaveable(
-        actividad.id
-    ) {
-        mutableIntStateOf(0)
+    // ====================================
+    // CONTINUAR DESDE LA PRIMERA PREGUNTA PENDIENTE
+    // ====================================
+
+    val indicePendiente = preguntas.indexOfFirst { pregunta ->
+
+        val historialPregunta = respuestas.filter {
+            it.actividadId == actividad.id &&
+                    it.preguntaId == pregunta.id
+        }
+
+        val respondidaCorrectamente =
+            historialPregunta.any {
+                it.esCorrecta
+            }
+
+        val intentosRealizados =
+            historialPregunta.maxOfOrNull {
+                it.numeroIntento
+            } ?: 0
+
+        // Pendiente: todavía no acertó
+        // y le quedan intentos disponibles.
+
+        !respondidaCorrectamente && intentosRealizados < 3
     }
+
+    // Si terminó todas las preguntas,
+    // mostrar la última para ver los resultados.
+
+    val indiceInicial = if (indicePendiente >= 0) {
+        indicePendiente
+    } else {
+        preguntas.lastIndex.coerceAtLeast(0)
+    }
+
+    // Recordar la posición mientras esté
+    // abierta esta pantalla.
+    // Al volver a entrar, recalcular desde Room.
+
+    var indicePregunta by remember(actividad.id) {
+        mutableIntStateOf(indiceInicial)
+    }
+
 
     val pregunta = preguntas.getOrNull(
         indicePregunta

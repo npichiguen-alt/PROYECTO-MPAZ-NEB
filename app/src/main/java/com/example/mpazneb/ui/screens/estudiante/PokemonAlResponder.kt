@@ -43,6 +43,7 @@ fun PokemonAlResponder(
                 Arrangement.spacedBy(12.dp)
         ) {
 
+
             if (vm.imagenUrl != null) {
 
                 AsyncImage(
@@ -56,6 +57,33 @@ fun PokemonAlResponder(
                 CircularProgressIndicator(
                     modifier = Modifier.size(32.dp)
                 )
+
+            } else if (vm.error) {
+
+                Column(
+                    modifier = Modifier.width(100.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+
+                    Text(
+                        text = "📡",
+                        style = MaterialTheme.typography.headlineLarge
+                    )
+
+                    Text(
+                        text = "Sin imagen",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    TextButton(
+                        onClick = {
+                            vm.cargar(nombrePokemon)
+                        }
+                    ) {
+                        Text("Reintentar")
+                    }
+                }
             }
 
             Column(
