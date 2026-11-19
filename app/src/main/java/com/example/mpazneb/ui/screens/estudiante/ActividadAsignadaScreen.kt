@@ -141,11 +141,50 @@ fun ActividadAsignadaScreen(
     onVerResultados: () -> Unit
 ) {
 
-    var indicePregunta by rememberSaveable(
-        actividad.id
-    ) {
-        mutableIntStateOf(0)
+    // ====================================
+    // CONTINUAR DESDE LA PRIMERA PREGUNTA PENDIENTE
+    // ====================================
+
+    val indicePendiente = preguntas.indexOfFirst { pregunta ->
+
+        val historialPregunta = respuestas.filter {
+            it.actividadId == actividad.id &&
+                    it.preguntaId == pregunta.id
+        }
+
+        val respondidaCorrectamente =
+            historialPregunta.any {
+                it.esCorrecta
+            }
+
+        val intentosRealizados =
+            historialPregunta.maxOfOrNull {
+                it.numeroIntento
+            } ?: 0
+
+        // Pendiente: todavía no acertó
+        // y le quedan intentos disponibles.
+
+        !respondidaCorrectamente && intentosRealizados < 3
     }
+
+    // Si terminó todas las preguntas,
+    // mostrar la última para ver los resultados.
+
+    val indiceInicial = if (indicePendiente >= 0) {
+        indicePendiente
+    } else {
+        preguntas.lastIndex.coerceAtLeast(0)
+    }
+
+    // Recordar la posición mientras esté
+    // abierta esta pantalla.
+    // Al volver a entrar, recalcular desde Room.
+
+    var indicePregunta by remember(actividad.id) {
+        mutableIntStateOf(indiceInicial)
+    }
+
 
     val pregunta = preguntas.getOrNull(
         indicePregunta
@@ -342,39 +381,13 @@ fun ActividadAsignadaScreen(
             }
 
             // ====================================
-            // RETROALIMENTACIÓN
+            // RETROALIMENTACIÓN DE LA PREGUNTA
             // ====================================
 
-            if (fueCorrecta) {
+            // Si agotó los tres intentos,
+            // mostrar la respuesta correcta.
 
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor =
-                            MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement =
-                            Arrangement.spacedBy(8.dp)
-                    ) {
-
-                        Text(
-                            text = "¡Respuesta correcta!",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-
-                        Text(
-                            text = pregunta.retroalimentacion
-                                .ifBlank {
-                                    "¡Muy bien!"
-                                }
-                        )
-                    }
-                }
-
-            } else if (intentosRealizados >= 3) {
+            if (!fueCorrecta && intentosRealizados >= 3) {
 
                 Card(
                     colors = CardDefaults.cardColors(
@@ -393,15 +406,11 @@ fun ActividadAsignadaScreen(
                             text = "Has agotado tus 3 intentos."
                         )
 
-                        if (pregunta.retroalimentacion.isNotBlank()) {
-
-                            Text(
-                                text = "No lograste responder correctamente esta vez. " +
-                                        "¡Sigue practicando!"
-                            )
-
-                            val textoRespuestaCorrecta = when (
-                                pregunta.respuestaCorrecta.trim().uppercase()
+                        val textoRespuestaCorrecta =
+                            when (
+                                pregunta.respuestaCorrecta
+                                    .trim()
+                                    .uppercase()
                             ) {
                                 "A" -> pregunta.alternativaA
                                 "B" -> pregunta.alternativaB
@@ -410,23 +419,68 @@ fun ActividadAsignadaScreen(
                                 else -> ""
                             }
 
+                        Text(
+                            text = "Respuesta correcta: " +
+                                    "${pregunta.respuestaCorrecta}. " +
+                                    textoRespuestaCorrecta
+                        )
+
+                        if (pregunta.retroalimentacion.isNotBlank()) {
+
                             Text(
-                                text = "Respuesta correcta: " +
-                                        "${pregunta.respuestaCorrecta}. " +
-                                        textoRespuestaCorrecta,
-                                style = MaterialTheme.typography.bodyMedium
+                                text = pregunta.retroalimentacion
                             )
                         }
                     }
                 }
+            }
 
-            } else if (intentosRealizados > 0) {
+            // ====================================
+            // POKÉAPI: RETROALIMENTACIÓN VISUAL
+            // ====================================
 
-                Text(
-                    text = "Respuesta incorrecta. Inténtalo nuevamente.",
-                    color = MaterialTheme.colorScheme.error
+            val ultimoIntento =
+                historialPregunta.maxByOrNull {
+                    it.numeroIntento
+                }
+
+            if (ultimoIntento != null && !guardando) {
+
+                val nombrePokemon = when {
+
+                    ultimoIntento.esCorrecta ->
+                        "pikachu"
+
+                    intentosRealizados >= 3 ->
+                        "bulbasaur"
+
+                    else ->
+                        "eevee"
+                }
+
+                val mensajePokemon = when {
+
+                    ultimoIntento.esCorrecta ->
+                        "¡Respuesta correcta! " +
+                                pregunta.retroalimentacion.ifBlank {
+                                    "¡Excelente trabajo!"
+                                }
+
+                    intentosRealizados >= 3 ->
+                        "¡No te rindas! Cada intento te ayuda a aprender."
+
+                    else ->
+                        "¡Buen intento! Lee nuevamente y prueba otra vez."
+                }
+
+                PokemonAlResponder(
+                    nombrePokemon = nombrePokemon,
+                    mensaje = mensajePokemon
                 )
             }
+
+
+
 
             // Mensaje de problemas al guardar.
             if (mensaje.isNotBlank()) {

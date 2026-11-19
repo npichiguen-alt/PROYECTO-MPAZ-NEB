@@ -38,7 +38,9 @@ class EstudianteViewModelTest {
 
     @Test
     fun codigoVacioMuestraMensajeDeError() {
-        val viewModel = EstudianteViewModel()
+        val viewModel = EstudianteViewModel(
+            repositorio = mockk<EstudianteRepository>()
+        )
 
         viewModel.actualizarCodigo("")
         viewModel.intentarIngresar()
@@ -52,7 +54,9 @@ class EstudianteViewModelTest {
 
     @Test
     fun codigoConSoloEspaciosNoPermiteIngresar() {
-        val viewModel = EstudianteViewModel()
+        val viewModel = EstudianteViewModel(
+            repositorio = mockk<EstudianteRepository>()
+        )
 
         viewModel.actualizarCodigo("   ")
         viewModel.intentarIngresar()
@@ -141,63 +145,48 @@ class EstudianteViewModelTest {
         )
     }
 
-
     @Test
-    fun lecturaNoPermiteMasDeTresIntentos() = runTest {
+    fun codigoRealConEspaciosPermiteIngresar() = runTest {
 
-        val viewModel = EstudianteViewModel()
+        val repositorio = mockk<EstudianteRepository>()
 
-        // Ingresar con el código de demostración.
-        viewModel.actualizarCodigo("EST-123")
+        val asignacion = Asignacion(
+            id = 10,
+            actividadId = 5,
+            estudianteFicticio = "Estudiante A",
+            codigoTemporal = "REAL-001",
+            estado = "Pendiente"
+        )
+
+        coEvery {
+            repositorio.buscarAsignacionPorCodigo("REAL-001")
+        } returns asignacion
+
+        coEvery {
+            repositorio.obtenerResultados(10)
+        } returns emptyList()
+
+        val viewModel = EstudianteViewModel(
+            repositorio = repositorio
+        )
+
+        viewModel.actualizarCodigo("  REAL-001  ")
         viewModel.intentarIngresar()
 
         advanceUntilIdle()
 
-        assertTrue(
-            viewModel.estado.value.ingresoValidado
+        assertTrue(viewModel.estado.value.ingresoValidado)
+
+        assertEquals(
+            10,
+            viewModel.estado.value.asignacionActiva?.id
         )
 
-        // Responder incorrectamente tres veces.
-        repeat(3) {
-            viewModel.seleccionarRespuestaLectura("Un perro")
-            viewModel.comprobarRespuestaLectura()
-
-            advanceUntilIdle()
+        coVerify(exactly = 1) {
+            repositorio.buscarAsignacionPorCodigo("REAL-001")
         }
-
-        // La actividad debe finalizar al tercer intento.
-        assertEquals(
-            3,
-            viewModel.estadoLectura.value.intentos
-        )
-
-        assertTrue(
-            viewModel.estadoLectura.value.finalizada
-        )
-
-        // Intentar responder una cuarta vez.
-        viewModel.seleccionarRespuestaLectura("Un gato")
-        viewModel.comprobarRespuestaLectura()
-
-        advanceUntilIdle()
-
-        // No debe permitir el cuarto intento.
-        assertEquals(
-            3,
-            viewModel.estadoLectura.value.intentos
-        )
-
-        assertEquals(
-            "Respuesta incorrecta. Has agotado los 3 intentos permitidos.",
-            viewModel.estadoLectura.value.mensaje
-        )
-
-        // El resultado debe guardarse una sola vez.
-        assertEquals(
-            1,
-            viewModel.resultados.value.size
-        )
     }
+
 
 
 }

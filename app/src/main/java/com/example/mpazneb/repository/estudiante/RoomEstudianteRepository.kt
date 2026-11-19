@@ -1,7 +1,6 @@
 
 package com.example.mpazneb.repository.estudiante
 
-import com.example.mpazneb.data.local.AsignacionEntity
 import com.example.mpazneb.data.local.ResultadoEntity
 import com.example.mpazneb.data.local.resultadoDao
 import com.example.mpazneb.model.Asignacion
@@ -14,9 +13,7 @@ class RoomEstudianteRepository(
     private val resultadoDao: resultadoDao
 ) : EstudianteRepository {
 
-    // ====================================
-    // 1. BUSCAR ASIGNACIÓN POR CÓDIGO
-    // ====================================
+    // 1. BUSCAR ASIGNACIÓN REAL POR CÓDIGO
 
     override suspend fun buscarAsignacionPorCodigo(
         codigo: String
@@ -26,55 +23,14 @@ class RoomEstudianteRepository(
             .trim()
             .uppercase(Locale.ROOT)
 
-        // Buscar primero en Room
-        var asignacion =
-            asignacionRepository.buscarPorCodigo(codigoLimpio)
-
-        // ====================================
-        // 2. CÓDIGOS DE DEMOSTRACIÓN
-        // ====================================
-
-        // EST-123 conserva la prueba anterior.
-        // EST-PRUEBA crea una asignación nueva
-        // para probar los tres intentos.
-
-        if (
-            asignacion == null &&
-            codigoLimpio in listOf(
-                "EST-123",
-                "EST-PRUEBA",
-                "EST-FALLOS"
-            )
-        ) {
-
-            val asignacionPrueba = AsignacionEntity(
-                actividadId = 1,
-                actividadTitulo = "Cuento del bosque",
-                estudianteAlias = "Estudiante de prueba",
-                codigoTemporal = codigoLimpio,
-                asistenteAlias = "ASISTENTE_DEMO",
-                curso = 2,
-                estado = "Pendiente"
-            )
-
-            // Guardar la nueva asignación en Room
-            asignacionRepository.guardarAsignacion(
-                asignacionPrueba
-            )
-
-            // Recuperarla con su ID real
-            asignacion =
-                asignacionRepository.buscarPorCodigo(
-                    codigoLimpio
-                )
-        }
-
-        // No permitir códigos desconocidos
-        if (asignacion == null) {
+        if (codigoLimpio.isBlank()) {
             return null
         }
 
-        // Convertir a modelo del Estudiante
+        val asignacion = asignacionRepository
+            .buscarPorCodigo(codigoLimpio)
+            ?: return null
+
         return Asignacion(
             id = asignacion.id,
             actividadId = asignacion.actividadId,
@@ -84,9 +40,7 @@ class RoomEstudianteRepository(
         )
     }
 
-    // ====================================
-    // 3. GUARDAR RESULTADO EN ROOM
-    // ====================================
+    // 2. GUARDAR RESULTADO EN ROOM
 
     override suspend fun guardarResultado(
         resultado: Resultado
@@ -105,9 +59,7 @@ class RoomEstudianteRepository(
         )
     }
 
-    // ====================================
-    // 4. RECUPERAR RESULTADOS DE ROOM
-    // ====================================
+    // 3. RECUPERAR RESULTADOS DE ROOM
 
     override suspend fun obtenerResultados(
         asignacionId: Int

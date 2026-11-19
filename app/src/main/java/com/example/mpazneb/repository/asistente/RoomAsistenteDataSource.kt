@@ -18,6 +18,7 @@ import com.example.mpazneb.data.local.resultadoDao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import com.example.mpazneb.data.local.UsuarioDao
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -25,7 +26,8 @@ class RoomAsistenteDataSource(
     private val actividadDao: ActividadDao,
     private val asignacionDao: AsignacionDao,
     private val resultadoDao: resultadoDao,
-    private val demo: AsistenteDataSource = DemoAsistenteDataSource()
+    private val demo: AsistenteDataSource = DemoAsistenteDataSource(),
+    private val usuarioDao: UsuarioDao? = null
 ) : AsistenteDataSource {
 
     //ACTIVIDADES REALES CREADAS POR MATÍAS
@@ -45,10 +47,25 @@ class RoomAsistenteDataSource(
             }
         }
 
-    //  ESTUDIANTES FICTICIOS
-    // Por ahora se mantienen los estudiantes de prueba
+    // ESTUDIANTES REGISTRADOS EN ROOM
     override val estudiantes: Flow<List<EstudianteAula>> =
-        demo.estudiantes
+        usuarioDao?.observarUsuarios()?.map { usuarios ->
+
+            usuarios
+                .filter { usuario ->
+                    usuario.perfil.equals(
+                        "Estudiante",
+                        ignoreCase = true
+                    )
+                }
+                .map { usuario ->
+                    EstudianteAula(
+                        alias = usuario.alias,
+                        activo = usuario.activo
+                    )
+                }
+
+        } ?: demo.estudiantes
 
 
     //  RESULTADOS REALES

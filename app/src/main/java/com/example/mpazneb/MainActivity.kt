@@ -23,7 +23,7 @@ import com.example.mpazneb.ui.screens.SeleccionPerfilScreen
 
 // Módulo Estudiante
 import com.example.mpazneb.ui.screens.estudiante.IngresoEstudianteScreen
-import com.example.mpazneb.ui.screens.estudiante.NavegacionEstudianteDemo
+import com.example.mpazneb.ui.screens.estudiante.NavegacionEstudianteScreen
 import com.example.mpazneb.viewmodel.EstudianteViewModel
 import com.example.mpazneb.viewmodel.EstudianteViewModelFactory
 
@@ -31,7 +31,7 @@ import com.example.mpazneb.viewmodel.EstudianteViewModelFactory
 import com.example.mpazneb.ui.screens.asistente.AsistenteScreen
 import com.example.mpazneb.data.local.ActividadDatabase
 import com.example.mpazneb.repository.asistente.RoomAsistenteDataSource
-
+import com.example.mpazneb.data.local.UsuarioDatabase
 
 // Módulo Administración
 import com.example.mpazneb.ui.screens.administracion.NuevaActividadConRoomScreen
@@ -89,15 +89,18 @@ class MainActivity : ComponentActivity() {
 
                         asignacionDao = baseAsignaciones.asignacionDao(),
 
-                        resultadoDao = baseAsignaciones.resultadoDao()
+                        resultadoDao = baseAsignaciones.resultadoDao(),
+
+                        usuarioDao = UsuarioDatabase
+                            .obtenerInstancia(applicationContext)
+                            .usuarioDao()
                     )
                 }
 
 
 
-                // ====================================
-                // VOLVER A SELECCIÓN DE PERFILES
-                // ====================================
+
+                // VOLVER A SELECCIÓN DE PERFILES //
 
                 BackHandler(
                     enabled = pantallaActual != "PERFILES"
@@ -130,7 +133,7 @@ class MainActivity : ComponentActivity() {
                                     // IMPORTANTE:
                                     // Usar el mismo ViewModel
                                     // que validó el código.
-                                    NavegacionEstudianteDemo(
+                                    NavegacionEstudianteScreen(
                                         estudianteViewModel =
                                             estudianteViewModel
                                     )
