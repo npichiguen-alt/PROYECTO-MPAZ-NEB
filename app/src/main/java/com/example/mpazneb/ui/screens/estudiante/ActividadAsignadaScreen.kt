@@ -1,18 +1,13 @@
 
 package com.example.mpazneb.ui.screens.estudiante
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-
 import androidx.compose.material3.*
-
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
 import com.example.mpazneb.data.local.ActividadEntity
 import com.example.mpazneb.data.local.PreguntaEntity
 import com.example.mpazneb.model.Respuesta
