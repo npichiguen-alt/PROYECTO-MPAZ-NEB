@@ -58,6 +58,15 @@ class AsistenteViewModelTest {
                     estado = "Disponible"
                 ),
                 ActividadAula(
+                    id = 2,
+                    titulo = "Lectura de animales",
+                    modulo = "Lectura",
+                    curso = 2,
+                    dificultad = "Básica",
+                    descripcion = "Comprensión lectora",
+                    estado = "Disponible"
+                ),
+                ActividadAula(
                     id = 5,
                     titulo = "Borrador de lectura",
                     modulo = "Lectura",
@@ -121,6 +130,31 @@ class AsistenteViewModelTest {
         assertEquals(0, viewModel.formulario.actividadId)
         assertFalse(viewModel.trabajando)
     }
+
+    @Test
+    fun noPermiteDosAsignacionesSimultaneas() = runTest {
+        val fuente = crearFuente()
+        val viewModel = crearViewModel(fuente, this)
+
+        viewModel.elegirActividad(1)
+        viewModel.elegirEstudiante("Estudiante A")
+
+        // Primera asignación
+        viewModel.asignarActividad()
+
+        // Intentar una segunda mientras sigue trabajando
+        viewModel.asignarActividad()
+
+        advanceUntilIdle()
+
+        // Solo debe guardarse una asignación
+        coVerify(exactly = 1) {
+            fuente.crearAsignacion(any())
+        }
+
+        assertFalse(viewModel.trabajando)
+    }
+
 
     @Test
     fun estudianteInactivoNoPuedeRecibirActividad() = runTest {
@@ -228,4 +262,63 @@ class AsistenteViewModelTest {
         assertTrue(viewModel.mensaje.contains("Error de prueba"))
         assertFalse(viewModel.trabajando)
     }
+
+@Test
+fun cambiarModuloActualizaFormulario() = runTest {
+    val fuente = crearFuente()
+    val viewModel = crearViewModel(fuente, this)
+
+    viewModel.elegirActividad(1)
+    viewModel.cambiarModulo("Matemáticas")
+
+    assertEquals("Matemáticas", viewModel.formulario.modulo)
+    assertEquals(0, viewModel.formulario.actividadId)
+}
+
+@Test
+fun cambiarCursoActualizaFormulario() = runTest {
+    val fuente = crearFuente()
+    val viewModel = crearViewModel(fuente, this)
+
+    viewModel.elegirActividad(1)
+    viewModel.cambiarCurso(3)
+
+    assertEquals(3, viewModel.formulario.curso)
+    assertEquals(0, viewModel.formulario.actividadId)
+}
+
+@Test
+fun cambiarDificultadActualizaFormulario() = runTest {
+    val fuente = crearFuente()
+    val viewModel = crearViewModel(fuente, this)
+
+    viewModel.elegirActividad(1)
+    viewModel.cambiarDificultad("Avanzada")
+
+    assertEquals("Avanzada", viewModel.formulario.dificultad)
+    assertEquals(0, viewModel.formulario.actividadId)
+}
+
+@Test
+fun limpiarMensajeBorraMensajeAnterior() = runTest {
+    val fuente = crearFuente()
+    val viewModel = crearViewModel(fuente, this)
+
+    viewModel.asignarActividad()
+
+    assertTrue(viewModel.mensaje.isNotEmpty())
+
+    viewModel.limpiarMensaje()
+
+    assertEquals("", viewModel.mensaje)
+}
+
+@Test
+fun consultarAsignacionesYResultados() = runTest {
+    val fuente = crearFuente()
+    val viewModel = crearViewModel(fuente, this)
+
+    assertTrue(viewModel.asignaciones.value.isEmpty())
+    assertTrue(viewModel.resultados.value.isEmpty())
+}
 }

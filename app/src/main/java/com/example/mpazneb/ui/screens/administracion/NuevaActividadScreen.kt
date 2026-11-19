@@ -11,7 +11,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-
+import com.example.mpazneb.ui.viewmodel.AdministracionViewModel
 @Composable
 fun NuevaActividadScreen(
     viewModel: AdministracionViewModel
