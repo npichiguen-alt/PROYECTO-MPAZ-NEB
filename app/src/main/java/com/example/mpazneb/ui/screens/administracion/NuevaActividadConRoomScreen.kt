@@ -20,6 +20,7 @@ import com.example.mpazneb.model.Actividad
 import com.example.mpazneb.data.local.ActividadDatabase
 import com.example.mpazneb.repository.administracion.ActividadRepository
 import com.example.mpazneb.data.local.AsignacionDatabase
+import com.example.mpazneb.ui.viewmodel.AdministracionViewModel
 @Composable
 fun NuevaActividadConRoomScreen() {
 
