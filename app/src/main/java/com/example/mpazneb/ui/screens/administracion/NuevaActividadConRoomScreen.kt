@@ -1,12 +1,15 @@
-
 package com.example.mpazneb.ui.screens.administracion
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
+
 import androidx.compose.material3.*
+
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -18,36 +21,41 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 
 import com.example.mpazneb.model.Actividad
 import com.example.mpazneb.data.local.ActividadDatabase
-import com.example.mpazneb.repository.administracion.ActividadRepository
 import com.example.mpazneb.data.local.AsignacionDatabase
+import com.example.mpazneb.repository.administracion.ActividadRepository
 import com.example.mpazneb.ui.viewmodel.AdministracionViewModel
+
 @Composable
 fun NuevaActividadConRoomScreen() {
 
+    // ====================================
     // CONTEXTO DE LA APLICACIÓN
+    // ====================================
+
     val contexto = LocalContext.current.applicationContext
 
-    // REPOSITORIO CON ROOM
+    // ====================================
+    // REPOSITORIO LOCAL ROOM
+    // ====================================
+
     val repositorio = remember(contexto) {
 
-        // Actividades y preguntas de Administración.
         val actividadDatabase =
             ActividadDatabase.obtenerInstancia(contexto)
 
-        // Asignaciones del módulo Asistente.
         val asignacionDatabase =
             AsignacionDatabase.obtenerInstancia(contexto)
 
         ActividadRepository(
-            actividadDao =
-                actividadDatabase.actividadDao(),
-
-            asignacionDao =
-                asignacionDatabase.asignacionDao()
+            actividadDao = actividadDatabase.actividadDao(),
+            asignacionDao = asignacionDatabase.asignacionDao()
         )
     }
 
-    // FÁBRICA DEL VIEWMODEL
+    // ====================================
+    // VIEWMODEL
+    // ====================================
+
     val fabrica = remember(repositorio) {
 
         viewModelFactory {
@@ -62,20 +70,25 @@ fun NuevaActividadConRoomScreen() {
         factory = fabrica
     )
 
-    // PANTALLA SELECCIONADA
+    // ====================================
+    // NAVEGACIÓN
+    // ====================================
+
     var pantalla by rememberSaveable {
         mutableStateOf("Nueva")
     }
 
-    // ACTIVIDAD SELECCIONADA PARA EDITAR
     var actividadEnEdicion by remember {
         mutableStateOf<Actividad?>(null)
     }
 
-    // MENSAJES DE EDICIÓN
     val snackbarHostState = remember {
         SnackbarHostState()
     }
+
+    // ====================================
+    // MENSAJES DE EDICIÓN
+    // ====================================
 
     LaunchedEffect(viewModel.mensaje) {
 
@@ -83,17 +96,18 @@ fun NuevaActividadConRoomScreen() {
 
         if (
             mensajeActual == "Actividad editada correctamente." ||
-            mensajeActual.startsWith(
-                "No se pudo editar la actividad."
-            ) ||
+            mensajeActual.startsWith("No se pudo editar la actividad.") ||
             mensajeActual == "No se encontró la actividad para editar."
         ) {
+
             snackbarHostState.showSnackbar(mensajeActual)
         }
     }
 
-    // CARGAR ACTIVIDADES DESDE ROOM
-    // NUEVO: TAMBIÉN AL ENTRAR A PREGUNTAS
+    // ====================================
+    // CARGAR ACTIVIDADES
+    // ====================================
+
     LaunchedEffect(pantalla) {
 
         if (
@@ -102,9 +116,51 @@ fun NuevaActividadConRoomScreen() {
             pantalla == "Preguntas" ||
             pantalla == "Resultados"
         ) {
+
             viewModel.cargarActividades()
         }
+
+        if (pantalla == "Servidor") {
+
+            viewModel.cargarActividadesRemotas()
+        }
     }
+
+    // ====================================
+    // FORMULARIO REMOTO
+    // ====================================
+
+    var tituloRemoto by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var descripcionRemota by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var objetivoRemoto by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var instruccionesRemotas by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var moduloRemoto by rememberSaveable {
+        mutableStateOf("Lectura")
+    }
+
+    var cursoRemoto by rememberSaveable {
+        mutableIntStateOf(1)
+    }
+
+    var dificultadRemota by rememberSaveable {
+        mutableStateOf("Básica")
+    }
+
+    // ====================================
+    // INTERFAZ PRINCIPAL
+    // ====================================
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -114,7 +170,10 @@ fun NuevaActividadConRoomScreen() {
             modifier = Modifier.fillMaxSize()
         ) {
 
-            // MENÚ DE ADMINISTRACIÓN
+            // ====================================
+            // MENÚ ADMINISTRACIÓN
+            // ====================================
+
             Row(
                 modifier = Modifier
                     .horizontalScroll(rememberScrollState())
@@ -130,7 +189,8 @@ fun NuevaActividadConRoomScreen() {
                     "Lectura",
                     "Preguntas",
                     "Usuarios",
-                    "Resultados"
+                    "Resultados",
+                    "Servidor"
                 ).forEach { opcion ->
 
                     FilterChip(
@@ -147,14 +207,20 @@ fun NuevaActividadConRoomScreen() {
                 }
             }
 
-            // CONTENIDO DE LAS SECCIONES
+            // ====================================
+            // CONTENIDO
+            // ====================================
+
             Box(
                 modifier = Modifier.weight(1f)
             ) {
 
                 when (pantalla) {
 
-                    // NUEVA ACTIVIDAD
+                    // ====================================
+                    // NUEVA ACTIVIDAD LOCAL
+                    // ====================================
+
                     "Nueva" -> {
 
                         NuevaActividadScreen(
@@ -162,7 +228,10 @@ fun NuevaActividadConRoomScreen() {
                         )
                     }
 
+                    // ====================================
                     // MATEMÁTICA
+                    // ====================================
+
                     "Matemática" -> {
 
                         GestionMatematicaScreen(
@@ -177,7 +246,10 @@ fun NuevaActividadConRoomScreen() {
                         )
                     }
 
+                    // ====================================
                     // LECTURA
+                    // ====================================
+
                     "Lectura" -> {
 
                         GestionLecturaScreen(
@@ -192,7 +264,10 @@ fun NuevaActividadConRoomScreen() {
                         )
                     }
 
-                    // NUEVO: GESTIONAR PREGUNTAS
+                    // ====================================
+                    // PREGUNTAS
+                    // ====================================
+
                     "Preguntas" -> {
 
                         GestionPreguntasScreen(
@@ -200,33 +275,392 @@ fun NuevaActividadConRoomScreen() {
                         )
                     }
 
+                    // ====================================
                     // USUARIOS
+                    // ====================================
+
                     "Usuarios" -> {
 
                         AdministrarUsuariosScreen()
                     }
 
+                    // ====================================
                     // RESULTADOS
+                    // ====================================
+
                     "Resultados" -> {
 
                         ResultadosGeneralesScreen(
                             actividades = viewModel.actividades
                         )
                     }
+
+                    // ====================================
+                    // SERVIDOR SPRING BOOT
+                    // ====================================
+
+                    "Servidor" -> {
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(16.dp),
+
+                            verticalArrangement =
+                                Arrangement.spacedBy(12.dp)
+                        ) {
+
+                            Text(
+                                text = "Administración del servidor",
+                                style = MaterialTheme.typography.headlineSmall
+                            )
+
+                            Text(
+                                text = "Actividades almacenadas en PostgreSQL mediante Spring Boot.",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+
+                            HorizontalDivider()
+
+                            // ====================================
+                            // CREAR ACTIVIDAD REMOTA
+                            // ====================================
+
+                            Text(
+                                text = "Crear actividad en PostgreSQL",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+
+                            // TÍTULO
+                            OutlinedTextField(
+                                value = tituloRemoto,
+
+                                onValueChange = {
+                                    tituloRemoto = it
+                                },
+
+                                label = {
+                                    Text("Título de la actividad")
+                                },
+
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true
+                            )
+
+                            // DESCRIPCIÓN
+                            OutlinedTextField(
+                                value = descripcionRemota,
+
+                                onValueChange = {
+                                    descripcionRemota = it
+                                },
+
+                                label = {
+                                    Text("Descripción")
+                                },
+
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 2
+                            )
+
+                            // OBJETIVO
+                            OutlinedTextField(
+                                value = objetivoRemoto,
+
+                                onValueChange = {
+                                    objetivoRemoto = it
+                                },
+
+                                label = {
+                                    Text("Objetivo de aprendizaje")
+                                },
+
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 2
+                            )
+
+                            // INSTRUCCIONES
+                            OutlinedTextField(
+                                value = instruccionesRemotas,
+
+                                onValueChange = {
+                                    instruccionesRemotas = it
+                                },
+
+                                label = {
+                                    Text("Instrucciones para el estudiante")
+                                },
+
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 2
+                            )
+
+                            // ====================================
+                            // SELECCIONAR MÓDULO
+                            // ====================================
+
+                            Text(
+                                text = "Módulo",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+
+                            Row(
+                                horizontalArrangement =
+                                    Arrangement.spacedBy(8.dp)
+                            ) {
+
+                                FilterChip(
+                                    selected = moduloRemoto == "Lectura",
+
+                                    onClick = {
+                                        moduloRemoto = "Lectura"
+                                    },
+
+                                    label = {
+                                        Text("Lectura")
+                                    }
+                                )
+
+                                FilterChip(
+                                    selected = moduloRemoto == "Matemática",
+
+                                    onClick = {
+                                        moduloRemoto = "Matemática"
+                                    },
+
+                                    label = {
+                                        Text("Matemática")
+                                    }
+                                )
+                            }
+
+                            // ====================================
+                            // SELECCIONAR CURSO
+                            // ====================================
+
+                            Text(
+                                text = "Curso",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+
+                            Row(
+                                modifier = Modifier.horizontalScroll(
+                                    rememberScrollState()
+                                ),
+
+                                horizontalArrangement =
+                                    Arrangement.spacedBy(8.dp)
+                            ) {
+
+                                (1..4).forEach { numero ->
+
+                                    FilterChip(
+                                        selected = cursoRemoto == numero,
+
+                                        onClick = {
+                                            cursoRemoto = numero
+                                        },
+
+                                        label = {
+                                            Text("${numero}°")
+                                        }
+                                    )
+                                }
+                            }
+
+                            // ====================================
+                            // SELECCIONAR DIFICULTAD
+                            // ====================================
+
+                            Text(
+                                text = "Dificultad",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+
+                            Row(
+                                modifier = Modifier.horizontalScroll(
+                                    rememberScrollState()
+                                ),
+
+                                horizontalArrangement =
+                                    Arrangement.spacedBy(8.dp)
+                            ) {
+
+                                listOf(
+                                    "Básica",
+                                    "Media",
+                                    "Avanzada"
+                                ).forEach { opcion ->
+
+                                    FilterChip(
+                                        selected = dificultadRemota == opcion,
+
+                                        onClick = {
+                                            dificultadRemota = opcion
+                                        },
+
+                                        label = {
+                                            Text(opcion)
+                                        }
+                                    )
+                                }
+                            }
+
+                            // ====================================
+                            // GUARDAR EN SPRING BOOT
+                            // ====================================
+
+                            Button(
+                                onClick = {
+
+                                    viewModel.crearActividadRemota(
+                                        titulo = tituloRemoto,
+                                        descripcion = descripcionRemota,
+                                        modulo = moduloRemoto,
+                                        curso = cursoRemoto,
+                                        dificultad = dificultadRemota,
+                                        objetivo = objetivoRemoto,
+                                        instrucciones = instruccionesRemotas
+                                    )
+                                },
+
+                                enabled =
+                                    tituloRemoto.isNotBlank() &&
+                                            descripcionRemota.isNotBlank() &&
+                                            objetivoRemoto.isNotBlank() &&
+                                            instruccionesRemotas.isNotBlank() &&
+                                            !viewModel.guardando,
+
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(52.dp)
+                            ) {
+
+                                Text(
+                                    if (viewModel.guardando) {
+                                        "Guardando en PostgreSQL..."
+                                    } else {
+                                        "Guardar en servidor"
+                                    }
+                                )
+                            }
+
+                            // ====================================
+                            // MENSAJES DEL SERVIDOR
+                            // ====================================
+
+                            if (viewModel.mensajeRemoto.isNotBlank()) {
+
+                                Text(
+                                    text = viewModel.mensajeRemoto,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+
+                            HorizontalDivider()
+
+                            // ====================================
+                            // LISTADO REMOTO
+                            // ====================================
+
+                            Text(
+                                text = "Actividades registradas",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+
+                            Button(
+                                onClick = {
+                                    viewModel.cargarActividadesRemotas()
+                                },
+
+                                enabled = !viewModel.cargandoRemotas
+                            ) {
+
+                                Text(
+                                    if (viewModel.cargandoRemotas) {
+                                        "Consultando..."
+                                    } else {
+                                        "Actualizar actividades"
+                                    }
+                                )
+                            }
+
+                            // ====================================
+                            // MOSTRAR ACTIVIDADES REMOTAS
+                            // ====================================
+
+                            viewModel.actividadesRemotas.forEach { actividad ->
+
+                                Card(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+
+                                        verticalArrangement =
+                                            Arrangement.spacedBy(6.dp)
+                                    ) {
+
+                                        Text(
+                                            text = actividad.titulo,
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+
+                                        Text(
+                                            text = "ID: ${actividad.id}"
+                                        )
+
+                                        Text(
+                                            text = "Módulo: ${actividad.modulo}"
+                                        )
+
+                                        Text(
+                                            text = "Curso: ${actividad.curso}° básico"
+                                        )
+
+                                        Text(
+                                            text = "Dificultad: ${actividad.dificultad}"
+                                        )
+
+                                        Text(
+                                            text = actividad.descripcion
+                                        )
+
+                                        Text(
+                                            text = if (actividad.activa) {
+                                                "Estado: Activa"
+                                            } else {
+                                                "Estado: Inactiva"
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        // MOSTRAR MENSAJES DE GUARDADO Y EDICIÓN
+        // ====================================
+        // MENSAJES DE ROOM
+        // ====================================
+
         SnackbarHost(
             hostState = snackbarHostState,
+
             modifier = Modifier.align(
                 Alignment.BottomCenter
             )
         )
     }
 
-    // VENTANA DE EDICIÓN DE ACTIVIDADES
+    // ====================================
+    // VENTANA DE EDICIÓN LOCAL
+    // ====================================
+
     actividadEnEdicion?.let { actividad ->
 
         EditarActividadDialog(

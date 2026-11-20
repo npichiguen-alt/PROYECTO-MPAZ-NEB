@@ -1,6 +1,6 @@
 
 package com.example.mpazneb.ui.screens.administracion
-
+import com.example.mpazneb.ui.viewmodel.AdministracionViewModel
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
