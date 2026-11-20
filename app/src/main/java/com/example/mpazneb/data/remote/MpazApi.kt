@@ -1,9 +1,13 @@
-﻿package com.example.mpazneb.data.remote
+﻿
+package com.example.mpazneb.data.remote
 
 import com.example.mpazneb.model.Actividad
 import com.example.mpazneb.model.ActividadRequest
 import com.example.mpazneb.model.AsignacionRequest
 import com.example.mpazneb.model.AsignacionRemota
+
+import com.example.mpazneb.model.asistente.AsignacionRequest as AsignacionAsistenteRequest
+import com.example.mpazneb.model.asistente.AsignacionAula
 
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -22,7 +26,8 @@ interface MpazApi {
         @Body actividad: ActividadRequest
     ): Actividad
 
-    // ASIGNACIONES DE KATY
+
+    // ASIGNACIONES DE MATÍAS
 
     @GET("api/asignaciones")
     suspend fun obtenerAsignaciones(): List<AsignacionRemota>
@@ -41,4 +46,15 @@ interface MpazApi {
     suspend fun crearAsignacion(
         @Body asignacion: AsignacionRequest
     ): AsignacionRemota
+
+
+    // ASIGNACIONES DEL MÓDULO ASISTENTE
+
+    @POST("api/asignaciones")
+    suspend fun crearAsignacionAsistente(
+        @Body asignacion: AsignacionAsistenteRequest
+    ): AsignacionAula
+
+    @GET("api/asignaciones")
+    suspend fun obtenerAsignacionesAsistente(): List<AsignacionAula>
 }

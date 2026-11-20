@@ -21,9 +21,12 @@ import java.util.UUID
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.example.mpazneb.model.asistente.AsignacionRequest
+import com.example.mpazneb.repository.asistente.AsignacionRemotaRepository
 
 class AsistenteViewModel(
-    private val fuente: AsistenteDataSource
+    private val fuente: AsistenteDataSource,
+    private val repositorioRemoto: AsignacionRemotaRepository? = null
 ) : ViewModel() {
 
 
@@ -57,6 +60,11 @@ class AsistenteViewModel(
         SharingStarted.WhileSubscribed(5_000),
         emptyList()
     )
+    // ASIGNACIONES OBTENIDAS DESDE SPRING BOOT
+    var asignacionesRemotas by mutableStateOf<List<AsignacionAula>>(emptyList())
+        private set
+    var asignacionesRemotasCargadas by mutableStateOf(false)
+        private set
 
     // RESULTADOS DE ACTIVIDADES
     val resultados = fuente.resultados.stateIn(
@@ -120,6 +128,26 @@ class AsistenteViewModel(
     // LIMPIAR MENSAJE
     fun limpiarMensaje() {
         mensaje = ""
+    }
+    // CONSULTAR ASIGNACIONES GUARDADAS EN SPRING BOOT
+    fun cargarAsignacionesRemotas() {
+
+        if (trabajando || repositorioRemoto == null) return
+
+        trabajando = true
+
+        viewModelScope.launch {
+            try {
+                asignacionesRemotas = repositorioRemoto.obtenerAsignaciones()
+                asignacionesRemotasCargadas = true
+
+            } catch (e: Exception) {
+                mensaje = "No se pudieron cargar las asignaciones del servidor: ${e.message ?: "error de conexión"}"
+
+            } finally {
+                trabajando = false
+            }
+        }
     }
 
     // CAMBIAR MODULO
@@ -204,28 +232,47 @@ class AsistenteViewModel(
 
             try {
 
-                // GENERAR CODIGO DE DEMOSTRACION
-                val codigo = UUID.randomUUID()
-                    .toString()
-                    .replace("-", "")
-                    .take(10)
-                    .uppercase(Locale.ROOT)
+                if (repositorioRemoto != null) {
 
-                // GUARDAR LA ASIGNACION
-                fuente.crearAsignacion(
-                    AsignacionAula(
+                    // CREAR ASIGNACION EN SPRING BOOT
+                    val solicitud = AsignacionRequest(
                         actividadId = actividad.id,
                         actividadTitulo = actividad.titulo,
                         estudianteAlias = datos.estudianteAlias,
-                        codigoTemporal = codigo,
                         asistenteAlias = "ASISTENTE_DEMO",
                         curso = datos.curso
                     )
-                )
 
-                mensaje =
-                    "Actividad asignada correctamente. Código:  $codigo"
+                    val asignacionGuardada =
+                        repositorioRemoto.crearAsignacion(solicitud)
 
+                    // MOSTRAR EL CODIGO GENERADO POR EL SERVIDOR
+                    mensaje =
+                        "Actividad asignada correctamente. Código: ${asignacionGuardada.codigoTemporal}"
+
+                } else {
+
+                    // CONSERVAR EL FUNCIONAMIENTO LOCAL
+                    val codigo = UUID.randomUUID()
+                        .toString()
+                        .replace("-", "")
+                        .take(10)
+                        .uppercase(Locale.ROOT)
+
+                    fuente.crearAsignacion(
+                        AsignacionAula(
+                            actividadId = actividad.id,
+                            actividadTitulo = actividad.titulo,
+                            estudianteAlias = datos.estudianteAlias,
+                            codigoTemporal = codigo,
+                            asistenteAlias = "ASISTENTE_DEMO",
+                            curso = datos.curso
+                        )
+                    )
+
+                    mensaje =
+                        "Actividad asignada correctamente. Código: $codigo"
+                }
                 // LIMPIAR EL FORMULARIO
                 formulario = FormularioAsignacion()
 
@@ -290,7 +337,8 @@ class AsistenteViewModel(
 
 // FACTORY PARA CREAR EL VIEWMODEL
 class AsistenteViewModelFactory(
-    private val fuente: AsistenteDataSource
+    private val fuente: AsistenteDataSource,
+    private val repositorioRemoto: AsignacionRemotaRepository? = null
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(
@@ -304,7 +352,10 @@ class AsistenteViewModelFactory(
         ) {
 
             @Suppress("UNCHECKED_CAST")
-            return AsistenteViewModel(fuente) as T
+            return AsistenteViewModel(
+                fuente = fuente,
+                repositorioRemoto = repositorioRemoto
+            ) as T
 
         }
 

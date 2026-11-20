@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.example.mpazneb.repository.asistente.AsistenteDataSource
+import com.example.mpazneb.repository.asistente.AsignacionRemotaRepository
 import com.example.mpazneb.viewmodel.AsistenteViewModel
 import com.example.mpazneb.viewmodel.AsistenteViewModelFactory
 
@@ -30,10 +31,17 @@ fun AsistenteScreen(
     fuente: AsistenteDataSource
 ) {
 
-    // VIEWMODEL DEL ASISTENTE
+    // CREAR EL VIEWMODEL DEL ASISTENTE
+    val repositorioRemoto = remember {
+        AsignacionRemotaRepository()
+    }
+
     val vm: AsistenteViewModel = viewModel(
-        factory = remember(fuente) {
-            AsistenteViewModelFactory(fuente)
+        factory = remember(fuente, repositorioRemoto) {
+            AsistenteViewModelFactory(
+                fuente = fuente,
+                repositorioRemoto = repositorioRemoto
+            )
         }
     )
 
@@ -41,6 +49,7 @@ fun AsistenteScreen(
     val actividades by vm.actividades.collectAsState()
     val estudiantes by vm.estudiantes.collectAsState()
     val asignaciones by vm.asignaciones.collectAsState()
+    val asignacionesRemotas = vm.asignacionesRemotas
     val resultados by vm.resultados.collectAsState()
 
     // PANTALLA ACTUAL
@@ -310,11 +319,19 @@ fun AsistenteScreen(
 
                     "SEGUIMIENTO" -> {
 
+                        LaunchedEffect(Unit) {
+                            vm.cargarAsignacionesRemotas()
+                        }
+
                         SeguimientoAsistenteScreen(
-                            asignaciones = asignaciones,
+                            asignaciones =
+                                if (vm.asignacionesRemotasCargadas) {
+                                    asignacionesRemotas
+                                } else {
+                                    asignaciones
+                                },
                             resultados = resultados,
                             trabajando = vm.trabajando,
-
                             onGuardarObservacion =
                                 vm::guardarObservacion
                         )
