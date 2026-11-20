@@ -2,7 +2,18 @@
 package com.example.mpazneb.ui.screens.asistente
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -14,39 +25,42 @@ import com.example.mpazneb.repository.asistente.AsistenteDataSource
 import com.example.mpazneb.viewmodel.AsistenteViewModel
 import com.example.mpazneb.viewmodel.AsistenteViewModelFactory
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Assignment
-import androidx.compose.material.icons.filled.Assessment
 @Composable
 fun AsistenteScreen(
     fuente: AsistenteDataSource
 ) {
 
-    // CREAR EL VIEWMODEL DEL ASISTENTE
+    // VIEWMODEL DEL ASISTENTE
     val vm: AsistenteViewModel = viewModel(
         factory = remember(fuente) {
             AsistenteViewModelFactory(fuente)
         }
     )
 
-    // OBTENER LOS DATOS DEL VIEWMODEL
+    // DATOS LOCALES DE ROOM
     val actividades by vm.actividades.collectAsState()
     val estudiantes by vm.estudiantes.collectAsState()
     val asignaciones by vm.asignaciones.collectAsState()
     val resultados by vm.resultados.collectAsState()
 
-    // RECORDAR LA PANTALLA ACTUAL
+    // PANTALLA ACTUAL
     var seccion by rememberSaveable {
         mutableStateOf("INICIO")
+    }
+
+    // ORIGEN DEL CATALOGO
+    var origenCatalogo by rememberSaveable {
+        mutableStateOf("LOCAL")
+    }
+
+    // CARGAR ACTIVIDADES DE AWS CUANDO CORRESPONDA
+    LaunchedEffect(seccion, origenCatalogo) {
+        if (
+            seccion == "CATALOGO" &&
+            origenCatalogo == "AWS"
+        ) {
+            vm.cargarActividadesRemotas()
+        }
     }
 
     // BOTON ATRAS DEL TELEFONO
@@ -54,8 +68,7 @@ fun AsistenteScreen(
         seccion = "INICIO"
     }
 
-    // OPCIONES DEL MENU
-
+    // OPCIONES DEL MENU INFERIOR
     val opciones = listOf(
         Triple("INICIO", "Inicio", Icons.Filled.Home),
         Triple("CATALOGO", "Catálogo", Icons.Filled.MenuBook),
@@ -64,14 +77,9 @@ fun AsistenteScreen(
         Triple("SEGUIMIENTO", "Seguimiento", Icons.Filled.Assessment)
     )
 
-
     Scaffold(
-
-        // BARRA INFERIOR DE NAVEGACION
         bottomBar = {
-
             NavigationBar {
-
                 opciones.forEach { (clave, etiqueta, icono) ->
 
                     NavigationBarItem(
@@ -96,7 +104,6 @@ fun AsistenteScreen(
                 }
             }
         }
-
     ) { innerPadding ->
 
         Column(
@@ -105,9 +112,7 @@ fun AsistenteScreen(
                 .padding(innerPadding)
         ) {
 
-            // MOSTRAR MENSAJES DEL VIEWMODEL
-
-            // MOSTRAR MENSAJES CON ANIMACIÓN
+            // MENSAJES DEL VIEWMODEL
             AnimatedVisibility(
                 visible = vm.mensaje.isNotBlank(),
                 enter = fadeIn() + expandVertically(),
@@ -140,7 +145,7 @@ fun AsistenteScreen(
                 }
             }
 
-            // MOSTRAR LA PANTALLA SELECCIONADA
+            // CONTENIDO PRINCIPAL
             Box(
                 modifier = Modifier.weight(1f)
             ) {
@@ -152,12 +157,15 @@ fun AsistenteScreen(
                         AsistenteInicioScreen(
                             actividades = actividades,
                             asignaciones = asignaciones,
+
                             irCatalogo = {
                                 seccion = "CATALOGO"
                             },
+
                             irAsignar = {
                                 seccion = "ASIGNAR"
                             },
+
                             irResultados = {
                                 seccion = "SEGUIMIENTO"
                             }
@@ -166,12 +174,107 @@ fun AsistenteScreen(
 
                     "CATALOGO" -> {
 
-                        CatalogoAsistenteScreen(
-                            actividades = actividades,
-                            onIrAsignar = {
-                                seccion = "ASIGNAR"
+                        Column(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+
+                            // SELECCION DEL ORIGEN
+                            Row(
+                                modifier = Modifier.padding(8.dp),
+                                horizontalArrangement =
+                                    Arrangement.spacedBy(8.dp)
+                            ) {
+
+                                FilterChip(
+                                    selected = origenCatalogo == "LOCAL",
+                                    onClick = {
+                                        origenCatalogo = "LOCAL"
+                                    },
+                                    label = {
+                                        Text("Room local")
+                                    }
+                                )
+
+                                FilterChip(
+                                    selected = origenCatalogo == "AWS",
+                                    onClick = {
+                                        origenCatalogo = "AWS"
+                                    },
+                                    label = {
+                                        Text("Servidor AWS")
+                                    }
+                                )
                             }
-                        )
+
+                            // CARGANDO DATOS REMOTOS
+                            if (
+                                origenCatalogo == "AWS" &&
+                                vm.cargandoActividadesRemotas
+                            ) {
+
+                                LinearProgressIndicator(
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+
+                            // ERRORES DE CONEXION
+                            if (
+                                origenCatalogo == "AWS" &&
+                                vm.errorActividadesRemotas.isNotBlank()
+                            ) {
+
+                                Text(
+                                    text = vm.errorActividadesRemotas,
+                                    color =
+                                        MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(8.dp)
+                                )
+                            }
+
+                            // AVISO SOBRE EL MODO AWS
+                            if (origenCatalogo == "AWS") {
+
+                                Text(
+                                    text = "Actividades del servidor AWS. " +
+                                            "La asignación remota estará " +
+                                            "disponible próximamente.",
+                                    modifier = Modifier.padding(
+                                        horizontal = 16.dp,
+                                        vertical = 4.dp
+                                    ),
+                                    style =
+                                        MaterialTheme.typography.bodySmall
+                                )
+                            }
+
+                            // CATALOGO
+                            Box(
+                                modifier = Modifier.weight(1f)
+                            ) {
+
+                                CatalogoAsistenteScreen(
+                                    actividades =
+                                        if (origenCatalogo == "AWS") {
+                                            vm.actividadesRemotas
+                                        } else {
+                                            actividades
+                                        },
+
+                                    onIrAsignar = { actividadId ->
+
+                                        if (origenCatalogo == "LOCAL") {
+                                            vm.prepararActividad(
+                                                actividadId
+                                            )
+                                            seccion = "ASIGNAR"
+                                        }
+                                    },
+
+                                    permitirAsignar =
+                                        origenCatalogo == "LOCAL"
+                                )
+                            }
+                        }
                     }
 
                     "ESTUDIANTES" -> {
@@ -179,6 +282,7 @@ fun AsistenteScreen(
                         EstudiantesAsistenteScreen(
                             estudiantes = estudiantes,
                             asignaciones = asignaciones,
+
                             onIrAsignar = {
                                 seccion = "ASIGNAR"
                             }
@@ -195,7 +299,8 @@ fun AsistenteScreen(
 
                             onModuloChange = vm::cambiarModulo,
                             onCursoChange = vm::cambiarCurso,
-                            onDificultadChange = vm::cambiarDificultad,
+                            onDificultadChange =
+                                vm::cambiarDificultad,
                             onActividadChange = vm::elegirActividad,
                             onEstudianteChange = vm::elegirEstudiante,
 
@@ -209,6 +314,7 @@ fun AsistenteScreen(
                             asignaciones = asignaciones,
                             resultados = resultados,
                             trabajando = vm.trabajando,
+
                             onGuardarObservacion =
                                 vm::guardarObservacion
                         )

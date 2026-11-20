@@ -10,6 +10,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.mpazneb.model.asistente.*
 
 import com.example.mpazneb.repository.asistente.AsistenteDataSource
+import com.example.mpazneb.data.remote.RetrofitClient
+import com.example.mpazneb.model.asistente.ActividadAula
+import kotlinx.coroutines.CancellationException
 
 
 import java.util.Locale
@@ -22,6 +25,17 @@ import kotlinx.coroutines.launch
 class AsistenteViewModel(
     private val fuente: AsistenteDataSource
 ) : ViewModel() {
+
+
+    // ACTIVIDADES OBTENIDAS DESDE AWS
+    var actividadesRemotas by mutableStateOf<List<ActividadAula>>(emptyList())
+        private set
+
+    var cargandoActividadesRemotas by mutableStateOf(false)
+        private set
+
+    var errorActividadesRemotas by mutableStateOf("")
+        private set
 
     // ACTIVIDADES DISPONIBLES
     val actividades = fuente.actividades.stateIn(
@@ -62,6 +76,46 @@ class AsistenteViewModel(
     // INDICA SI SE ESTA GUARDANDO INFORMACION
     var trabajando by mutableStateOf(false)
         private set
+    // CONSULTAR ACTIVIDADES DISPONIBLES EN AWS
+    fun cargarActividadesRemotas() {
+
+        if (cargandoActividadesRemotas) return
+
+        cargandoActividadesRemotas = true
+        errorActividadesRemotas = ""
+
+        viewModelScope.launch {
+            try {
+                val actividadesServidor =
+                    RetrofitClient.api.obtenerActividades()
+
+                actividadesRemotas = actividadesServidor
+                    .filter { it.activa }
+                    .map { actividad ->
+                        ActividadAula(
+                            id = actividad.id,
+                            titulo = actividad.titulo,
+                            modulo = actividad.modulo,
+                            curso = actividad.curso,
+                            dificultad = actividad.dificultad,
+                            descripcion = actividad.descripcion,
+                            estado = "Disponible"
+                        )
+                    }
+
+            } catch (error: CancellationException) {
+                throw error
+
+            } catch (error: Exception) {
+                errorActividadesRemotas =
+                    "No se pudieron cargar las actividades de AWS: " +
+                            (error.message ?: "error de conexión")
+
+            } finally {
+                cargandoActividadesRemotas = false
+            }
+        }
+    }
 
     // LIMPIAR MENSAJE
     fun limpiarMensaje() {
@@ -96,6 +150,20 @@ class AsistenteViewModel(
     fun elegirActividad(id: Int) {
         formulario = formulario.copy(
             actividadId = id
+        )
+    }
+    // PRESELECCIONAR ACTIVIDAD DESDE EL CATALOGO
+    fun prepararActividad(id: Int) {
+
+        val actividad = actividades.value.firstOrNull {
+            it.id == id
+        } ?: return
+
+        formulario = formulario.copy(
+            modulo = actividad.modulo,
+            curso = actividad.curso,
+            dificultad = actividad.dificultad,
+            actividadId = actividad.id
         )
     }
 

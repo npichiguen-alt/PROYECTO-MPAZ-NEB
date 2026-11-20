@@ -19,7 +19,8 @@ import com.example.mpazneb.ui.theme.MPAZNEBTheme
 @Composable
 fun CatalogoAsistenteScreen(
     actividades: List<ActividadAula>,
-    onIrAsignar: () -> Unit
+    onIrAsignar: (Int) -> Unit,
+    permitirAsignar: Boolean = true
 ) {
 
     // FILTROS SELECCIONADOS
@@ -31,7 +32,7 @@ fun CatalogoAsistenteScreen(
         mutableIntStateOf(0)
     }
 
-    // ACTIVIDADES QUE CUMPLEN LOS FILTROS
+    // FILTRAR ACTIVIDADES DISPONIBLES
     val actividadesFiltradas = actividades.filter { actividad ->
 
         val moduloCoincide =
@@ -75,6 +76,7 @@ fun CatalogoAsistenteScreen(
             ),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+
             listOf(
                 "Todos",
                 "Lectura",
@@ -119,8 +121,11 @@ fun CatalogoAsistenteScreen(
                     },
                     label = {
                         Text(
-                            if (curso == 0) "Todos"
-                            else "${curso}° básico"
+                            if (curso == 0) {
+                                "Todos"
+                            } else {
+                                "${curso}° básico"
+                            }
                         )
                     }
                 )
@@ -129,6 +134,7 @@ fun CatalogoAsistenteScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // CANTIDAD DE ACTIVIDADES
         Text(
             text = "Actividades encontradas: ${actividadesFiltradas.size}",
             style = MaterialTheme.typography.bodyMedium
@@ -192,10 +198,16 @@ fun CatalogoAsistenteScreen(
                                     MaterialTheme.typography.bodyMedium
                             )
 
-                            BotonAsistente(
-                                texto = "Ir a asignar",
-                                onClick = onIrAsignar
-                            )
+                            // SOLO PERMITIR ASIGNAR EN MODO LOCAL
+                            if (permitirAsignar) {
+
+                                BotonAsistente(
+                                    texto = "Ir a asignar",
+                                    onClick = {
+                                        onIrAsignar(actividad.id)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
