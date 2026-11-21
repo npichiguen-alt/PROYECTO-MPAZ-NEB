@@ -1,13 +1,33 @@
-
 package com.example.mpazneb.repository.asistente
 
+import com.example.mpazneb.data.remote.MpazApi
 import com.example.mpazneb.data.remote.RetrofitClient
+import com.example.mpazneb.model.Resultado
+import com.example.mpazneb.model.asistente.ActividadAula
 import com.example.mpazneb.model.asistente.AsignacionAula
 import com.example.mpazneb.model.asistente.AsignacionRequest
+import com.example.mpazneb.model.asistente.ObservacionRequest
+import com.example.mpazneb.model.asistente.ResultadoAula
 
-class AsignacionRemotaRepository {
+class AsignacionRemotaRepository(
+    private val api: MpazApi = RetrofitClient.api
+) {
 
-    private val api = RetrofitClient.api
+    suspend fun obtenerActividades(): List<ActividadAula> {
+        return api.obtenerActividades()
+            .filter { it.activa }
+            .map { actividad ->
+                ActividadAula(
+                    id = actividad.id,
+                    titulo = actividad.titulo,
+                    modulo = actividad.modulo,
+                    curso = actividad.curso,
+                    dificultad = actividad.dificultad,
+                    descripcion = actividad.descripcion,
+                    estado = "Disponible"
+                )
+            }
+    }
 
     suspend fun crearAsignacion(
         solicitud: AsignacionRequest
@@ -17,5 +37,42 @@ class AsignacionRemotaRepository {
 
     suspend fun obtenerAsignaciones(): List<AsignacionAula> {
         return api.obtenerAsignacionesAsistente()
+    }
+
+    suspend fun obtenerResultados(
+        asignacionId: Int
+    ): List<ResultadoAula> {
+
+        return api.obtenerResultadosPorAsignacion(asignacionId)
+            .map { convertirResultado(it) }
+    }
+
+    suspend fun guardarObservacion(
+        resultadoId: Int,
+        texto: String
+    ): ResultadoAula {
+
+        val resultado = api.actualizarObservacion(
+            id = resultadoId,
+            solicitud = ObservacionRequest(
+                observacion = texto.trim()
+            )
+        )
+
+        return convertirResultado(resultado)
+    }
+
+    private fun convertirResultado(
+        resultado: Resultado
+    ): ResultadoAula {
+
+        return ResultadoAula(
+            id = resultado.id,
+            asignacionId = resultado.asignacionId,
+            aciertos = resultado.aciertos,
+            totalPreguntas = resultado.totalPreguntas,
+            intentos = resultado.intentos,
+            observacion = resultado.observacion
+        )
     }
 }

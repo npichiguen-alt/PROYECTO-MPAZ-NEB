@@ -1,3 +1,4 @@
+
 package com.example.mpazneb.viewmodel
 
 import androidx.compose.runtime.getValue
@@ -8,30 +9,66 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 
 import com.example.mpazneb.model.asistente.*
-
 import com.example.mpazneb.repository.asistente.AsistenteDataSource
-import com.example.mpazneb.data.remote.RetrofitClient
-import com.example.mpazneb.model.asistente.ActividadAula
+import com.example.mpazneb.repository.asistente.AsignacionRemotaRepository
+
 import kotlinx.coroutines.CancellationException
-
-
-import java.util.Locale
-import java.util.UUID
-
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import com.example.mpazneb.model.asistente.AsignacionRequest
-import com.example.mpazneb.repository.asistente.AsignacionRemotaRepository
+
+import java.util.Locale
+import java.util.UUID
 
 class AsistenteViewModel(
     private val fuente: AsistenteDataSource,
     private val repositorioRemoto: AsignacionRemotaRepository? = null
 ) : ViewModel() {
 
+    // DATOS LOCALES DE ROOM
 
-    // ACTIVIDADES OBTENIDAS DESDE AWS
-    var actividadesRemotas by mutableStateOf<List<ActividadAula>>(emptyList())
+    val actividades = fuente.actividades.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5_000),
+        emptyList()
+    )
+
+    val estudiantes = fuente.estudiantes.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5_000),
+        emptyList()
+    )
+
+    val asignaciones = fuente.asignaciones.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5_000),
+        emptyList()
+    )
+
+    val resultados = fuente.resultados.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5_000),
+        emptyList()
+    )
+
+    // DATOS REMOTOS DE AWS
+
+    var actividadesRemotas by mutableStateOf<List<ActividadAula>>(
+        emptyList()
+    )
+        private set
+
+    var asignacionesRemotas by mutableStateOf<List<AsignacionAula>>(
+        emptyList()
+    )
+        private set
+
+    var resultadosRemotos by mutableStateOf<List<ResultadoAula>>(
+        emptyList()
+    )
+        private set
+
+    var asignacionesRemotasCargadas by mutableStateOf(false)
         private set
 
     var cargandoActividadesRemotas by mutableStateOf(false)
@@ -40,52 +77,32 @@ class AsistenteViewModel(
     var errorActividadesRemotas by mutableStateOf("")
         private set
 
-    // ACTIVIDADES DISPONIBLES
-    val actividades = fuente.actividades.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5_000),
-        emptyList()
-    )
-
-    // ESTUDIANTES FICTICIOS
-    val estudiantes = fuente.estudiantes.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5_000),
-        emptyList()
-    )
-
-    // ASIGNACIONES REALIZADAS
-    val asignaciones = fuente.asignaciones.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5_000),
-        emptyList()
-    )
-    // ASIGNACIONES OBTENIDAS DESDE SPRING BOOT
-    var asignacionesRemotas by mutableStateOf<List<AsignacionAula>>(emptyList())
-        private set
-    var asignacionesRemotasCargadas by mutableStateOf(false)
+    var errorResultadosRemotos by mutableStateOf("")
         private set
 
-    // RESULTADOS DE ACTIVIDADES
-    val resultados = fuente.resultados.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5_000),
-        emptyList()
-    )
+    // ESTADOS DEL FORMULARIO
 
-    // DATOS DEL FORMULARIO
     var formulario by mutableStateOf(FormularioAsignacion())
         private set
 
-    // MENSAJE PARA EL USUARIO
     var mensaje by mutableStateOf("")
         private set
 
-    // INDICA SI SE ESTA GUARDANDO INFORMACION
     var trabajando by mutableStateOf(false)
         private set
-    // CONSULTAR ACTIVIDADES DISPONIBLES EN AWS
+
+    val actividadesParaAsignar: List<ActividadAula>
+        get() = if (repositorioRemoto != null) {
+            actividadesRemotas
+        } else {
+            actividades.value
+        }
+
+    // CONSULTAR ACTIVIDADES DESDE AWS
+
     fun cargarActividadesRemotas() {
+
+        val repositorio = repositorioRemoto ?: return
 
         if (cargandoActividadesRemotas) return
 
@@ -93,65 +110,109 @@ class AsistenteViewModel(
         errorActividadesRemotas = ""
 
         viewModelScope.launch {
+
             try {
-                val actividadesServidor =
-                    RetrofitClient.api.obtenerActividades()
 
-                actividadesRemotas = actividadesServidor
-                    .filter { it.activa }
-                    .map { actividad ->
-                        ActividadAula(
-                            id = actividad.id,
-                            titulo = actividad.titulo,
-                            modulo = actividad.modulo,
-                            curso = actividad.curso,
-                            dificultad = actividad.dificultad,
-                            descripcion = actividad.descripcion,
-                            estado = "Disponible"
-                        )
-                    }
+                actividadesRemotas =
+                    repositorio.obtenerActividades()
 
-            } catch (error: CancellationException) {
-                throw error
+            } catch (e: CancellationException) {
+                throw e
 
-            } catch (error: Exception) {
+            } catch (e: Exception) {
+
                 errorActividadesRemotas =
-                    "No se pudieron cargar las actividades de AWS: " +
-                            (error.message ?: "error de conexión")
+                    "No se pudieron cargar las actividades: " +
+                            (e.message ?: "error de conexión")
 
             } finally {
+
                 cargandoActividadesRemotas = false
             }
         }
     }
 
-    // LIMPIAR MENSAJE
-    fun limpiarMensaje() {
-        mensaje = ""
-    }
-    // CONSULTAR ASIGNACIONES GUARDADAS EN SPRING BOOT
+    // CONSULTAR ASIGNACIONES Y RESULTADOS DESDE AWS
+
     fun cargarAsignacionesRemotas() {
 
-        if (trabajando || repositorioRemoto == null) return
+        val repositorio = repositorioRemoto ?: return
+
+        if (trabajando) return
 
         trabajando = true
+        errorResultadosRemotos = ""
 
         viewModelScope.launch {
+
             try {
-                asignacionesRemotas = repositorioRemoto.obtenerAsignaciones()
+
+                asignacionesRemotas =
+                    repositorio.obtenerAsignaciones()
+
                 asignacionesRemotasCargadas = true
 
+                resultadosRemotos = emptyList()
+
+                val resultadosConsultados =
+                    mutableListOf<ResultadoAula>()
+
+                var huboError = false
+
+                for (asignacion in asignacionesRemotas) {
+
+                    try {
+
+                        resultadosConsultados.addAll(
+                            repositorio.obtenerResultados(
+                                asignacion.id
+                            )
+                        )
+
+                    } catch (e: CancellationException) {
+                        throw e
+
+                    } catch (e: Exception) {
+
+                        huboError = true
+                    }
+                }
+
+                resultadosRemotos = resultadosConsultados
+
+                if (huboError) {
+
+                    errorResultadosRemotos =
+                        "No se pudieron consultar algunos resultados. " +
+                                "Presiona Actualizar para reintentar."
+                }
+
+            } catch (e: CancellationException) {
+                throw e
+
             } catch (e: Exception) {
-                mensaje = "No se pudieron cargar las asignaciones del servidor: ${e.message ?: "error de conexión"}"
+
+                mensaje =
+                    "No se pudieron cargar las asignaciones: " +
+                            (e.message ?: "error de conexión")
 
             } finally {
+
                 trabajando = false
             }
         }
     }
 
+    // LIMPIAR MENSAJE
+
+    fun limpiarMensaje() {
+        mensaje = ""
+    }
+
     // CAMBIAR MODULO
+
     fun cambiarModulo(valor: String) {
+
         formulario = formulario.copy(
             modulo = valor,
             actividadId = 0
@@ -159,7 +220,9 @@ class AsistenteViewModel(
     }
 
     // CAMBIAR CURSO
+
     fun cambiarCurso(valor: Int) {
+
         formulario = formulario.copy(
             curso = valor,
             actividadId = 0
@@ -167,25 +230,41 @@ class AsistenteViewModel(
     }
 
     // CAMBIAR DIFICULTAD
+
     fun cambiarDificultad(valor: String) {
+
         formulario = formulario.copy(
             dificultad = valor,
             actividadId = 0
         )
     }
 
-    // SELECCIONAR ACTIVIDAD
+    // ELEGIR ACTIVIDAD
+
     fun elegirActividad(id: Int) {
+
         formulario = formulario.copy(
             actividadId = id
         )
     }
+
+    // ELEGIR ESTUDIANTE
+
+    fun elegirEstudiante(alias: String) {
+
+        formulario = formulario.copy(
+            estudianteAlias = alias
+        )
+    }
+
     // PRESELECCIONAR ACTIVIDAD DESDE EL CATALOGO
+
     fun prepararActividad(id: Int) {
 
-        val actividad = actividades.value.firstOrNull {
-            it.id == id
-        } ?: return
+        val actividad =
+            actividadesParaAsignar.firstOrNull {
+                it.id == id
+            } ?: return
 
         formulario = formulario.copy(
             modulo = actividad.modulo,
@@ -195,34 +274,29 @@ class AsistenteViewModel(
         )
     }
 
-    // SELECCIONAR ESTUDIANTE
-    fun elegirEstudiante(alias: String) {
-        formulario = formulario.copy(
-            estudianteAlias = alias
-        )
-    }
+    // CREAR ASIGNACION
 
-    // CREAR UNA NUEVA ASIGNACION
     fun asignarActividad() {
 
         if (trabajando) return
 
         val datos = formulario
 
-        // VALIDAR EL FORMULARIO
+        val disponibles = actividadesParaAsignar
+
         val error = ValidadorAsignacion.validar(
             datos,
-            actividades.value,
+            disponibles,
             estudiantes.value
         )
 
         if (error != null) {
+
             mensaje = error
             return
         }
 
-        // BUSCAR LA ACTIVIDAD SELECCIONADA
-        val actividad = actividades.value.first {
+        val actividad = disponibles.first {
             it.id == datos.actividadId
         }
 
@@ -234,7 +308,8 @@ class AsistenteViewModel(
 
                 if (repositorioRemoto != null) {
 
-                    // CREAR ASIGNACION EN SPRING BOOT
+                    // GUARDAR EN SPRING BOOT Y POSTGRESQL
+
                     val solicitud = AsignacionRequest(
                         actividadId = actividad.id,
                         actividadTitulo = actividad.titulo,
@@ -243,16 +318,26 @@ class AsistenteViewModel(
                         curso = datos.curso
                     )
 
-                    val asignacionGuardada =
-                        repositorioRemoto.crearAsignacion(solicitud)
+                    val guardada =
+                        repositorioRemoto.crearAsignacion(
+                            solicitud
+                        )
 
-                    // MOSTRAR EL CODIGO GENERADO POR EL SERVIDOR
+                    // ACTUALIZAR ASIGNACIONES Y CONTADORES
+
+                    asignacionesRemotas =
+                        asignacionesRemotas.filterNot {
+                            it.id == guardada.id
+                        } + guardada
+
                     mensaje =
-                        "Actividad asignada correctamente. Código: ${asignacionGuardada.codigoTemporal}"
+                        "Actividad asignada correctamente. " +
+                                "Código: ${guardada.codigoTemporal}"
 
                 } else {
 
-                    // CONSERVAR EL FUNCIONAMIENTO LOCAL
+                    // CONSERVAR FUNCIONAMIENTO LOCAL
+
                     val codigo = UUID.randomUUID()
                         .toString()
                         .replace("-", "")
@@ -271,25 +356,30 @@ class AsistenteViewModel(
                     )
 
                     mensaje =
-                        "Actividad asignada correctamente. Código: $codigo"
+                        "Actividad asignada correctamente. " +
+                                "Código: $codigo"
                 }
-                // LIMPIAR EL FORMULARIO
+
                 formulario = FormularioAsignacion()
+
+            } catch (e: CancellationException) {
+                throw e
 
             } catch (e: Exception) {
 
                 mensaje =
-                    "No se pudo guardar la asignación: ${e.message ?: "intenta otra vez"}"
+                    "No se pudo guardar la asignación: " +
+                            (e.message ?: "error de conexión")
 
             } finally {
 
                 trabajando = false
-
             }
         }
     }
 
     // GUARDAR OBSERVACION PEDAGOGICA
+
     fun guardarObservacion(
         resultadoId: Int,
         texto: String
@@ -297,11 +387,11 @@ class AsistenteViewModel(
 
         if (trabajando) return
 
-        // VALIDAR LA OBSERVACION
         val error =
             ValidadorAsignacion.validarObservacion(texto)
 
         if (error != null) {
+
             mensaje = error
             return
         }
@@ -312,30 +402,61 @@ class AsistenteViewModel(
 
             try {
 
-                // GUARDAR LA OBSERVACION
-                fuente.guardarObservacion(
-                    resultadoId,
-                    texto.trim()
-                )
+                if (repositorioRemoto != null) {
+
+                    // ACTUALIZAR OBSERVACION EN POSTGRESQL
+
+                    val actualizado =
+                        repositorioRemoto.guardarObservacion(
+                            resultadoId,
+                            texto.trim()
+                        )
+
+                    resultadosRemotos =
+                        resultadosRemotos.map { resultado ->
+
+                            if (resultado.id == actualizado.id) {
+
+                                actualizado
+
+                            } else {
+
+                                resultado
+                            }
+                        }
+
+                } else {
+
+                    // GUARDADO LOCAL PARA ROOM
+
+                    fuente.guardarObservacion(
+                        resultadoId,
+                        texto.trim()
+                    )
+                }
 
                 mensaje =
                     "Observación guardada correctamente."
 
+            } catch (e: CancellationException) {
+                throw e
+
             } catch (e: Exception) {
 
                 mensaje =
-                    "No se pudo guardar la observación: ${e.message ?: "error"}"
+                    "No se pudo guardar la observación: " +
+                            (e.message ?: "error de conexión")
 
             } finally {
 
                 trabajando = false
-
             }
         }
     }
 }
 
-// FACTORY PARA CREAR EL VIEWMODEL
+// FACTORY DEL VIEWMODEL
+
 class AsistenteViewModelFactory(
     private val fuente: AsistenteDataSource,
     private val repositorioRemoto: AsignacionRemotaRepository? = null
@@ -356,7 +477,6 @@ class AsistenteViewModelFactory(
                 fuente = fuente,
                 repositorioRemoto = repositorioRemoto
             ) as T
-
         }
 
         throw IllegalArgumentException(

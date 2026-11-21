@@ -1,5 +1,4 @@
-﻿
-package com.example.mpazneb.data.remote
+﻿package com.example.mpazneb.data.remote
 
 import com.example.mpazneb.model.Actividad
 import com.example.mpazneb.model.ActividadRequest
@@ -9,18 +8,19 @@ import com.example.mpazneb.model.Respuesta
 import com.example.mpazneb.model.RespuestaRequest
 import com.example.mpazneb.model.Resultado
 import com.example.mpazneb.data.local.PreguntaEntity
-
 import com.example.mpazneb.model.asistente.AsignacionRequest as AsignacionAsistenteRequest
 import com.example.mpazneb.model.asistente.AsignacionAula
+import com.example.mpazneb.model.asistente.ObservacionRequest
 
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PATCH
 import retrofit2.http.Path
 
 interface MpazApi {
 
-    // ACTIVIDADES DE ADMINISTRACIÓN
+    // ADMINISTRACION
 
     @GET("api/actividades")
     suspend fun obtenerActividades(): List<Actividad>
@@ -30,8 +30,7 @@ interface MpazApi {
         @Body actividad: ActividadRequest
     ): Actividad
 
-
-    // ASIGNACIONES DE MATÍAS
+    // ASIGNACIONES
 
     @GET("api/asignaciones")
     suspend fun obtenerAsignaciones(): List<AsignacionRemota>
@@ -61,8 +60,7 @@ interface MpazApi {
         @Path("actividadId") actividadId: Int
     ): List<PreguntaEntity>
 
-
-    // RESPUESTAS DEL MÓDULO ESTUDIANTE
+    // ESTUDIANTE
 
     @POST("api/respuestas")
     suspend fun registrarRespuesta(
@@ -74,9 +72,6 @@ interface MpazApi {
         @Path("asignacionId") asignacionId: Int
     ): List<Respuesta>
 
-
-    // RESULTADOS DEL MÓDULO ESTUDIANTE
-
     @GET("api/resultados/asignacion/{asignacionId}")
     suspend fun obtenerResultadosPorAsignacion(
         @Path("asignacionId") asignacionId: Int
@@ -87,8 +82,7 @@ interface MpazApi {
         @Path("asignacionId") asignacionId: Int
     ): Resultado
 
-
-    // ASIGNACIONES DEL MÓDULO ASISTENTE
+    // ASISTENTE
 
     @POST("api/asignaciones")
     suspend fun crearAsignacionAsistente(
@@ -97,4 +91,12 @@ interface MpazApi {
 
     @GET("api/asignaciones")
     suspend fun obtenerAsignacionesAsistente(): List<AsignacionAula>
+
+    // OBSERVACIONES PEDAGOGICAS
+
+    @PATCH("api/resultados/{id}/observacion")
+    suspend fun actualizarObservacion(
+        @Path("id") id: Int,
+        @Body solicitud: ObservacionRequest
+    ): Resultado
 }

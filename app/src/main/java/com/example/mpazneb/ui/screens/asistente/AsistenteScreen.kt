@@ -48,9 +48,10 @@ fun AsistenteScreen(
     // DATOS LOCALES DE ROOM
     val actividades by vm.actividades.collectAsState()
     val estudiantes by vm.estudiantes.collectAsState()
-    val asignaciones by vm.asignaciones.collectAsState()
-    val asignacionesRemotas = vm.asignacionesRemotas
-    val resultados by vm.resultados.collectAsState()
+
+    // DATOS REMOTOS DE AWS
+    val asignaciones = vm.asignacionesRemotas
+    val resultados = vm.resultadosRemotos
 
     // PANTALLA ACTUAL
     var seccion by rememberSaveable {
@@ -59,7 +60,7 @@ fun AsistenteScreen(
 
     // ORIGEN DEL CATALOGO
     var origenCatalogo by rememberSaveable {
-        mutableStateOf("LOCAL")
+        mutableStateOf("AWS")
     }
 
     // CARGAR ACTIVIDADES DE AWS CUANDO CORRESPONDA
@@ -69,6 +70,17 @@ fun AsistenteScreen(
             origenCatalogo == "AWS"
         ) {
             vm.cargarActividadesRemotas()
+        }
+    }
+
+    // ACTUALIZAR ASIGNACIONES REMOTAS
+    LaunchedEffect(seccion) {
+        if (
+            seccion == "INICIO" ||
+            seccion == "ESTUDIANTES" ||
+            seccion == "SEGUIMIENTO"
+        ) {
+            vm.cargarAsignacionesRemotas()
         }
     }
 
@@ -161,6 +173,7 @@ fun AsistenteScreen(
 
                 when (seccion) {
 
+                    // PANTALLA DE INICIO
                     "INICIO" -> {
 
                         AsistenteInicioScreen(
@@ -181,6 +194,7 @@ fun AsistenteScreen(
                         )
                     }
 
+                    // CATALOGO DE ACTIVIDADES
                     "CATALOGO" -> {
 
                         Column(
@@ -240,13 +254,12 @@ fun AsistenteScreen(
                                 )
                             }
 
-                            // AVISO SOBRE EL MODO AWS
-                            if (origenCatalogo == "AWS") {
+                            // AVISO SOBRE EL MODO LOCAL
+                            if (origenCatalogo == "LOCAL") {
 
                                 Text(
-                                    text = "Actividades del servidor AWS. " +
-                                            "La asignación remota estará " +
-                                            "disponible próximamente.",
+                                    text = "Catálogo local de consulta. " +
+                                            "Para asignar, selecciona Servidor AWS.",
                                     modifier = Modifier.padding(
                                         horizontal = 16.dp,
                                         vertical = 4.dp
@@ -256,7 +269,7 @@ fun AsistenteScreen(
                                 )
                             }
 
-                            // CATALOGO
+                            // MOSTRAR CATALOGO
                             Box(
                                 modifier = Modifier.weight(1f)
                             ) {
@@ -271,7 +284,7 @@ fun AsistenteScreen(
 
                                     onIrAsignar = { actividadId ->
 
-                                        if (origenCatalogo == "LOCAL") {
+                                        if (origenCatalogo == "AWS") {
                                             vm.prepararActividad(
                                                 actividadId
                                             )
@@ -280,12 +293,13 @@ fun AsistenteScreen(
                                     },
 
                                     permitirAsignar =
-                                        origenCatalogo == "LOCAL"
+                                        origenCatalogo == "AWS"
                                 )
                             }
                         }
                     }
 
+                    // LISTADO DE ESTUDIANTES
                     "ESTUDIANTES" -> {
 
                         EstudiantesAsistenteScreen(
@@ -298,43 +312,109 @@ fun AsistenteScreen(
                         )
                     }
 
+                    // ASIGNAR ACTIVIDADES DESDE AWS
                     "ASIGNAR" -> {
 
-                        AsignarActividadScreen(
-                            formulario = vm.formulario,
-                            actividades = actividades,
-                            estudiantes = estudiantes,
-                            trabajando = vm.trabajando,
-
-                            onModuloChange = vm::cambiarModulo,
-                            onCursoChange = vm::cambiarCurso,
-                            onDificultadChange =
-                                vm::cambiarDificultad,
-                            onActividadChange = vm::elegirActividad,
-                            onEstudianteChange = vm::elegirEstudiante,
-
-                            onAsignar = vm::asignarActividad
-                        )
-                    }
-
-                    "SEGUIMIENTO" -> {
-
                         LaunchedEffect(Unit) {
-                            vm.cargarAsignacionesRemotas()
+                            vm.cargarActividadesRemotas()
                         }
 
-                        SeguimientoAsistenteScreen(
-                            asignaciones =
-                                if (vm.asignacionesRemotasCargadas) {
-                                    asignacionesRemotas
-                                } else {
-                                    asignaciones
-                                },
-                            resultados = resultados,
-                            trabajando = vm.trabajando,
-                            onGuardarObservacion =
-                                vm::guardarObservacion
-                        )
+                        Column {
+
+                            if (vm.cargandoActividadesRemotas) {
+
+                                LinearProgressIndicator(
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+
+                            if (
+                                vm.errorActividadesRemotas.isNotBlank()
+                            ) {
+
+                                Text(
+                                    text = vm.errorActividadesRemotas,
+                                    color =
+                                        MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(8.dp)
+                                )
+
+                                TextButton(
+                                    onClick = vm::cargarActividadesRemotas
+                                ) {
+                                    Text("Reintentar")
+                                }
+                            }
+
+                            Box(
+                                modifier = Modifier.weight(1f)
+                            ) {
+
+                                AsignarActividadScreen(
+                                    formulario = vm.formulario,
+                                    actividades = vm.actividadesParaAsignar,
+                                    estudiantes = estudiantes,
+
+                                    trabajando =
+                                        vm.trabajando ||
+                                                vm.cargandoActividadesRemotas,
+
+                                    onModuloChange = vm::cambiarModulo,
+                                    onCursoChange = vm::cambiarCurso,
+                                    onDificultadChange =
+                                        vm::cambiarDificultad,
+                                    onActividadChange = vm::elegirActividad,
+                                    onEstudianteChange = vm::elegirEstudiante,
+
+                                    onAsignar = vm::asignarActividad
+                                )
+                            }
+                        }
+                    }
+
+                    // SEGUIMIENTO DE ASIGNACIONES Y RESULTADOS
+                    "SEGUIMIENTO" -> {
+
+                        Column {
+
+                            // MOSTRAR ERRORES DE RESULTADOS
+                            if (
+                                vm.errorResultadosRemotos.isNotBlank()
+                            ) {
+
+                                Text(
+                                    text = vm.errorResultadosRemotos,
+                                    color =
+                                        MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(8.dp)
+                                )
+                            }
+
+                            // ACTUALIZAR DATOS DEL SERVIDOR
+                            Row {
+
+                                TextButton(
+                                    onClick = vm::cargarAsignacionesRemotas,
+                                    enabled = !vm.trabajando
+                                ) {
+                                    Text("Actualizar")
+                                }
+                            }
+
+                            Box(
+                                modifier = Modifier.weight(1f)
+                            ) {
+
+                                SeguimientoAsistenteScreen(
+                                    asignaciones = asignaciones,
+                                    resultados = resultados,
+                                    trabajando = vm.trabajando,
+
+                                    onGuardarObservacion =
+                                        vm::guardarObservacion
+                                )
+                            }
+                        }
                     }
                 }
             }
