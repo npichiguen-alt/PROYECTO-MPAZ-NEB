@@ -6,5 +6,6 @@ data class Resultado(
     val aciertos: Int,
     val totalPreguntas: Int,
     val intentos: Int,
-    val observacion: String = ""
+    val observacion: String = "",
+    val fechaRegistro: Long = 0
 )

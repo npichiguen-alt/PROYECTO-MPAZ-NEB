@@ -3,10 +3,14 @@ package com.example.mpazneb.repository.estudiante
 
 import com.example.mpazneb.data.local.RespuestaDao
 import com.example.mpazneb.data.local.RespuestaEntity
+import com.example.mpazneb.data.remote.MpazApi
+import com.example.mpazneb.data.remote.RetrofitClient
 import com.example.mpazneb.model.Respuesta
+import com.example.mpazneb.model.RespuestaRequest
 
 class RespuestaRepository(
-    private val respuestaDao: RespuestaDao
+    private val respuestaDao: RespuestaDao,
+    private val api: MpazApi = RetrofitClient.api
 ) {
 
     // ====================================
@@ -57,22 +61,50 @@ class RespuestaRepository(
         asignacionId: Int
     ): List<Respuesta> {
 
-        val respuestasGuardadas =
-            respuestaDao.obtenerRespuestas(asignacionId)
+        return try {
+            val remotas = api.obtenerRespuestasPorAsignacion(asignacionId)
+            try {
+                val existentes = respuestaDao.obtenerRespuestas(asignacionId)
+                remotas.forEach { resp ->
+                    val existe = existentes.any {
+                        it.actividadId == resp.actividadId &&
+                                it.preguntaId == resp.preguntaId &&
+                                it.numeroIntento == resp.numeroIntento
+                    }
+                    if (!existe) {
+                        respuestaDao.insertarRespuesta(
+                            RespuestaEntity(
+                                asignacionId = resp.asignacionId,
+                                actividadId = resp.actividadId,
+                                preguntaId = resp.preguntaId,
+                                respuestaSeleccionada = resp.respuestaSeleccionada,
+                                esCorrecta = resp.esCorrecta,
+                                numeroIntento = resp.numeroIntento,
+                                fechaRespuesta = resp.fechaRespuesta
+                            )
+                        )
+                    }
+                }
+            } catch (_: Exception) {
+            }
+            remotas
+        } catch (_: Exception) {
+            val respuestasGuardadas =
+                respuestaDao.obtenerRespuestas(asignacionId)
 
-        return respuestasGuardadas.map { registro ->
-
-            Respuesta(
-                id = registro.id,
-                asignacionId = registro.asignacionId,
-                actividadId = registro.actividadId,
-                preguntaId = registro.preguntaId,
-                respuestaSeleccionada =
-                    registro.respuestaSeleccionada,
-                esCorrecta = registro.esCorrecta,
-                numeroIntento = registro.numeroIntento,
-                fechaRespuesta = registro.fechaRespuesta
-            )
+            respuestasGuardadas.map { registro ->
+                Respuesta(
+                    id = registro.id,
+                    asignacionId = registro.asignacionId,
+                    actividadId = registro.actividadId,
+                    preguntaId = registro.preguntaId,
+                    respuestaSeleccionada =
+                        registro.respuestaSeleccionada,
+                    esCorrecta = registro.esCorrecta,
+                    numeroIntento = registro.numeroIntento,
+                    fechaRespuesta = registro.fechaRespuesta
+                )
+            }
         }
     }
 
@@ -102,15 +134,40 @@ class RespuestaRepository(
         esCorrecta: Boolean,
         preguntasIds: List<Int>
     ): Boolean {
+        val respuestaRemota = try {
+            api.registrarRespuesta(
+                RespuestaRequest(
+                    asignacionId = asignacionId,
+                    actividadId = actividadId,
+                    preguntaId = preguntaId,
+                    respuestaSeleccionada = respuestaSeleccionada
+                )
+            )
+        } catch (_: Exception) {
+            null
+        }
 
-        return respuestaDao.guardarRespuestaYResultado(
+        if (respuestaRemota == null) {
+            throw IllegalStateException("No se pudo guardar la respuesta en el servidor")
+        }
+
+        val registrada = respuestaDao.guardarRespuestaYResultado(
             asignacionId = asignacionId,
             actividadId = actividadId,
             preguntaId = preguntaId,
             respuestaSeleccionada = respuestaSeleccionada,
-            esCorrecta = esCorrecta,
+            esCorrecta = respuestaRemota.esCorrecta,
             preguntasIds = preguntasIds
         )
+
+        if (registrada) {
+            try {
+                api.calcularResultado(asignacionId)
+            } catch (_: Exception) {
+            }
+        }
+
+        return registrada
     }
 
 }

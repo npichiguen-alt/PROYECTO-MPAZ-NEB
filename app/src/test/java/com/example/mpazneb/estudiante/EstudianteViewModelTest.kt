@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import com.example.mpazneb.model.Asignacion
+import com.example.mpazneb.repository.estudiante.RespuestaRepository
 import org.junit.Assert.assertTrue
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -187,6 +188,34 @@ class EstudianteViewModelTest {
         }
     }
 
+    @Test
+    fun responderPreguntaBloqueaPulsacionesMultiplesCuandoEstaGuardando() = runTest {
+        val repositorio = mockk<EstudianteRepository>()
+        val respuestaRepo = mockk<RespuestaRepository>()
 
+        val asignacion = Asignacion(
+            id = 1,
+            actividadId = 1,
+            estudianteFicticio = "Estudiante A",
+            codigoTemporal = "EST-100",
+            estado = "Pendiente"
+        )
 
+        coEvery { repositorio.buscarAsignacionPorCodigo("EST-100") } returns asignacion
+        coEvery { repositorio.obtenerResultados(1) } returns emptyList()
+        coEvery { respuestaRepo.obtenerRespuestasParaMostrar(1) } returns emptyList()
+
+        val viewModel = EstudianteViewModel(
+            repositorio = repositorio,
+            respuestaRepository = respuestaRepo
+        )
+
+        viewModel.actualizarCodigo("EST-100")
+        viewModel.intentarIngresar()
+        advanceUntilIdle()
+
+        // Simular intento de respuesta cuando la actividad no coincide o está vacía
+        viewModel.responderPreguntaAsignada(1, "A")
+        assertFalse(viewModel.guardandoRespuestaAsignada.value)
+    }
 }

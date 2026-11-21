@@ -11,3 +11,10 @@ data class Respuesta(
     val numeroIntento: Int,
     val fechaRespuesta: Long
 )
+
+data class RespuestaRequest(
+    val asignacionId: Int,
+    val actividadId: Int,
+    val preguntaId: Int,
+    val respuestaSeleccionada: String
+)
