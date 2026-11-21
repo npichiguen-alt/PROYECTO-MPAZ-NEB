@@ -1,6 +1,7 @@
 package com.example.mpazneb.ui.screens.estudiante
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -11,6 +12,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 
 import com.example.mpazneb.viewmodel.PokemonViewModel
+
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun PokemonAlResponder(
@@ -26,12 +29,19 @@ fun PokemonAlResponder(
         vm.cargar(nombrePokemon)
     }
 
+    val contenedorColor = when (nombrePokemon.lowercase()) {
+        "pikachu" -> Color(0xFFE8F5E9)   // Verde suave para aciertos
+        "bulbasaur" -> Color(0xFFFFF3E0) // Naranjo suave para intentos agotados
+        else -> Color(0xFFFFEBEE)        // Rosado suave para reintentos
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor =
-                MaterialTheme.colorScheme.primaryContainer
-        )
+            containerColor = contenedorColor
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
 
         Row(
@@ -40,7 +50,7 @@ fun PokemonAlResponder(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement =
-                Arrangement.spacedBy(12.dp)
+                Arrangement.spacedBy(14.dp)
         ) {
 
 
