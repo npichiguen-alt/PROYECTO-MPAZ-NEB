@@ -7,6 +7,8 @@ import com.example.mpazneb.data.remote.MpazApi
 import com.example.mpazneb.data.remote.RetrofitClient
 import com.example.mpazneb.model.Respuesta
 import com.example.mpazneb.model.RespuestaRequest
+import retrofit2.HttpException
+import java.io.IOException
 
 class RespuestaRepository(
     private val respuestaDao: RespuestaDao,
@@ -132,7 +134,8 @@ class RespuestaRepository(
         preguntaId: Int,
         respuestaSeleccionada: String,
         esCorrecta: Boolean,
-        preguntasIds: List<Int>
+        preguntasIds: List<Int>,
+        intentosAnterioresCount: Int = 0
     ): Boolean {
         val respuestaRemota = try {
             api.registrarRespuesta(
@@ -143,31 +146,53 @@ class RespuestaRepository(
                     respuestaSeleccionada = respuestaSeleccionada
                 )
             )
-        } catch (_: Exception) {
-            null
-        }
-
-        if (respuestaRemota == null) {
-            throw IllegalStateException("No se pudo guardar la respuesta en el servidor")
-        }
-
-        val registrada = respuestaDao.guardarRespuestaYResultado(
-            asignacionId = asignacionId,
-            actividadId = actividadId,
-            preguntaId = preguntaId,
-            respuestaSeleccionada = respuestaSeleccionada,
-            esCorrecta = respuestaRemota.esCorrecta,
-            preguntasIds = preguntasIds
-        )
-
-        if (registrada) {
-            try {
-                api.calcularResultado(asignacionId)
+        } catch (e: HttpException) {
+            if (e.code() == 409 || e.code() == 400) {
+                try {
+                    api.obtenerRespuestasPorAsignacion(asignacionId)
+                } catch (_: Exception) {
+                }
+                return false
+            }
+            throw e
+        } catch (e: IOException) {
+            val historialRemoto = try {
+                api.obtenerRespuestasPorAsignacion(asignacionId)
             } catch (_: Exception) {
+                null
+            }
+
+            val respuestasPregunta = historialRemoto?.filter {
+                it.actividadId == actividadId && it.preguntaId == preguntaId
+            } ?: emptyList()
+
+            if (respuestasPregunta.size > intentosAnterioresCount) {
+                respuestasPregunta.last()
+            } else {
+                throw IOException("No se pudo confirmar el envío por timeout. Por favor actualiza el historial antes de reintentar.", e)
             }
         }
 
-        return registrada
+        val esCorrectaServidor = respuestaRemota.esCorrecta
+
+        try {
+            respuestaDao.guardarRespuestaYResultado(
+                asignacionId = asignacionId,
+                actividadId = actividadId,
+                preguntaId = preguntaId,
+                respuestaSeleccionada = respuestaSeleccionada,
+                esCorrecta = esCorrectaServidor,
+                preguntasIds = preguntasIds
+            )
+        } catch (_: Exception) {
+        }
+
+        try {
+            api.calcularResultado(asignacionId)
+        } catch (_: Exception) {
+        }
+
+        return true
     }
 
 }

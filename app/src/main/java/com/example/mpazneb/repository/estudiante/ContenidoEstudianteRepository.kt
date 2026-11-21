@@ -5,6 +5,9 @@ import com.example.mpazneb.data.local.ActividadEntity
 import com.example.mpazneb.data.local.PreguntaEntity
 import com.example.mpazneb.data.remote.MpazApi
 import com.example.mpazneb.data.remote.RetrofitClient
+import kotlinx.coroutines.CancellationException
+import retrofit2.HttpException
+import java.io.IOException
 
 class ContenidoEstudianteRepository(
     private val database: ActividadDatabase,
@@ -27,12 +30,17 @@ class ContenidoEstudianteRepository(
                 objetivo = actividad.objetivo,
                 instrucciones = actividad.instrucciones
             )
-        } catch (_: Exception) {
-            database.actividadDao()
-                .obtenerActividades()
-                .firstOrNull { actividad ->
-                    actividad.id == actividadId
-                }
+        } catch (e: HttpException) {
+            if (e.code() == 404) {
+                null
+            } else {
+                throw e
+            }
+        } catch (e: IOException) {
+            throw e
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            throw e
         }
     }
 
@@ -41,11 +49,17 @@ class ContenidoEstudianteRepository(
     ): List<PreguntaEntity> {
         return try {
             api.obtenerPreguntasPorActividad(actividadId)
-        } catch (_: Exception) {
-            database.preguntaDao()
-                .obtenerPreguntasPorActividad(
-                    actividadId
-                )
+        } catch (e: HttpException) {
+            if (e.code() == 404) {
+                emptyList()
+            } else {
+                throw e
+            }
+        } catch (e: IOException) {
+            throw e
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            throw e
         }
     }
 }

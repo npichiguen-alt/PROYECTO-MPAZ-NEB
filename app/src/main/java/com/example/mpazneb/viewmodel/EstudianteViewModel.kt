@@ -18,6 +18,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 
 private const val MAX_INTENTOS_POR_PREGUNTA = 3
 
@@ -28,6 +30,7 @@ private const val MAX_INTENTOS_POR_PREGUNTA = 3
 data class IngresoEstudianteUiState(
     val codigoTemporal: String = "",
     val mensaje: String = "",
+    val cargando: Boolean = false,
     val ingresoValidado: Boolean = false,
     val asignacionActiva: Asignacion? = null
 )
@@ -144,12 +147,22 @@ class EstudianteViewModel(
 
             _estado.value = _estado.value.copy(
                 mensaje = "Debes ingresar un código.",
+                cargando = false,
                 ingresoValidado = false,
                 asignacionActiva = null
             )
 
             return
         }
+
+        if (_estado.value.cargando) return
+
+        _estado.value = _estado.value.copy(
+            cargando = true,
+            mensaje = "",
+            ingresoValidado = false,
+            asignacionActiva = null
+        )
 
         viewModelScope.launch {
 
@@ -180,6 +193,7 @@ class EstudianteViewModel(
 
                     _estado.value = _estado.value.copy(
                         mensaje = "Código no encontrado.",
+                        cargando = false,
                         ingresoValidado = false,
                         asignacionActiva = null
                     )
@@ -196,19 +210,31 @@ class EstudianteViewModel(
                         asignacion.actividadId
                     )
 
+                if (contenidoRepository != null && actividadConsultada == null) {
+                    _resultados.value = emptyList()
+                    _respuestas.value = emptyList()
+                    _actividadAsignada.value = null
+                    _preguntasAsignadas.value = emptyList()
+
+                    _estado.value = _estado.value.copy(
+                        mensaje = "La asignación existe, pero su actividad no está disponible en el servidor.",
+                        cargando = false,
+                        ingresoValidado = false,
+                        asignacionActiva = null
+                    )
+                    return@launch
+                }
+
                 // ====================================
                 // RECUPERAR PREGUNTAS REALES
                 // ====================================
 
                 val preguntasConsultadas =
                     if (actividadConsultada != null) {
-
                         contenidoRepository?.obtenerPreguntas(
                             asignacion.actividadId
                         ) ?: emptyList()
-
                     } else {
-
                         emptyList()
                     }
 
@@ -255,6 +281,7 @@ class EstudianteViewModel(
 
                 _estado.value = _estado.value.copy(
                     mensaje = "Código válido. Asignación encontrada.",
+                    cargando = false,
                     ingresoValidado = true,
                     asignacionActiva = asignacion
                 )
@@ -263,6 +290,45 @@ class EstudianteViewModel(
 
                 throw error
 
+            } catch (error: HttpException) {
+
+                if (
+                    _estado.value.codigoTemporal.trim() == codigo
+                ) {
+                    val msg = if (error.code() == 404) {
+                        "Código no encontrado."
+                    } else {
+                        "Error en el servidor. Inténtalo más tarde."
+                    }
+
+                    _estado.value = _estado.value.copy(
+                        mensaje = msg,
+                        cargando = false,
+                        ingresoValidado = false,
+                        asignacionActiva = null
+                    )
+
+                    _actividadAsignada.value = null
+                    _preguntasAsignadas.value = emptyList()
+                }
+
+            } catch (error: IOException) {
+
+                if (
+                    _estado.value.codigoTemporal.trim() == codigo
+                ) {
+
+                    _estado.value = _estado.value.copy(
+                        mensaje = "No se pudo conectar con el servidor. Comprueba tu conexión o inténtalo más tarde.",
+                        cargando = false,
+                        ingresoValidado = false,
+                        asignacionActiva = null
+                    )
+
+                    _actividadAsignada.value = null
+                    _preguntasAsignadas.value = emptyList()
+                }
+
             } catch (error: Exception) {
 
                 if (
@@ -270,13 +336,18 @@ class EstudianteViewModel(
                 ) {
 
                     _estado.value = _estado.value.copy(
-                        mensaje = "No se pudo verificar el código.",
+                        mensaje = error.message ?: "No se pudo verificar el código.",
+                        cargando = false,
                         ingresoValidado = false,
                         asignacionActiva = null
                     )
 
                     _actividadAsignada.value = null
                     _preguntasAsignadas.value = emptyList()
+                }
+            } finally {
+                if (_estado.value.codigoTemporal.trim() == codigo) {
+                    _estado.value = _estado.value.copy(cargando = false)
                 }
             }
         }
@@ -375,6 +446,10 @@ class EstudianteViewModel(
                 it.id
             }
 
+        val intentosAnterioresCount = _respuestas.value.count {
+            it.actividadId == actividad.id && it.preguntaId == pregunta.id
+        }
+
         _guardandoRespuestaAsignada.value = true
         _mensajeRespuestaAsignada.value = ""
 
@@ -393,7 +468,8 @@ class EstudianteViewModel(
                         preguntaId = pregunta.id,
                         respuestaSeleccionada = opcion,
                         esCorrecta = esCorrecta,
-                        preguntasIds = preguntasIds
+                        preguntasIds = preguntasIds,
+                        intentosAnterioresCount = intentosAnterioresCount
                     )
 
                 // ====================================

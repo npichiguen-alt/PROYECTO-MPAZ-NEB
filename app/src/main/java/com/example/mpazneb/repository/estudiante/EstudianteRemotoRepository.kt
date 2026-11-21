@@ -4,6 +4,9 @@ import com.example.mpazneb.data.remote.MpazApi
 import com.example.mpazneb.model.Asignacion
 import com.example.mpazneb.model.Resultado
 import com.example.mpazneb.repository.asignacion.AsignacionRemotaRepository
+import kotlinx.coroutines.CancellationException
+import retrofit2.HttpException
+import java.io.IOException
 
 class EstudianteRemotoRepository(
     private val asignacionRepository: AsignacionRemotaRepository,
@@ -20,23 +23,43 @@ class EstudianteRemotoRepository(
                 codigoTemporal = asignacion.codigoTemporal,
                 estado = asignacion.estado
             )
-        } catch (_: Exception) {
-            null
+        } catch (e: HttpException) {
+            if (e.code() == 404) {
+                null
+            } else {
+                throw e
+            }
+        } catch (e: IOException) {
+            throw e
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            throw e
         }
     }
 
     override suspend fun guardarResultado(resultado: Resultado) {
         try {
             api.calcularResultado(resultado.asignacionId)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            throw e
         }
     }
 
     override suspend fun obtenerResultados(asignacionId: Int): List<Resultado> {
         return try {
             api.obtenerResultadosPorAsignacion(asignacionId)
-        } catch (_: Exception) {
-            emptyList()
+        } catch (e: HttpException) {
+            if (e.code() == 404) {
+                emptyList()
+            } else {
+                throw e
+            }
+        } catch (e: IOException) {
+            throw e
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            throw e
         }
     }
 }
