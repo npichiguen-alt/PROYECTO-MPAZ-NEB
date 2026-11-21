@@ -491,7 +491,7 @@ fun ResultadosEstudianteScreen(
                     EstadisticaCard(
                         titulo = "Preguntas acertadas",
                         valor = "$aciertos",
-                        icono = "🎯",
+                        icono = "",
                         colorFondo = VerdeSuave,
                         colorTexto = VerdeExito,
                         modifier = Modifier.weight(1f)
@@ -500,7 +500,7 @@ fun ResultadosEstudianteScreen(
                     EstadisticaCard(
                         titulo = "Por reforzar",
                         valor = "$preguntasPendientes",
-                        icono = "💡",
+                        icono = "",
                         colorFondo = RosaSuave,
                         colorTexto = Rosa,
                         modifier = Modifier.weight(1f)
@@ -514,7 +514,7 @@ fun ResultadosEstudianteScreen(
                     EstadisticaCard(
                         titulo = "Respuestas correctas",
                         valor = "$respuestasCorrectas",
-                        icono = "✅",
+                        icono = " ",
                         colorFondo = AzulSuave,
                         colorTexto = Azul,
                         modifier = Modifier.weight(1f)
@@ -523,7 +523,7 @@ fun ResultadosEstudianteScreen(
                     EstadisticaCard(
                         titulo = "Respuestas incorrectas",
                         valor = "$respuestasIncorrectas",
-                        icono = "❌",
+                        icono = "",
                         colorFondo = Color(0xFFFFEBEE),
                         colorTexto = Color(0xFFC62828),
                         modifier = Modifier.weight(1f)

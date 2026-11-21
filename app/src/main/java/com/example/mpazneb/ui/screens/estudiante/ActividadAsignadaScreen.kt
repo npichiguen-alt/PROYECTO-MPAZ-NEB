@@ -91,7 +91,7 @@ fun InicioActividadAsignadaScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            text = "📚 ${actividad.modulo}",
+                            text = " ${actividad.modulo}",
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.labelLarge,
                             color = AzulOscuro
@@ -126,7 +126,7 @@ fun InicioActividadAsignadaScreen(
                 HorizontalDivider(color = AzulSuave)
 
                 Text(
-                    text = "📝 Descripción",
+                    text = "Descripción",
                     style = MaterialTheme.typography.titleMedium,
                     color = AzulOscuro
                 )
@@ -139,7 +139,7 @@ fun InicioActividadAsignadaScreen(
 
                 if (actividad.objetivo.isNotBlank()) {
                     Text(
-                        text = "🎯 Objetivo",
+                        text = " Objetivo",
                         style = MaterialTheme.typography.titleMedium,
                         color = AzulOscuro
                     )
@@ -153,7 +153,7 @@ fun InicioActividadAsignadaScreen(
 
                 if (actividad.instrucciones.isNotBlank()) {
                     Text(
-                        text = "📋 Instrucciones",
+                        text = "Instrucciones",
                         style = MaterialTheme.typography.titleMedium,
                         color = AzulOscuro
                     )
