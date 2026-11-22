@@ -82,6 +82,14 @@ fun NuevaActividadConRoomScreen() {
         mutableStateOf<Actividad?>(null)
     }
 
+    var actividadRemotaEnEdicion by remember {
+        mutableStateOf<Actividad?>(null)
+    }
+
+    var actividadRemotaAEliminar by remember {
+        mutableStateOf<Actividad?>(null)
+    }
+
     val snackbarHostState = remember {
         SnackbarHostState()
     }
@@ -120,7 +128,7 @@ fun NuevaActividadConRoomScreen() {
             viewModel.cargarActividades()
         }
 
-        if (pantalla == "Servidor") {
+        if (pantalla == "Servidor" || pantalla == "Preguntas servidor") {
 
             viewModel.cargarActividadesRemotas()
         }
@@ -190,8 +198,9 @@ fun NuevaActividadConRoomScreen() {
                     "Preguntas",
                     "Usuarios",
                     "Resultados",
-                    "Servidor"
-                ).forEach { opcion ->
+                    "Servidor",
+                    "Preguntas servidor"
+).forEach { opcion ->
 
                     FilterChip(
                         selected = pantalla == opcion,
@@ -298,6 +307,42 @@ fun NuevaActividadConRoomScreen() {
                     // ====================================
                     // SERVIDOR SPRING BOOT
                     // ====================================
+
+                    
+                    "Preguntas servidor" -> {
+
+                        if (viewModel.cargandoRemotas || viewModel.guardando) {
+
+                            CircularProgressIndicator()
+
+                        } else if (viewModel.actividadesRemotas.isEmpty()) {
+
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+
+                                Text("No hay actividades remotas disponibles.")
+
+                                Text(viewModel.mensajeRemoto)
+
+                                Button(
+                                    onClick = {
+                                        viewModel.cargarActividadesRemotas()
+                                    }
+                                ) {
+                                    Text("Consultar servidor")
+                                }
+                            }
+
+                        } else {
+
+                            GestionPreguntasScreen(
+                                actividades = viewModel.actividadesRemotas,
+                                modoRemoto = true
+                            )
+                        }
+                    }
 
                     "Servidor" -> {
 
@@ -530,7 +575,7 @@ fun NuevaActividadConRoomScreen() {
                                             descripcionRemota.isNotBlank() &&
                                             objetivoRemoto.isNotBlank() &&
                                             instruccionesRemotas.isNotBlank() &&
-                                            !viewModel.guardando,
+                                            !viewModel.guardando && !viewModel.cargandoRemotas,
 
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -574,7 +619,7 @@ fun NuevaActividadConRoomScreen() {
                                     viewModel.cargarActividadesRemotas()
                                 },
 
-                                enabled = !viewModel.cargandoRemotas
+                                enabled = !viewModel.cargandoRemotas && !viewModel.guardando
                             ) {
 
                                 Text(
@@ -628,13 +673,81 @@ fun NuevaActividadConRoomScreen() {
                                             text = actividad.descripcion
                                         )
 
+
                                         Text(
                                             text = if (actividad.activa) {
                                                 "Estado: Activa"
                                             } else {
                                                 "Estado: Inactiva"
+                                            },
+                                            color = if (actividad.activa) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.error
                                             }
                                         )
+
+                                        Text(
+                                            text = "Objetivo: ${actividad.objetivo}"
+                                        )
+
+                                        Text(
+                                            text = "Instrucciones: ${actividad.instrucciones}"
+                                        )
+
+                                        HorizontalDivider()
+
+// EDITAR ACTIVIDAD REMOTA
+
+                                        OutlinedButton(
+                                            onClick = {
+                                                actividadRemotaEnEdicion = actividad
+                                            },
+                                            enabled = !viewModel.guardando &&
+                                                    !viewModel.cargandoRemotas,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("Editar actividad")
+                                        }
+
+// ACTIVAR O DESACTIVAR ACTIVIDAD REMOTA
+
+                                        Button(
+                                            onClick = {
+                                                viewModel.cambiarEstadoActividadRemota(
+                                                    actividad
+                                                )
+                                            },
+                                            enabled = !viewModel.guardando &&
+                                                    !viewModel.cargandoRemotas,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text(
+                                                if (actividad.activa) {
+                                                    "Desactivar actividad"
+                                                } else {
+                                                    "Activar actividad"
+                                                }
+                                            )
+                                        }
+                                        // ELIMINAR ACTIVIDAD REMOTA
+
+                                        OutlinedButton(
+                                            onClick = {
+                                                actividadRemotaAEliminar = actividad
+                                            },
+                                            enabled = !actividad.activa &&
+                                                    !viewModel.guardando &&
+                                                    !viewModel.cargandoRemotas,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                contentColor = MaterialTheme.colorScheme.error
+                                            )
+                                        ) {
+                                            Text("Eliminar actividad")
+                                        }
+
+
                                     }
                                 }
                             }
@@ -693,4 +806,114 @@ fun NuevaActividadConRoomScreen() {
             }
         )
     }
+
+    // ====================================
+    // VENTANA DE EDICIÓN REMOTA
+    // ====================================
+
+    actividadRemotaEnEdicion?.let { actividad ->
+
+        EditarActividadDialog(
+            actividad = actividad,
+            guardando = viewModel.guardando,
+
+            onDismiss = {
+                actividadRemotaEnEdicion = null
+            },
+
+            onGuardar = {
+                    titulo,
+                    descripcion,
+                    curso,
+                    dificultad,
+                    objetivo,
+                    instrucciones ->
+
+                viewModel.editarActividadRemota(
+                    actividad = actividad,
+                    titulo = titulo,
+                    descripcion = descripcion,
+                    curso = curso,
+                    dificultad = dificultad,
+                    objetivo = objetivo,
+                    instrucciones = instrucciones
+                )
+
+                actividadRemotaEnEdicion = null
+            }
+        )
+    }
+
+
+
+    // ====================================
+    // CONFIRMAR ELIMINACION REMOTA
+    // ====================================
+
+    actividadRemotaAEliminar?.let { actividad ->
+
+        AlertDialog(
+            onDismissRequest = {
+                actividadRemotaAEliminar = null
+            },
+
+            title = {
+                Text("Eliminar actividad")
+            },
+
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+
+                    Text(
+                        "Deseas eliminar la actividad '${actividad.titulo}'?"
+                    )
+
+                    Text(
+                        "Esta accion es permanente."
+                    )
+
+                    Text(
+                        "El servidor verificara que la actividad este inactiva y no tenga preguntas, asignaciones ni respuestas asociadas."
+                    )
+                }
+            },
+
+            confirmButton = {
+
+                TextButton(
+                    onClick = {
+
+                        viewModel.eliminarActividadRemota(
+                            actividad
+                        )
+
+                        actividadRemotaAEliminar = null
+                    },
+
+                    enabled = !viewModel.guardando &&
+                            !viewModel.cargandoRemotas,
+
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Eliminar")
+                }
+            },
+
+            dismissButton = {
+
+                TextButton(
+                    onClick = {
+                        actividadRemotaAEliminar = null
+                    }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
 }

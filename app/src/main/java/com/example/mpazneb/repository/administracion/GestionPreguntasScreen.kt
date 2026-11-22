@@ -22,7 +22,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun GestionPreguntasScreen(
-    actividades: List<Actividad>
+    actividades: List<Actividad>,
+    modoRemoto: Boolean = false
 ) {
 
     val contexto = LocalContext.current.applicationContext
@@ -34,6 +35,18 @@ fun GestionPreguntasScreen(
                 .preguntaDao(),
             context = contexto
         )
+    }
+
+    val repositorioRemoto = remember {
+        com.example.mpazneb.repository.administracion.PreguntaRemotaRepository()
+    }
+
+    suspend fun listarPreguntas(id: Int): List<PreguntaEntity> {
+        return if (modoRemoto) {
+            repositorioRemoto.obtenerPreguntasPorActividad(id)
+        } else {
+            repositorio.listarPreguntas(id)
+        }
     }
 
     val scope = rememberCoroutineScope()
@@ -190,9 +203,7 @@ fun GestionPreguntasScreen(
 
             try {
 
-                preguntas = repositorio.listarPreguntas(
-                    idActividad
-                )
+                preguntas = listarPreguntas(idActividad)
 
             } catch (error: CancellationException) {
 
@@ -237,7 +248,11 @@ fun GestionPreguntasScreen(
     ) {
 
         Text(
-            text = "Gestionar preguntas",
+            text = if (modoRemoto) {
+                "Gestionar preguntas del servidor"
+            } else {
+                "Gestionar preguntas locales"
+            },
             style = MaterialTheme.typography.headlineSmall
         )
 
@@ -366,7 +381,11 @@ fun GestionPreguntasScreen(
 
                     Text(
                         text = "Estás modificando una pregunta " +
-                                "que ya existe en Room."
+                                if (modoRemoto) {
+                                    "que existe en PostgreSQL."
+                                } else {
+                                    "que existe en Room."
+                                }
                     )
 
                     OutlinedButton(
@@ -530,21 +549,26 @@ fun GestionPreguntasScreen(
 
                                 // Verificar el estado actual
                                 // antes de modificar Room.
-                                val actividadEnRoom =
+                                val actividadActiva: Boolean? = if (modoRemoto) {
+                                    com.example.mpazneb.data.remote.RetrofitClient.api
+                                        .obtenerActividadPorId(idActividad)
+                                        .activa
+                                } else {
                                     ActividadDatabase
                                         .obtenerInstancia(contexto)
                                         .actividadDao()
                                         .obtenerActividades()
                                         .firstOrNull {
                                             it.id == idActividad
-                                        }
+                                        }?.activa
+                                }
 
-                                if (actividadEnRoom == null) {
+                                if (actividadActiva == null) {
 
                                     mensaje =
                                         "La actividad ya no existe."
 
-                                } else if (actividadEnRoom.activa) {
+                                } else if (actividadActiva == true) {
 
                                     mensaje =
                                         "Desactiva la actividad " +
@@ -554,9 +578,11 @@ fun GestionPreguntasScreen(
 
                                     if (preguntaAnterior == null) {
 
-                                        repositorio.guardarPregunta(
-                                            pregunta
-                                        )
+                                        if (modoRemoto) {
+                                            repositorioRemoto.crearPregunta(pregunta)
+                                        } else {
+                                            repositorio.guardarPregunta(pregunta)
+                                        }
 
                                         mensaje =
                                             "Pregunta creada correctamente."
@@ -564,9 +590,12 @@ fun GestionPreguntasScreen(
                                     } else {
 
                                         val actualizado =
-                                            repositorio.editarPregunta(
-                                                pregunta
-                                            )
+                                            if (modoRemoto) {
+                                                repositorioRemoto.actualizarPregunta(pregunta)
+                                                true
+                                            } else {
+                                                repositorio.editarPregunta(pregunta)
+                                            }
 
                                         mensaje =
                                             if (actualizado) {
@@ -582,9 +611,7 @@ fun GestionPreguntasScreen(
                                     ) {
 
                                         preguntas =
-                                            repositorio.listarPreguntas(
-                                                idActividad
-                                            )
+                                            listarPreguntas(idActividad)
 
                                         limpiarFormulario()
                                     }
@@ -599,7 +626,15 @@ fun GestionPreguntasScreen(
                             } catch (error: Exception) {
 
                                 mensaje =
-                                    "No se pudo guardar la pregunta."
+                                    when (error) {
+                                        is IllegalStateException,
+                                        is IllegalArgumentException ->
+                                            error.message ?: "Pregunta no valida."
+                                        is retrofit2.HttpException ->
+                                            "Error del servidor: ${error.code()}."
+                                        else ->
+                                            "No se pudo confirmar el guardado. Sal y vuelve a consultar."
+                                    }
 
                             } finally {
 
@@ -820,21 +855,26 @@ fun GestionPreguntasScreen(
 
                             try {
 
-                                val actividadEnRoom =
+                                val actividadActiva: Boolean? = if (modoRemoto) {
+                                    com.example.mpazneb.data.remote.RetrofitClient.api
+                                        .obtenerActividadPorId(idActividad)
+                                        .activa
+                                } else {
                                     ActividadDatabase
                                         .obtenerInstancia(contexto)
                                         .actividadDao()
                                         .obtenerActividades()
                                         .firstOrNull {
                                             it.id == idActividad
-                                        }
+                                        }?.activa
+                                }
 
-                                if (actividadEnRoom == null) {
+                                if (actividadActiva == null) {
 
                                     mensaje =
                                         "La actividad ya no existe."
 
-                                } else if (actividadEnRoom.activa) {
+                                } else if (actividadActiva == true) {
 
                                     mensaje =
                                         "Desactiva la actividad " +
@@ -843,9 +883,17 @@ fun GestionPreguntasScreen(
                                 } else {
 
                                     val eliminada =
-                                        repositorio.eliminarPregunta(
-                                            pendiente.id
-                                        )
+                                        if (modoRemoto) {
+                                            repositorioRemoto.eliminarPregunta(
+                                                idActividad,
+                                                pendiente.id
+                                            )
+                                            true
+                                        } else {
+                                            repositorio.eliminarPregunta(
+                                                pendiente.id
+                                            )
+                                        }
 
                                     mensaje =
                                         if (eliminada) {
@@ -860,9 +908,7 @@ fun GestionPreguntasScreen(
                                     ) {
 
                                         preguntas =
-                                            repositorio.listarPreguntas(
-                                                idActividad
-                                            )
+                                            listarPreguntas(idActividad)
 
                                         if (
                                             preguntaEnEdicion?.id ==
@@ -882,7 +928,15 @@ fun GestionPreguntasScreen(
                             } catch (error: Exception) {
 
                                 mensaje =
-                                    "No se pudo eliminar la pregunta."
+                                    when (error) {
+                                        is IllegalStateException,
+                                        is IllegalArgumentException ->
+                                            error.message ?: "Operacion no permitida."
+                                        is retrofit2.HttpException ->
+                                            "Error del servidor: ${error.code()}."
+                                        else ->
+                                            "No se pudo confirmar la eliminacion."
+                                    }
 
                             } finally {
 

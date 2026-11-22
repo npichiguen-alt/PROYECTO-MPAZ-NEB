@@ -395,7 +395,7 @@ class AdministracionViewModel(
 
     fun cargarActividadesRemotas() {
 
-        if (cargandoRemotas) return
+        if (cargandoRemotas || guardando) return
 
         cargandoRemotas = true
 
@@ -454,7 +454,7 @@ class AdministracionViewModel(
         instrucciones: String
     ) {
 
-        if (guardando) return
+        if (guardando || cargandoRemotas) return
 
         // Validar campos obligatorios
         if (
@@ -581,4 +581,262 @@ class AdministracionViewModel(
             }
         }
     }
+
+    // ====================================
+    // 7. EDITAR ACTIVIDAD EN SPRING BOOT
+    // ====================================
+
+    fun editarActividadRemota(
+        actividad: Actividad,
+        titulo: String,
+        descripcion: String,
+        curso: Int,
+        dificultad: String,
+        objetivo: String,
+        instrucciones: String
+    ) {
+
+        if (guardando || cargandoRemotas) return
+
+        if (
+            titulo.isBlank() ||
+            descripcion.isBlank() ||
+            objetivo.isBlank() ||
+            instrucciones.isBlank()
+        ) {
+            mensajeRemoto = "Completa todos los campos obligatorios."
+            return
+        }
+
+        if (curso !in 1..4) {
+            mensajeRemoto = "Selecciona un curso válido."
+            return
+        }
+
+        if (
+            dificultad !in listOf(
+                "Básica",
+                "Media",
+                "Avanzada"
+            )
+        ) {
+            mensajeRemoto = "Selecciona una dificultad válida."
+            return
+        }
+
+        if (actividadesRemotas.none { it.id == actividad.id }) {
+            mensajeRemoto = "Selecciona una actividad del servidor."
+            return
+        }
+
+        guardando = true
+
+        mensajeRemoto = "Guardando cambios en PostgreSQL..."
+
+        viewModelScope.launch {
+
+            try {
+
+                val actividadActual =
+                    repositorioRemoto.obtenerActividadPorId(
+                        actividad.id
+                    )
+
+                val actividadEditada = actividadActual.copy(
+                    titulo = titulo.trim(),
+                    descripcion = descripcion.trim(),
+                    curso = curso,
+                    dificultad = dificultad,
+                    objetivo = objetivo.trim(),
+                    instrucciones = instrucciones.trim()
+                )
+
+                val resultado =
+                    repositorioRemoto.actualizarActividad(
+                        actividadEditada
+                    )
+
+                actividadesRemotas = actividadesRemotas.map {
+                    if (it.id == resultado.id) resultado else it
+                }
+
+                mensajeRemoto =
+                    "Actividad editada correctamente en PostgreSQL."
+
+            } catch (error: CancellationException) {
+
+                throw error
+
+            } catch (error: Exception) {
+
+                mensajeRemoto =
+                    "No se pudo confirmar la edición. " +
+                            "Actualiza el listado antes de reintentar."
+
+            } finally {
+
+                guardando = false
+            }
+        }
+    }
+
+    // ====================================
+    // 8. ACTIVAR O DESACTIVAR EN SPRING BOOT
+    // ====================================
+
+    fun cambiarEstadoActividadRemota(
+        actividad: Actividad
+    ) {
+
+        if (guardando || cargandoRemotas) return
+
+        if (actividadesRemotas.none { it.id == actividad.id }) {
+            mensajeRemoto = "Selecciona una actividad del servidor."
+            return
+        }
+
+        guardando = true
+
+        mensajeRemoto = "Actualizando estado en el servidor..."
+
+        viewModelScope.launch {
+
+            try {
+
+                val actividadActual =
+                    repositorioRemoto.obtenerActividadPorId(
+                        actividad.id
+                    )
+
+                val nuevoEstado = !actividadActual.activa
+
+                // Validar que tenga preguntas antes de activar
+                if (nuevoEstado) {
+
+                    val preguntas =
+                        com.example.mpazneb.data.remote.RetrofitClient
+                            .api.obtenerPreguntasPorActividad(
+                                actividad.id
+                            )
+
+                    if (preguntas.isEmpty()) {
+
+                        mensajeRemoto =
+                            "No se puede activar. " +
+                                    "Agrega al menos una pregunta en el servidor."
+
+                        return@launch
+                    }
+                }
+
+                val resultado =
+                    repositorioRemoto.actualizarActividad(
+                        actividadActual.copy(
+                            activa = nuevoEstado
+                        )
+                    )
+
+                actividadesRemotas = actividadesRemotas.map {
+                    if (it.id == resultado.id) resultado else it
+                }
+
+                mensajeRemoto = if (resultado.activa) {
+
+                    "Actividad activada correctamente en AWS."
+
+                } else {
+
+                    "Actividad desactivada correctamente en AWS."
+                }
+
+            } catch (error: CancellationException) {
+
+                throw error
+
+            } catch (error: Exception) {
+
+                mensajeRemoto =
+                    "No se pudo confirmar el cambio de estado. " +
+                            "Actualiza el listado antes de reintentar."
+
+            } finally {
+
+                guardando = false
+            }
+        }
+    }
+
+
+    // ====================================
+    // 9. ELIMINAR ACTIVIDAD REMOTA
+    // ====================================
+
+    fun eliminarActividadRemota(
+        actividad: Actividad
+    ) {
+
+        if (guardando || cargandoRemotas) return
+
+        if (actividadesRemotas.none { it.id == actividad.id }) {
+            mensajeRemoto = "Selecciona una actividad del servidor."
+            return
+        }
+
+        if (actividad.activa) {
+            mensajeRemoto =
+                "Desactiva la actividad antes de eliminarla."
+            return
+        }
+
+        guardando = true
+
+        mensajeRemoto = "Eliminando actividad del servidor..."
+
+        viewModelScope.launch {
+
+            try {
+
+                repositorioRemoto.eliminarActividad(
+                    actividad.id
+                )
+
+                actividadesRemotas = actividadesRemotas.filter {
+                    it.id != actividad.id
+                }
+
+                mensajeRemoto =
+                    "Actividad eliminada correctamente de PostgreSQL."
+
+            } catch (error: CancellationException) {
+
+                throw error
+
+            } catch (error: retrofit2.HttpException) {
+
+                mensajeRemoto = when (error.code()) {
+
+                    404 ->
+                        "La actividad ya no existe en el servidor."
+
+                    409 ->
+                        "No se puede eliminar. La actividad esta activa " +
+                        "o tiene registros asociados."
+
+                    else ->
+                        "Error del servidor: ${error.code()}."
+                }
+
+            } catch (error: Exception) {
+
+                mensajeRemoto =
+                    "No se pudo confirmar la eliminacion. " +
+                    "Actualiza el listado antes de reintentar."
+
+            } finally {
+
+                guardando = false
+            }
+        }
+    }
+
 }

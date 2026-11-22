@@ -1,4 +1,5 @@
-﻿package com.example.mpazneb.data.remote
+
+package com.example.mpazneb.data.remote
 
 import com.example.mpazneb.model.Actividad
 import com.example.mpazneb.model.ActividadRequest
@@ -15,22 +16,70 @@ import com.example.mpazneb.model.asistente.ObservacionRequest
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.DELETE
 import retrofit2.http.PATCH
 import retrofit2.http.Path
 
 interface MpazApi {
 
-    // ADMINISTRACION
+    // ==========================================
+    // ADMINISTRACION - ACTIVIDADES
+    // ==========================================
 
     @GET("api/actividades")
     suspend fun obtenerActividades(): List<Actividad>
+
+    @GET("api/actividades/{id}")
+    suspend fun obtenerActividadPorId(
+        @Path("id") id: Int
+    ): Actividad
 
     @POST("api/actividades")
     suspend fun crearActividad(
         @Body actividad: ActividadRequest
     ): Actividad
 
+    @PUT("api/actividades/{id}")
+    suspend fun actualizarActividad(
+        @Path("id") id: Int,
+        @Body actividad: Actividad
+    ): Actividad
+
+    @DELETE("api/actividades/{id}")
+    suspend fun eliminarActividad(
+        @Path("id") id: Int
+    )
+
+    // ==========================================
+    // ADMINISTRACION - PREGUNTAS
+    // ==========================================
+
+    @GET("api/preguntas/actividad/{actividadId}")
+    suspend fun obtenerPreguntasPorActividad(
+        @Path("actividadId") actividadId: Int
+    ): List<PreguntaEntity>
+
+    @POST("api/preguntas")
+    suspend fun crearPregunta(
+        @Body pregunta: PreguntaEntity
+    ): PreguntaEntity
+
+    @PUT("api/preguntas/{id}")
+    suspend fun actualizarPregunta(
+        @Path("id") id: Int,
+        @Body pregunta: PreguntaEntity
+    ): PreguntaEntity
+
+    @DELETE("api/preguntas/{id}")
+    suspend fun eliminarPregunta(
+        @Path("id") id: Int
+    )
+
+
+    // ==========================================
     // ASIGNACIONES
+    // ==========================================
 
     @GET("api/asignaciones")
     suspend fun obtenerAsignaciones(): List<AsignacionRemota>
@@ -50,17 +99,9 @@ interface MpazApi {
         @Body asignacion: AsignacionRequest
     ): AsignacionRemota
 
-    @GET("api/actividades/{id}")
-    suspend fun obtenerActividadPorId(
-        @Path("id") id: Int
-    ): Actividad
-
-    @GET("api/preguntas/actividad/{actividadId}")
-    suspend fun obtenerPreguntasPorActividad(
-        @Path("actividadId") actividadId: Int
-    ): List<PreguntaEntity>
-
+    // ==========================================
     // ESTUDIANTE
+    // ==========================================
 
     @POST("api/respuestas")
     suspend fun registrarRespuesta(
@@ -82,7 +123,9 @@ interface MpazApi {
         @Path("asignacionId") asignacionId: Int
     ): Resultado
 
+    // ==========================================
     // ASISTENTE
+    // ==========================================
 
     @POST("api/asignaciones")
     suspend fun crearAsignacionAsistente(
@@ -92,7 +135,9 @@ interface MpazApi {
     @GET("api/asignaciones")
     suspend fun obtenerAsignacionesAsistente(): List<AsignacionAula>
 
+    // ==========================================
     // OBSERVACIONES PEDAGOGICAS
+    // ==========================================
 
     @PATCH("api/resultados/{id}/observacion")
     suspend fun actualizarObservacion(
