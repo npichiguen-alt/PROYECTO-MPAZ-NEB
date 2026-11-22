@@ -1,4 +1,3 @@
-
 package com.example.mpazneb.data.remote
 
 import com.google.gson.annotations.SerializedName
@@ -9,7 +8,7 @@ import retrofit2.http.Path
 
 data class PokemonDto(
     val name: String,
-    val sprites: PokemonSprites
+    val sprites: PokemonSprites?
 )
 
 data class PokemonSprites(
@@ -28,7 +27,6 @@ interface PokeApiService {
 object PokeApiClient {
 
     val api: PokeApiService by lazy {
-
         Retrofit.Builder()
             .baseUrl("https://pokeapi.co/api/v2/")
             .addConverterFactory(
