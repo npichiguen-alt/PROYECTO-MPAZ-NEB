@@ -58,6 +58,11 @@ class AsistenteViewModel(
     )
         private set
 
+    var estudiantesRemotos by mutableStateOf<List<EstudianteAula>>(
+        emptyList()
+    )
+        private set
+
     var asignacionesRemotas by mutableStateOf<List<AsignacionAula>>(
         emptyList()
     )
@@ -74,7 +79,16 @@ class AsistenteViewModel(
     var cargandoActividadesRemotas by mutableStateOf(false)
         private set
 
+    var cargandoEstudiantesRemotos by mutableStateOf(false)
+        private set
+
+    var estudiantesRemotosCargados by mutableStateOf(false)
+        private set
+
     var errorActividadesRemotas by mutableStateOf("")
+        private set
+
+    var errorEstudiantesRemotos by mutableStateOf("")
         private set
 
     var errorResultadosRemotos by mutableStateOf("")
@@ -96,6 +110,13 @@ class AsistenteViewModel(
             actividadesRemotas
         } else {
             actividades.value
+        }
+
+    val estudiantesParaAsignar: List<EstudianteAula>
+        get() = if (repositorioRemoto != null) {
+            estudiantesRemotos
+        } else {
+            estudiantes.value
         }
 
     // CONSULTAR ACTIVIDADES DESDE AWS
@@ -128,6 +149,60 @@ class AsistenteViewModel(
             } finally {
 
                 cargandoActividadesRemotas = false
+            }
+        }
+    }
+
+    // CONSULTAR ESTUDIANTES ACTIVOS DESDE AWS
+
+    fun cargarEstudiantesRemotos() {
+
+        val repositorio = repositorioRemoto ?: return
+
+        if (cargandoEstudiantesRemotos) return
+
+        cargandoEstudiantesRemotos = true
+        estudiantesRemotosCargados = false
+        errorEstudiantesRemotos = ""
+
+        viewModelScope.launch {
+
+            try {
+
+                estudiantesRemotos =
+                    repositorio.obtenerEstudiantes()
+
+                estudiantesRemotosCargados = true
+
+                val aliasSeleccionado =
+                    formulario.estudianteAlias
+
+                if (
+                    aliasSeleccionado.isNotBlank() &&
+                    estudiantesRemotos.none {
+                        it.alias == aliasSeleccionado && it.activo
+                    }
+                ) {
+
+                    formulario = formulario.copy(
+                        estudianteAlias = ""
+                    )
+                }
+
+            } catch (e: CancellationException) {
+                throw e
+
+            } catch (e: Exception) {
+
+                estudiantesRemotos = emptyList()
+
+                errorEstudiantesRemotos =
+                    "No se pudieron cargar los estudiantes: " +
+                            (e.message ?: "error de conexión")
+
+            } finally {
+
+                cargandoEstudiantesRemotos = false
             }
         }
     }
@@ -280,6 +355,25 @@ class AsistenteViewModel(
 
         if (trabajando) return
 
+        if (repositorioRemoto != null) {
+
+            if (cargandoEstudiantesRemotos) {
+
+                mensaje =
+                    "Espera mientras se cargan los estudiantes."
+
+                return
+            }
+
+            if (!estudiantesRemotosCargados) {
+
+                mensaje =
+                    "Debes cargar los estudiantes del servidor."
+
+                return
+            }
+        }
+
         val datos = formulario
 
         val disponibles = actividadesParaAsignar
@@ -287,7 +381,7 @@ class AsistenteViewModel(
         val error = ValidadorAsignacion.validar(
             datos,
             disponibles,
-            estudiantes.value
+            estudiantesParaAsignar
         )
 
         if (error != null) {

@@ -1,3 +1,4 @@
+
 package com.example.mpazneb.repository.asistente
 
 import com.example.mpazneb.data.remote.MpazApi
@@ -6,6 +7,7 @@ import com.example.mpazneb.model.Resultado
 import com.example.mpazneb.model.asistente.ActividadAula
 import com.example.mpazneb.model.asistente.AsignacionAula
 import com.example.mpazneb.model.asistente.AsignacionRequest
+import com.example.mpazneb.model.asistente.EstudianteAula
 import com.example.mpazneb.model.asistente.ObservacionRequest
 import com.example.mpazneb.model.asistente.ResultadoAula
 
@@ -15,6 +17,8 @@ import java.util.Locale
 class AsignacionRemotaRepository(
     private val api: MpazApi = RetrofitClient.api
 ) {
+
+    // NORMALIZACION DE TEXTOS
 
     private fun normalizar(texto: String): String {
         return Normalizer.normalize(
@@ -49,6 +53,8 @@ class AsignacionRemotaRepository(
         }
     }
 
+    // CONSULTAR ACTIVIDADES REMOTAS
+
     suspend fun obtenerActividades(): List<ActividadAula> {
 
         return api.obtenerActividades()
@@ -71,6 +77,26 @@ class AsignacionRemotaRepository(
             }
     }
 
+    // CONSULTAR ESTUDIANTES ACTIVOS DESDE AWS
+
+    suspend fun obtenerEstudiantes(): List<EstudianteAula> {
+
+        return api.obtenerEstudiantesActivos()
+            .filter { it.activo }
+            .map { estudiante ->
+
+                EstudianteAula(
+                    alias = estudiante.alias,
+                    activo = estudiante.activo
+                )
+            }
+            .sortedBy {
+                it.alias.lowercase(Locale.ROOT)
+            }
+    }
+
+    // CREAR ASIGNACION REMOTA
+
     suspend fun crearAsignacion(
         solicitud: AsignacionRequest
     ): AsignacionAula {
@@ -80,10 +106,14 @@ class AsignacionRemotaRepository(
         )
     }
 
+    // CONSULTAR ASIGNACIONES REMOTAS
+
     suspend fun obtenerAsignaciones(): List<AsignacionAula> {
 
         return api.obtenerAsignacionesAsistente()
     }
+
+    // CONSULTAR RESULTADOS REMOTOS
 
     suspend fun obtenerResultados(
         asignacionId: Int
@@ -95,6 +125,8 @@ class AsignacionRemotaRepository(
             convertirResultado(it)
         }
     }
+
+    // GUARDAR OBSERVACIONES PEDAGOGICAS
 
     suspend fun guardarObservacion(
         resultadoId: Int,
@@ -110,6 +142,8 @@ class AsignacionRemotaRepository(
 
         return convertirResultado(resultado)
     }
+
+    // CONVERTIR RESULTADO REMOTO AL MODELO ASISTENTE
 
     private fun convertirResultado(
         resultado: Resultado
