@@ -199,8 +199,9 @@ fun NuevaActividadConRoomScreen() {
                     "Usuarios",
                     "Resultados",
                     "Servidor",
-                    "Preguntas servidor"
-).forEach { opcion ->
+                    "Preguntas servidor",
+                    "Resultados servidor"
+                ).forEach { opcion ->
 
                     FilterChip(
                         selected = pantalla == opcion,
@@ -308,7 +309,12 @@ fun NuevaActividadConRoomScreen() {
                     // SERVIDOR SPRING BOOT
                     // ====================================
 
-                    
+
+                    "Resultados servidor" -> {
+
+                        ResultadosRemotosScreen()
+                    }
+
                     "Preguntas servidor" -> {
 
                         if (viewModel.cargandoRemotas || viewModel.guardando) {
