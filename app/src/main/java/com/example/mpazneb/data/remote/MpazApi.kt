@@ -13,6 +13,9 @@ import com.example.mpazneb.model.asistente.AsignacionRequest as AsignacionAsiste
 import com.example.mpazneb.model.asistente.AsignacionAula
 import com.example.mpazneb.model.asistente.ObservacionRequest
 
+import com.example.mpazneb.model.EstudianteRemoto
+import com.example.mpazneb.model.RegistroEstudianteRequest
+
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -144,4 +147,25 @@ interface MpazApi {
         @Path("id") id: Int,
         @Body solicitud: ObservacionRequest
     ): Resultado
+
+    // ==========================================
+    // ADMINISTRACION - ESTUDIANTES REMOTOS
+    // ==========================================
+
+    @GET("api/estudiantes")
+    suspend fun obtenerEstudiantes(): List<EstudianteRemoto>
+
+    @GET("api/estudiantes/activos")
+    suspend fun obtenerEstudiantesActivos(): List<EstudianteRemoto>
+
+    @GET("api/estudiantes/{id}")
+    suspend fun obtenerEstudiantePorId(
+        @Path("id") id: Int
+    ): EstudianteRemoto
+
+    @POST("api/estudiantes")
+    suspend fun registrarEstudiante(
+        @Body solicitud: RegistroEstudianteRequest
+    ): EstudianteRemoto
+
 }

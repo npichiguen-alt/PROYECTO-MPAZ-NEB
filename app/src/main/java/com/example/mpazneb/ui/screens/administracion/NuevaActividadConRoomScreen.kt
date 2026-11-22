@@ -200,7 +200,8 @@ fun NuevaActividadConRoomScreen() {
                     "Resultados",
                     "Servidor",
                     "Preguntas servidor",
-                    "Resultados servidor"
+                    "Resultados servidor",
+                    "Estudiantes servidor"
                 ).forEach { opcion ->
 
                     FilterChip(
@@ -309,6 +310,11 @@ fun NuevaActividadConRoomScreen() {
                     // SERVIDOR SPRING BOOT
                     // ====================================
 
+
+                    "Estudiantes servidor" -> {
+
+                        RegistroEstudiantesScreen()
+                    }
 
                     "Resultados servidor" -> {
 
