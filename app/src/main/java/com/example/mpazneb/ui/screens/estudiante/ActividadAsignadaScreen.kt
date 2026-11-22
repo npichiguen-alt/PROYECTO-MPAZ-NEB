@@ -12,6 +12,24 @@ import com.example.mpazneb.data.local.ActividadEntity
 import com.example.mpazneb.data.local.PreguntaEntity
 import com.example.mpazneb.model.Respuesta
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+
+private val Rosa = Color(0xFFEA3677)
+private val Azul = Color(0xFF248ED8)
+private val AzulSuave = Color(0xFFE7F5FE)
+private val AzulOscuro = Color(0xFF242B57)
+private val RosaSuave = Color(0xFFFFE8F1)
+private val Blanco = Color.White
+private val VerdeSuave = Color(0xFFE8F5E9)
+private val VerdeOscuro = Color(0xFF2E7D32)
+
 // ====================================
 // INICIO DE LA ACTIVIDAD ASIGNADA
 // ====================================
@@ -35,94 +53,190 @@ fun InicioActividadAsignadaScreen(
         Text(
             text = "MPAZ NEB",
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
+            color = Rosa
         )
 
         Text(
             text = "Mi actividad asignada",
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineMedium,
+            color = AzulOscuro
         )
 
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Blanco),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
 
             Column(
                 modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
 
                 Text(
                     text = actividad.titulo,
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleLarge,
+                    color = AzulOscuro,
+                    fontWeight = FontWeight.Bold
                 )
 
-                Text("Módulo: ${actividad.modulo}")
+                // Chips para Módulo, Curso y Dificultad
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Surface(
+                        color = AzulSuave,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = " ${actividad.modulo}",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = AzulOscuro
+                        )
+                    }
 
-                Text("Curso: ${actividad.curso}° básico")
+                    Surface(
+                        color = RosaSuave,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "🎓 ${actividad.curso}° básico",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Rosa
+                        )
+                    }
 
-                Text("Dificultad: ${actividad.dificultad}")
+                    Surface(
+                        color = Color(0xFFFFF9C4),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "⭐ ${actividad.dificultad}",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color(0xFFF57F17)
+                        )
+                    }
+                }
 
-                HorizontalDivider()
+                HorizontalDivider(color = AzulSuave)
 
                 Text(
                     text = "Descripción",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    color = AzulOscuro
                 )
 
-                Text(actividad.descripcion)
+                Text(
+                    text = actividad.descripcion,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color(0xFF57637E)
+                )
 
                 if (actividad.objetivo.isNotBlank()) {
-
                     Text(
-                        text = "Objetivo",
-                        style = MaterialTheme.typography.titleMedium
+                        text = " Objetivo",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = AzulOscuro
                     )
 
-                    Text(actividad.objetivo)
+                    Text(
+                        text = actividad.objetivo,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color(0xFF57637E)
+                    )
                 }
 
                 if (actividad.instrucciones.isNotBlank()) {
-
                     Text(
                         text = "Instrucciones",
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
+                        color = AzulOscuro
                     )
 
-                    Text(actividad.instrucciones)
+                    Text(
+                        text = actividad.instrucciones,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color(0xFF57637E)
+                    )
                 }
 
-                HorizontalDivider()
+                HorizontalDivider(color = AzulSuave)
 
-                Text(
-                    text = "Preguntas disponibles: $cantidadPreguntas"
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Preguntas disponibles:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF57637E)
+                    )
+                    Surface(
+                        color = Azul,
+                        shape = CircleShape
+                    ) {
+                        Text(
+                            text = "$cantidadPreguntas",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                            color = Blanco,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
 
         if (cantidadPreguntas == 0) {
-
-            Text(
-                text = "Esta actividad todavía no tiene preguntas."
-            )
+            Surface(
+                color = Color(0xFFFFF3E0),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Esta actividad todavía no tiene preguntas.",
+                    modifier = Modifier.padding(16.dp),
+                    color = Color(0xFFE65100)
+                )
+            }
         }
 
         Button(
             onClick = onAbrirActividad,
             enabled = cantidadPreguntas > 0,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Rosa,
+                contentColor = Blanco
+            )
         ) {
-            Text("Comenzar actividad")
+            Text(
+                text = "Comenzar actividad",
+                style = MaterialTheme.typography.titleMedium
+            )
         }
 
         OutlinedButton(
             onClick = onAbrirResultados,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            Text("Mis resultados")
+            Text(
+                text = "Mis resultados",
+                style = MaterialTheme.typography.titleMedium,
+                color = Azul
+            )
         }
-
-
     }
 }
 
@@ -278,35 +392,65 @@ fun ActividadAsignadaScreen(
             // ENCABEZADO
             // ====================================
 
-            Text(
-                text = "Pregunta ${indicePregunta + 1} de ${preguntas.size}",
-                style = MaterialTheme.typography.titleLarge
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Pregunta ${indicePregunta + 1} de ${preguntas.size}",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = AzulOscuro,
+                    fontWeight = FontWeight.Bold
+                )
+
+                // Indicador visual de intentos restantes con corazones
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    repeat(3) { i ->
+                        Text(
+                            text = if (i < intentosRestantes) "❤️" else "🖤",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+            }
 
             LinearProgressIndicator(
                 progress = {
                     (indicePregunta + 1).toFloat() /
                             preguntas.size.coerceAtLeast(1)
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp),
+                color = Rosa,
+                trackColor = RosaSuave
             )
 
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Blanco),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
 
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
 
                     Text(
                         text = pregunta.enunciado,
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
+                        color = AzulOscuro,
+                        fontWeight = FontWeight.Bold
                     )
 
                     // ====================================
-                    // ALTERNATIVAS
+                    // ALTERNATIVAS COMO TARJETAS SELECCIONABLES
                     // ====================================
 
                     val alternativas = listOf(
@@ -318,45 +462,77 @@ fun ActividadAsignadaScreen(
 
                     alternativas.forEach { (letra, texto) ->
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment =
-                                androidx.compose.ui.Alignment.CenterVertically,
-                            horizontalArrangement =
-                                Arrangement.spacedBy(8.dp)
+                        val seleccionada = opcionElegida == letra
+                        val fondoColor = if (seleccionada) AzulSuave else Blanco
+                        val bordeColor = if (seleccionada) Rosa else Color(0xFFE0E0E0)
+
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(
+                                    width = if (seleccionada) 2.dp else 1.dp,
+                                    color = bordeColor,
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .clickable(
+                                    enabled = !preguntaFinalizada && !guardando,
+                                    onClick = { opcionElegida = letra }
+                                ),
+                            shape = RoundedCornerShape(16.dp),
+                            color = fondoColor
                         ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                RadioButton(
+                                    selected = seleccionada,
+                                    onClick = { opcionElegida = letra },
+                                    enabled = !preguntaFinalizada && !guardando,
+                                    colors = RadioButtonDefaults.colors(
+                                        selectedColor = Rosa,
+                                        unselectedColor = Azul
+                                    )
+                                )
 
-                            RadioButton(
-                                selected = opcionElegida == letra,
-                                onClick = {
-                                    opcionElegida = letra
-                                },
-                                enabled =
-                                    !preguntaFinalizada && !guardando
-                            )
-
-                            Text(
-                                text = "$letra. $texto",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
+                                Text(
+                                    text = "$letra. $texto",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = AzulOscuro,
+                                    fontWeight = if (seleccionada) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
                         }
                     }
                 }
             }
 
             // ====================================
-            // INTENTOS
+            // INFORMACIÓN DE INTENTOS Y BOTÓN COMPROBAR
             // ====================================
-
-            Text(
-                text = "Intentos realizados: $intentosRealizados de 3"
-            )
 
             if (!preguntaFinalizada) {
 
-                Text(
-                    text = "Intentos restantes: $intentosRestantes"
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Intentos realizados: $intentosRealizados de 3",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF57637E)
+                    )
+                    Text(
+                        text = "Restantes: $intentosRestantes",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Rosa,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
                 Button(
                     onClick = {
@@ -365,9 +541,15 @@ fun ActividadAsignadaScreen(
                             opcionElegida
                         )
                     },
-                    enabled =
-                        opcionElegida.isNotBlank() && !guardando,
-                    modifier = Modifier.fillMaxWidth()
+                    enabled = opcionElegida.isNotBlank() && !guardando,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Rosa,
+                        contentColor = Blanco
+                    )
                 ) {
 
                     Text(
@@ -375,7 +557,8 @@ fun ActividadAsignadaScreen(
                             "Guardando respuesta..."
                         } else {
                             "Comprobar respuesta"
-                        }
+                        },
+                        style = MaterialTheme.typography.titleMedium
                     )
                 }
             }

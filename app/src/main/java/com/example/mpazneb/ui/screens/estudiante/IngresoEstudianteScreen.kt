@@ -62,14 +62,30 @@ fun IngresoEstudianteScreen(
     ) {
 
         // ====================================
-        // NOMBRE DE LA APLICACIÓN
+        // ÍCONO Y NOMBRE DE LA APLICACIÓN
         // ====================================
 
-        Text(
-            text = "MPAZ NEB",
-            style = MaterialTheme.typography.titleLarge,
-            color = Rosa
-        )
+        Surface(
+            color = Color(0xFFFFE8F1),
+            shape = RoundedCornerShape(20.dp),
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "🎓",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "MPAZ NEB",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Rosa
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -84,7 +100,7 @@ fun IngresoEstudianteScreen(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = "Bienvenido a tus actividades educativas",
@@ -93,7 +109,7 @@ fun IngresoEstudianteScreen(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
         // ====================================
         // TARJETA PARA INGRESAR EL CÓDIGO
@@ -141,6 +157,7 @@ fun IngresoEstudianteScreen(
 
                     // Mantiene la conexión con el ViewModel.
                     onValueChange = onCodigoChange,
+                    enabled = !estado.cargando,
 
                     label = {
                         Text("Código temporal")
@@ -207,6 +224,7 @@ fun IngresoEstudianteScreen(
 
                 Button(
                     onClick = onIngresar,
+                    enabled = !estado.cargando,
 
                     modifier = Modifier
                         .fillMaxWidth()
@@ -220,10 +238,18 @@ fun IngresoEstudianteScreen(
                     )
                 ) {
 
-                    Text(
-                        text = "Ingresar",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    if (estado.cargando) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Blanco,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Ingresar",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
 
                 // El mensaje de validación se muestra
