@@ -15,6 +15,7 @@ import com.example.mpazneb.repository.administracion.ActividadRemotaRepository
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 class AdministracionViewModel(
     private val repositorio: ActividadRepository? = null
@@ -569,6 +570,14 @@ class AdministracionViewModel(
 
                 throw error
 
+            } catch (error: HttpException) {
+
+                mensajeRemoto = when (error.code()) {
+                    400 -> "Solicitud rechazada: datos pedagógicos inválidos."
+                    409 -> "No se pudo guardar la actividad en el servidor por un conflicto."
+                    else -> "Error del servidor HTTP ${error.code()}."
+                }
+
             } catch (error: Exception) {
 
                 mensajeRemoto =
@@ -642,6 +651,11 @@ class AdministracionViewModel(
                         actividad.id
                     )
 
+                if (actividadActual.activa) {
+                    mensajeRemoto = "Desactiva la actividad en el servidor antes de editarla."
+                    return@launch
+                }
+
                 val actividadEditada = actividadActual.copy(
                     titulo = titulo.trim(),
                     descripcion = descripcion.trim(),
@@ -666,6 +680,15 @@ class AdministracionViewModel(
             } catch (error: CancellationException) {
 
                 throw error
+
+            } catch (error: HttpException) {
+
+                mensajeRemoto = when (error.code()) {
+                    400 -> "Solicitud rechazada: datos pedagógicos inválidos."
+                    404 -> "La actividad ya no existe en el servidor."
+                    409 -> "No se pudo editar: la actividad está activa o tiene registros asociados."
+                    else -> "Error del servidor (${error.code()})."
+                }
 
             } catch (error: Exception) {
 
@@ -752,6 +775,14 @@ class AdministracionViewModel(
             } catch (error: CancellationException) {
 
                 throw error
+
+            } catch (error: HttpException) {
+
+                mensajeRemoto = when (error.code()) {
+                    409 -> "No se puede cambiar el estado. Agrega al menos una pregunta o verifica asignaciones."
+                    404 -> "La actividad ya no existe en el servidor."
+                    else -> "Error del servidor HTTP ${error.code()}."
+                }
 
             } catch (error: Exception) {
 

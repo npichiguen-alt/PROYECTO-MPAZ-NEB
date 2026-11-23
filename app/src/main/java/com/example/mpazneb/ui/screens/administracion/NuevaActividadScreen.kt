@@ -1,6 +1,6 @@
 
 package com.example.mpazneb.ui.screens.administracion
-import com.example.mpazneb.ui.viewmodel.AdministracionViewModel
+
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,10 +11,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+
+import com.example.mpazneb.ui.viewmodel.AdministracionViewModel
+
 @Composable
 fun NuevaActividadScreen(
     viewModel: AdministracionViewModel
 ) {
+
+    // DESTINO DE GUARDADO (Servidor AWS vs Local / Room)
+    var destinoGuardado by rememberSaveable {
+        mutableStateOf("Servidor AWS")
+    }
 
     var titulo by rememberSaveable {
         mutableStateOf("")
@@ -58,9 +66,66 @@ fun NuevaActividadScreen(
         )
 
         Text(
-            text = "Completa los datos pedagógicos de la actividad.",
+            text = "Completa los datos pedagógicos de la actividad y selecciona dónde deseas guardarla.",
             style = MaterialTheme.typography.bodyMedium
         )
+
+        // SELECCIÓN DE DESTINO
+        Text(
+            text = "Destino de guardado",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+
+            FilterChip(
+                selected = destinoGuardado == "Servidor AWS",
+                onClick = {
+                    destinoGuardado = "Servidor AWS"
+                },
+                label = {
+                    Text("Servidor AWS (Asignación real)")
+                }
+            )
+
+            FilterChip(
+                selected = destinoGuardado == "Local / Room",
+                onClick = {
+                    destinoGuardado = "Local / Room"
+                },
+                label = {
+                    Text("Local / Room (Pruebas)")
+                }
+            )
+        }
+
+        // MENSAJE INFORMATIVO DEL DESTINO
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = if (destinoGuardado == "Servidor AWS") {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.secondaryContainer
+                }
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
+            Text(
+                text = if (destinoGuardado == "Servidor AWS") {
+                    "FLUJO PRINCIPAL: La actividad se guardará en PostgreSQL mediante Spring Boot (AWS). " +
+                            "Estará disponible en el catálogo Servidor AWS de Asistente para asignaciones reales a estudiantes."
+                } else {
+                    "MODO LOCAL: La actividad se guardará únicamente en la base de datos local de este dispositivo (Room). " +
+                            "No se enviará al Servidor AWS."
+                },
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(12.dp)
+            )
+        }
 
         // TÍTULO
         OutlinedTextField(
@@ -84,7 +149,7 @@ fun NuevaActividadScreen(
             minLines = 2
         )
 
-        // NUEVO: OBJETIVO DE APRENDIZAJE
+        // OBJETIVO DE APRENDIZAJE
         OutlinedTextField(
             value = objetivo,
             onValueChange = { objetivo = it },
@@ -98,7 +163,7 @@ fun NuevaActividadScreen(
             minLines = 2
         )
 
-        // NUEVO: INSTRUCCIONES
+        // INSTRUCCIONES
         OutlinedTextField(
             value = instrucciones,
             onValueChange = { instrucciones = it },
@@ -201,19 +266,36 @@ fun NuevaActividadScreen(
             }
         }
 
-        // GUARDAR ACTIVIDAD
+        val guardandoActual = viewModel.guardando || viewModel.cargandoRemotas
+
+        // GUARDAR ACTIVIDAD SEGÚN EL DESTINO SELECCIONADO
         Button(
             onClick = {
 
-                viewModel.guardarActividad(
-                    titulo = titulo,
-                    descripcion = descripcion,
-                    modulo = modulo,
-                    curso = curso,
-                    dificultad = dificultad,
-                    objetivo = objetivo,
-                    instrucciones = instrucciones
-                )
+                if (destinoGuardado == "Servidor AWS") {
+
+                    viewModel.crearActividadRemota(
+                        titulo = titulo,
+                        descripcion = descripcion,
+                        modulo = modulo,
+                        curso = curso,
+                        dificultad = dificultad,
+                        objetivo = objetivo,
+                        instrucciones = instrucciones
+                    )
+
+                } else {
+
+                    viewModel.guardarActividad(
+                        titulo = titulo,
+                        descripcion = descripcion,
+                        modulo = modulo,
+                        curso = curso,
+                        dificultad = dificultad,
+                        objetivo = objetivo,
+                        instrucciones = instrucciones
+                    )
+                }
             },
 
             enabled =
@@ -221,7 +303,7 @@ fun NuevaActividadScreen(
                         descripcion.isNotBlank() &&
                         objetivo.isNotBlank() &&
                         instrucciones.isNotBlank() &&
-                        !viewModel.guardando,
+                        !guardandoActual,
 
             modifier = Modifier
                 .fillMaxWidth()
@@ -229,20 +311,34 @@ fun NuevaActividadScreen(
         ) {
 
             Text(
-                if (viewModel.guardando) {
-                    "Guardando..."
-                } else {
-                    "Guardar actividad"
+                when {
+                    guardandoActual -> "Guardando..."
+                    destinoGuardado == "Servidor AWS" -> "Guardar en Servidor AWS (PostgreSQL)"
+                    else -> "Guardar en Local / Room"
                 }
             )
         }
 
-        // MENSAJE DEL VIEWMODEL
-        if (viewModel.mensaje.isNotBlank()) {
+        // MENSAJES FEEDBACK EXPLÍCITOS SEGÚN DESTINO
+        if (destinoGuardado == "Servidor AWS" && viewModel.mensajeRemoto.isNotBlank()) {
 
             Text(
-                text = viewModel.mensaje,
-                style = MaterialTheme.typography.bodyMedium
+                text = viewModel.mensajeRemoto,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (viewModel.mensajeRemoto.contains("guardada", ignoreCase = true) ||
+                    viewModel.mensajeRemoto.contains("PostgreSQL", ignoreCase = true)) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.error
+                }
+            )
+
+        } else if (destinoGuardado == "Local / Room" && viewModel.mensaje.isNotBlank()) {
+
+            Text(
+                text = "[Local / Room] ${viewModel.mensaje}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary
             )
         }
     }
@@ -262,3 +358,4 @@ fun NuevaActividadPreview() {
         )
     }
 }
+

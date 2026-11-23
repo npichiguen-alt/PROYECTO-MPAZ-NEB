@@ -193,16 +193,30 @@ fun NuevaActividadConRoomScreen() {
 
                 listOf(
                     "Nueva",
+                    "Servidor",
+                    "Preguntas servidor",
+                    "Resultados servidor",
+                    "Estudiantes servidor",
                     "Matemática",
                     "Lectura",
                     "Preguntas",
                     "Usuarios",
-                    "Resultados",
-                    "Servidor",
-                    "Preguntas servidor",
-                    "Resultados servidor",
-                    "Estudiantes servidor"
+                    "Resultados"
                 ).forEach { opcion ->
+
+                    val etiquetaMenu = when (opcion) {
+                        "Nueva" -> "Nueva (AWS / Room)"
+                        "Servidor" -> "Servidor AWS"
+                        "Preguntas servidor" -> "Preguntas AWS"
+                        "Resultados servidor" -> "Resultados AWS"
+                        "Estudiantes servidor" -> "Estudiantes AWS"
+                        "Matemática" -> "Matemática (Local/Room)"
+                        "Lectura" -> "Lectura (Local/Room)"
+                        "Preguntas" -> "Preguntas (Local/Room)"
+                        "Resultados" -> "Resultados (Local/Room)"
+                        "Usuarios" -> "Usuarios (Local)"
+                        else -> opcion
+                    }
 
                     FilterChip(
                         selected = pantalla == opcion,
@@ -212,7 +226,7 @@ fun NuevaActividadConRoomScreen() {
                         },
 
                         label = {
-                            Text(opcion)
+                            Text(etiquetaMenu)
                         }
                     )
                 }
