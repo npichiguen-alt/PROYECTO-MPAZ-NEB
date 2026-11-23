@@ -1,14 +1,15 @@
+
 # MPAZ NEB
 
 ## Descripción del proyecto
 
-MPAZ NEB es una aplicación móvil educativa desarrollada para apoyar la nivelación de estudiantes ficticios de 1.º a 4.º básico en las áreas de Lectura y Matemática.
+**MPAZ NEB** es una aplicación móvil educativa desarrollada para apoyar la nivelación de estudiantes ficticios de 1.º a 4.º básico, en las áreas de Lectura y Matemática.
 
 El proyecto corresponde a la **Evaluación Parcial 5 de la asignatura Desarrollo de Aplicaciones Móviles (DSY1105)**.
 
 La aplicación permite gestionar actividades educativas, registrar estudiantes, realizar asignaciones mediante códigos temporales, responder preguntas, consultar resultados y registrar observaciones pedagógicas.
 
-El sistema incorpora persistencia local mediante Room, servicios REST desarrollados en Spring Boot, PostgreSQL en AWS RDS y consumo de la API externa PokéAPI.
+El sistema utiliza Kotlin y Jetpack Compose en Android, arquitectura MVVM, persistencia local con Room, servicios REST desarrollados en Spring Boot, PostgreSQL alojado en AWS RDS y consumo de la API externa PokéAPI.
 
 ## Integrantes del equipo
 
@@ -20,7 +21,7 @@ El sistema incorpora persistencia local mediante Room, servicios REST desarrolla
 
 ## Tecnologías utilizadas
 
-### Aplicación móvil
+### Aplicación Android
 
 - Android Studio.
 - Kotlin.
@@ -41,8 +42,9 @@ El sistema incorpora persistencia local mediante Room, servicios REST desarrolla
 - API REST.
 - Maven.
 - PostgreSQL.
-- AWS EC2 y AWS RDS.
-- Systemd para ejecución persistente del backend.
+- AWS EC2.
+- AWS RDS.
+- Systemd para la ejecución automática del backend.
 
 ### Pruebas y colaboración
 
@@ -56,58 +58,58 @@ El sistema incorpora persistencia local mediante Room, servicios REST desarrolla
 
 ## Arquitectura del sistema
 
-La aplicación utiliza MVVM para separar la interfaz, la lógica de negocio y el acceso a datos.
+La aplicación utiliza la arquitectura **MVVM (Model-View-ViewModel)** para separar las interfaces, la lógica de presentación y el acceso a los datos.
 
 ```text
-Interfaz Jetpack Compose
-          |
-       ViewModel
-          |
-       Repository
-       /    |    \
-    Room Retrofit PokéAPI
-            |
-        Spring Boot
-            |
-        PostgreSQL
-          AWS RDS
+Interfaz Android - Jetpack Compose
+               |
+            ViewModel
+               |
+            Repository
+           /    |     \
+        Room  Retrofit  PokéAPI
+                  |
+              Spring Boot
+                  |
+              PostgreSQL
+                AWS RDS
 ```
 
-### Capas Android
+### Capas de Android
 
-- Model: representación de entidades y datos.
-- View: interfaces desarrolladas con Jetpack Compose.
-- ViewModel: estados, validaciones y lógica de interacción.
-- Repository: acceso a fuentes de datos locales y remotas.
-- Room: persistencia local.
-- Retrofit: consumo de servicios REST.
+- **Model:** representa las entidades y los datos de la aplicación.
+- **View:** contiene las pantallas desarrolladas con Jetpack Compose.
+- **ViewModel:** administra los estados y la lógica de interacción.
+- **Repository:** permite consultar y modificar información.
+- **Room:** proporciona persistencia local.
+- **Retrofit:** permite consumir servicios REST.
 
-### Capas Spring Boot
+### Capas del backend
 
-- Controller: exposición de endpoints HTTP.
-- Service: lógica de negocio y validaciones.
-- Repository: acceso a PostgreSQL mediante Spring Data JPA.
-- Model: entidades persistentes.
-- DTO: transferencia y validación de datos.
+- **Controller:** expone los endpoints HTTP.
+- **Service:** implementa la lógica de negocio.
+- **Repository:** accede a PostgreSQL mediante Spring Data JPA.
+- **Model:** contiene las entidades persistentes.
+- **DTO:** facilita la transferencia y validación de información.
 
-## Funcionalidades
+## Funcionalidades del sistema
 
-### Administración pedagógica
+### Perfil Administrador
 
 - Crear, editar y eliminar actividades.
-- Registrar y gestionar preguntas y alternativas.
+- Registrar preguntas y alternativas.
 - Activar y desactivar actividades.
 - Registrar estudiantes ficticios.
-- Consultar actividades y estudiantes desde AWS.
-- Consultar resultados remotos.
+- Consultar estudiantes almacenados en PostgreSQL.
+- Consultar los resultados de las actividades.
 - Validar los campos obligatorios.
 - Proteger la eliminación de actividades activas.
 
-### Asistente de aula
+### Perfil Asistente
 
 - Consultar el catálogo de actividades.
-- Filtrar por módulo, curso y dificultad.
-- Consultar estudiantes activos registrados en PostgreSQL.
+- Filtrar actividades por módulo, curso y dificultad.
+- Consultar estudiantes activos desde AWS.
 - Validar formularios de asignación.
 - Asignar actividades mediante servicios REST.
 - Generar, copiar y compartir códigos temporales.
@@ -115,65 +117,77 @@ Interfaz Jetpack Compose
 - Visualizar contadores de asignaciones.
 - Consultar aciertos, intentos y rendimiento.
 - Registrar y actualizar observaciones pedagógicas.
-- Gestionar estados de carga y errores de conexión.
+- Manejar estados de carga y errores de conexión.
 
-### Estudiante
+### Perfil Estudiante
 
 - Ingresar mediante un código temporal.
-- Consultar actividades y preguntas asignadas.
-- Responder ejercicios de Lectura y Matemática.
+- Consultar las actividades asignadas.
+- Responder preguntas de Lectura y Matemática.
 - Realizar un máximo de tres intentos por pregunta.
 - Recibir retroalimentación visual mediante Pokémon.
 - Registrar respuestas en PostgreSQL.
 - Consultar resultados y rendimiento.
 
-## Servicios REST
+## API REST
 
-Principales endpoints utilizados por la aplicación:
+La aplicación Android consume los servicios desarrollados en Spring Boot mediante Retrofit.
 
 | Método | Endpoint | Función |
 |---|---|---|
-| GET | /api/actividades | Consultar actividades |
-| POST | /api/actividades | Crear actividad |
-| GET | /api/actividades/{id} | Consultar actividad |
-| GET | /api/preguntas/actividad/{actividadId} | Consultar preguntas |
-| GET | /api/estudiantes/activos | Consultar estudiantes activos |
-| POST | /api/estudiantes | Registrar estudiante |
-| GET | /api/asignaciones | Consultar asignaciones |
-| POST | /api/asignaciones | Crear asignación |
-| GET | /api/asignaciones/codigo/{codigo} | Buscar asignación por código |
-| GET | /api/asignaciones/estudiante/{alias} | Consultar asignaciones por estudiante |
-| POST | /api/respuestas | Registrar respuesta |
-| GET | /api/respuestas/asignacion/{asignacionId} | Consultar respuestas |
-| GET | /api/resultados/asignacion/{asignacionId} | Consultar resultados |
-| POST | /api/resultados/asignacion/{asignacionId}/calcular | Calcular resultados |
-| PATCH | /api/resultados/{id}/observacion | Actualizar observación pedagógica |
+| GET | `/api/actividades` | Consultar actividades |
+| POST | `/api/actividades` | Crear una actividad |
+| GET | `/api/actividades/{id}` | Consultar una actividad |
+| GET | `/api/preguntas/actividad/{actividadId}` | Consultar preguntas |
+| GET | `/api/estudiantes/activos` | Consultar estudiantes activos |
+| POST | `/api/estudiantes` | Registrar un estudiante |
+| GET | `/api/asignaciones` | Consultar asignaciones |
+| POST | `/api/asignaciones` | Crear una asignación |
+| GET | `/api/asignaciones/codigo/{codigo}` | Buscar asignación por código |
+| GET | `/api/asignaciones/estudiante/{alias}` | Consultar asignaciones por estudiante |
+| POST | `/api/respuestas` | Registrar una respuesta |
+| GET | `/api/respuestas/asignacion/{asignacionId}` | Consultar respuestas |
+| GET | `/api/resultados/asignacion/{asignacionId}` | Consultar resultados |
+| POST | `/api/resultados/asignacion/{asignacionId}/calcular` | Calcular resultados |
+| PATCH | `/api/resultados/{id}/observacion` | Actualizar una observación |
 
-El backend también implementa operaciones de edición, eliminación y activación de actividades, además de operaciones de gestión de preguntas.
+El backend también implementa operaciones de modificación, eliminación y activación de actividades, además de la gestión de preguntas.
 
 ## API externa: PokéAPI
 
-La aplicación consume PokéAPI mediante una interfaz Retrofit independiente de los servicios REST propios.
+MPAZ NEB utiliza **PokéAPI** como servicio externo para mostrar Pokémon durante la retroalimentación educativa.
 
 URL base:
 
+```text
 https://pokeapi.co/api/v2/
+```
 
-La integración permite mostrar Pokémon como recurso de retroalimentación durante las actividades educativas.
+La integración se realiza mediante Retrofit, utilizando una interfaz independiente de la API REST propia del proyecto.
 
-Se implementaron mejoras de carga y recursos gráficos locales de respaldo para Pikachu, Bulbasaur y Eevee, con el objetivo de mantener la retroalimentación visual cuando falla la carga de imágenes remotas.
+Se incorporaron recursos gráficos locales de respaldo para:
+
+- Pikachu.
+- Bulbasaur.
+- Eevee.
+
+Estos recursos permiten mantener la retroalimentación visual cuando las imágenes remotas no se pueden cargar correctamente.
 
 ## Persistencia de datos
 
 ### Persistencia local
 
-Room Database permite almacenar información dentro del dispositivo Android.
+La aplicación utiliza Room Database para almacenar información local en Android.
 
 ### Persistencia remota
 
-PostgreSQL, alojado en AWS RDS, centraliza la información mediante los servicios REST de Spring Boot.
+La información compartida se almacena en PostgreSQL, alojado en AWS RDS, mediante los servicios REST de Spring Boot.
 
-La base de datos se denomina `mpaz_neb`.
+Nombre de la base de datos:
+
+```text
+mpaz_neb
+```
 
 Principales entidades:
 
@@ -186,31 +200,71 @@ Principales entidades:
 
 Las observaciones pedagógicas se almacenan en el campo `observacion` de los resultados.
 
-El backend actualiza una asignación al estado Completada cuando todas las preguntas han sido respondidas correctamente o se han agotado los tres intentos permitidos por pregunta.
+El backend actualiza una asignación al estado **Completada** cuando todas las preguntas han sido respondidas correctamente o se han agotado los tres intentos permitidos por pregunta.
 
 ## Despliegue en AWS
 
-El backend Spring Boot está desplegado en una instancia EC2 conectada a PostgreSQL en AWS RDS.
+El backend Spring Boot está desplegado en una instancia **AWS EC2** conectada a PostgreSQL en **AWS RDS**.
 
-URL pública verificada el 22 de noviembre de 2026:
+### Dirección pública verificada
+
+Dirección comprobada el 22 de noviembre de 2026, hora de Chile:
 
 ```text
-http://98.82.178.102:8080/
+http://3.85.113.237:8080/
 ```
 
-La dirección se configura en:
+Endpoint utilizado para comprobar la conexión:
+
+```text
+http://3.85.113.237:8080/api/estudiantes/activos
+```
+
+Se obtuvo una respuesta HTTP 200 con estudiantes activos registrados en PostgreSQL.
+
+### Configuración en Android
+
+La dirección del backend se encuentra en:
 
 ```text
 app/src/main/java/com/example/mpazneb/data/remote/RetrofitClient.kt
 ```
 
-La instancia utiliza una IP pública dinámica. Si se detiene y vuelve a iniciar, es necesario comprobar la nueva dirección y actualizar la configuración Android cuando corresponda.
+Configuración utilizada para generar el APK final:
 
-El backend se ejecuta mediante el servicio `mpaz-neb-api.service`, configurado para iniciarse automáticamente al arrancar la instancia.
+```kotlin
+private const val BASE_URL = "http://3.85.113.237:8080/"
+```
+
+### Servicio Spring Boot
+
+El backend está configurado como servicio de Ubuntu:
+
+```text
+mpaz-neb-api.service
+```
+
+Comando para comprobar su estado:
+
+```bash
+sudo systemctl status mpaz-neb-api.service --no-pager
+```
+
+El servicio quedó habilitado para iniciarse automáticamente con la instancia EC2.
+
+### Consideraciones sobre AWS
+
+La instancia de AWS Academy utiliza una dirección IPv4 pública dinámica.
+
+Si la instancia se detiene y vuelve a iniciarse, la IP puede cambiar. En ese caso, será necesario actualizar `RetrofitClient.kt` y generar nuevamente el APK.
+
+El grupo de seguridad de EC2 debe permitir el puerto TCP 8080 desde las direcciones IP autorizadas para utilizar la aplicación.
+
+Si se utiliza una red diferente, como el Wi-Fi del instituto, puede ser necesario autorizar su IP pública.
 
 ## Pruebas unitarias Android
 
-Resultados registrados el 22 de noviembre de 2026:
+Se ejecutaron las siguientes pruebas unitarias:
 
 | Clase de prueba | Pruebas aprobadas |
 |---|---:|
@@ -222,118 +276,202 @@ Resultados registrados el 22 de noviembre de 2026:
 | PokemonViewModelTest | 10 |
 | RespuestaRepositoryTest | 3 |
 | ValidadorAsignacionTest | 13 |
-| Total | 64 |
+| **Total** | **64** |
 
-Resultados:
+### Resultados
 
-- Pruebas ejecutadas: 64.
+- Pruebas unitarias aprobadas: 64.
 - Fallos: 0.
 - Pruebas omitidas: 0.
-- Porcentaje de éxito: 100%.
-- Duración de las pruebas: 14,921 segundos.
-- Compilación y ejecución de pruebas: BUILD SUCCESSFUL.
+- Compilación correcta.
+- Resultado: `BUILD SUCCESSFUL`.
 
-### Ejecutar las pruebas Android
+### Ejecutar pruebas
+
+Desde PowerShell, en la carpeta del proyecto:
 
 ```powershell
 .\gradlew.bat :app:assembleDebug :app:testDebugUnitTest
 ```
 
-Informe generado:
+También se verificó la compilación de la versión release con:
+
+```powershell
+.\gradlew.bat :app:assembleRelease :app:testDebugUnitTest
+```
+
+Resultado final registrado:
+
+```text
+BUILD SUCCESSFUL in 57s
+75 actionable tasks: 24 executed, 51 up-to-date
+```
+
+### Informe de pruebas
 
 ```text
 app/build/reports/tests/testDebugUnitTest/index.html
 ```
 
-### Cobertura de código JaCoCo
+## Cobertura de código con JaCoCo
+
+Se generó un informe de cobertura de las pruebas unitarias Android.
 
 | Indicador | Cobertura |
 |---|---:|
-| Instrucciones | 5% |
-| Ramas | 6% |
-| Líneas | 6,7% |
+| Instrucciones | 5 % |
+| Ramas | 6 % |
+| Líneas | 6,7 % |
 
-Cobertura de instrucciones por paquetes seleccionados:
+Cobertura de instrucciones en paquetes seleccionados:
 
 | Paquete | Cobertura |
 |---|---:|
-| repository.pokemon | 90% |
-| model.asistente | 75% |
-| viewmodel | 54% |
-| repository.estudiante | 52% |
-| model | 50% |
-| data.remote | 33% |
+| repository.pokemon | 90 % |
+| model.asistente | 75 % |
+| viewmodel | 54 % |
+| repository.estudiante | 52 % |
+| model | 50 % |
+| data.remote | 33 % |
 
-Generar informe:
+Para generar el informe:
 
 ```powershell
 .\gradlew.bat :app:createDebugUnitTestCoverageReport
 ```
 
-Ubicación:
+Ubicación del informe:
 
 ```text
 app/build/reports/coverage/test/debug/index.html
 ```
 
-El porcentaje de éxito de las pruebas no equivale al porcentaje de cobertura. La cobertura global incluye pantallas Compose, componentes de persistencia y otras clases que no están completamente cubiertas por las pruebas unitarias actuales.
+**Nota:** el porcentaje de pruebas aprobadas no equivale al porcentaje de cobertura. La cobertura global incluye clases y pantallas que no están completamente cubiertas por pruebas unitarias.
 
-## Pruebas unitarias Spring Boot
+## Pruebas unitarias del backend
 
-Se ejecutaron las pruebas unitarias de los servicios de actividades, preguntas, estudiantes, asignaciones, respuestas y resultados.
+Se ejecutaron pruebas unitarias de los servicios de:
 
-Resultado verificado en AWS EC2:
+- Actividades.
+- Preguntas.
+- Estudiantes.
+- Asignaciones.
+- Respuestas.
+- Resultados.
+
+Resultado verificado en AWS:
 
 - Pruebas ejecutadas: 70.
 - Fallos: 0.
 - Errores: 0.
 - Compilación Maven exitosa.
 
-### Ejecución en Windows
+### Ejecutar pruebas en Windows
 
 ```powershell
 .\mvnw.cmd "-Dtest=*ServiceTest" clean test
 ```
 
-### Ejecución en Ubuntu AWS
+### Ejecutar pruebas en Ubuntu
 
 ```bash
 bash mvnw "-Dtest=*ServiceTest" clean package
 ```
 
-Los informes Maven se generan en:
+Los informes se generan en:
 
 ```text
 target/surefire-reports/
 ```
 
-La prueba de contexto completo de Spring Boot requiere una conexión PostgreSQL correctamente configurada. Esta prueba presentó un error JDBC en el entorno local y no está incluida entre las 70 pruebas unitarias aprobadas.
+La prueba de contexto completo de Spring Boot requiere una conexión PostgreSQL correctamente configurada. En el entorno local se detectó un error JDBC relacionado con esta conexión, por lo que dicha prueba no está incluida entre las 70 pruebas unitarias aprobadas.
 
-### Resumen de pruebas
+### Resumen general
 
 | Componente | Pruebas unitarias aprobadas |
 |---|---:|
 | Android | 64 |
 | Spring Boot | 70 |
-| Total | 134 |
+| **Total** | **134** |
 
-## Verificación funcional
+## Verificación funcional del sistema
 
-Se verificó el flujo integrado de los tres perfiles:
+Se comprobó el flujo completo de los tres perfiles:
 
 1. Creación de una actividad educativa.
-2. Registro de preguntas y activación.
-3. Registro y consulta de estudiantes remotos.
-4. Asignación de una actividad desde Asistente.
-5. Generación de código temporal.
-6. Ingreso del Estudiante mediante el código.
-7. Registro de respuestas y cálculo del rendimiento.
-8. Consulta de resultados en Administración y Asistente.
-9. Registro de observaciones pedagógicas.
-10. Actualización del estado de asignación a Completada.
-11. Visualización de imagen Pokémon y retroalimentación ante una respuesta incorrecta.
+2. Registro de preguntas.
+3. Activación de actividades.
+4. Registro y consulta de estudiantes.
+5. Asignación de actividades desde el perfil Asistente.
+6. Generación de códigos temporales.
+7. Ingreso del Estudiante mediante código.
+8. Registro de respuestas.
+9. Cálculo y consulta de resultados.
+10. Registro de observaciones pedagógicas.
+11. Actualización del estado de asignaciones a Completada.
+12. Visualización de Pokémon como retroalimentación educativa.
 
-También se comprobó la recuperación del servicio Spring Boot tras detener y volver a iniciar EC2.
+También se comprobó el funcionamiento de Spring Boot después de reiniciar la instancia EC2.
+
+## APK firmado de entrega
+
+Se generó un APK firmado de la variante **release**, utilizando el almacén de claves existente del proyecto.
+
+Archivo generado:
+
+```text
+app-release.apk
+```
+
+La generación se completó correctamente mediante Android Studio.
+
+### Verificaciones realizadas
+
+- Compilación release exitosa.
+- Generación del APK firmado exitosa.
+- Instalación correcta en el emulador Pixel 6.
+- Apertura de la aplicación instalada.
+- Conexión con el backend desplegado en AWS EC2.
+- Consulta correcta de estudiantes desde PostgreSQL RDS.
+
+La prueba final mostró en la aplicación los estudiantes:
+
+- Estudiante Demo EPS.
+- Estudiante Prueba 2.
+
+La API respondió correctamente mediante HTTP 200 desde el ordenador utilizado para la verificación.
+
+### Instalación del APK
+
+1. Descargar o recibir el archivo `app-release.apk`.
+2. Transferirlo al dispositivo Android o al emulador.
+3. Autorizar la instalación desde la aplicación utilizada para abrir el archivo, si Android lo solicita.
+4. Instalar la aplicación.
+5. Abrir MPAZ NEB desde el icono instalado.
+6. Comprobar que existe conectividad con AWS.
+7. Consultar estudiantes y actividades.
+
+### Conflictos de firma
+
+Si Android muestra:
+
+```text
+INSTALL_FAILED_UPDATE_INCOMPATIBLE
+```
+
+significa que existe una versión instalada con el mismo identificador de paquete, pero firmada con una clave diferente.
+
+Para solucionarlo, se debe desinstalar la versión anterior antes de instalar el APK firmado.
+
+**Advertencia:** desinstalar una aplicación elimina sus datos locales. No elimina los registros guardados en PostgreSQL RDS.
+
+El botón Run de Android Studio suele instalar una versión debug, que puede tener una firma diferente de la versión release.
+
+Por tanto, para comprobar el APK firmado es recomendable abrirlo desde su icono en el dispositivo, sin reinstalarlo mediante Run.
+
+### Seguridad de la firma
+
+El archivo `.jks`, las contraseñas y las claves privadas no deben publicarse en GitHub ni compartirse junto con el APK.
 
 ## Seguridad y estabilidad
 
@@ -347,63 +485,49 @@ El proyecto incorpora:
 - Manejo de errores de conexión.
 - Estados de carga y opciones de reintento.
 - Validación de observaciones pedagógicas.
-- Restricciones de integridad en las operaciones de actividades.
+- Restricciones en operaciones sobre actividades.
 - Recursos gráficos de respaldo para Pokémon.
 
-El proyecto es un prototipo académico. El acceso por perfiles y códigos temporales no constituye un sistema completo de autenticación para producción.
+MPAZ NEB es un **prototipo académico**.
 
-La comunicación HTTP utilizada en el entorno académico debe reemplazarse por HTTPS en un entorno productivo.
+El acceso por perfiles y códigos temporales no constituye un sistema completo de autenticación para producción.
 
-## Generación del APK firmado
-
-1. Abrir el proyecto en Android Studio.
-2. Seleccionar Build.
-3. Seleccionar Generate Signed App Bundle or APK.
-4. Seleccionar APK.
-5. Utilizar el almacén de claves existente.
-6. Seleccionar el alias correspondiente.
-7. Seleccionar la variante release.
-8. Generar el APK firmado.
-9. Instalarlo en un dispositivo o emulador compatible.
-10. Verificar las funcionalidades principales.
-
-El archivo generado corresponde a `app-release.apk`.
-
-Las contraseñas y claves privadas de firma no deben publicarse en GitHub.
+La comunicación HTTP utilizada en el entorno de evaluación debería reemplazarse por HTTPS en un despliegue productivo.
 
 ## Cómo ejecutar el proyecto
 
 ### Aplicación Android
 
 1. Clonar el repositorio Android.
-2. Abrirlo en Android Studio.
+2. Abrir el proyecto en Android Studio.
 3. Sincronizar Gradle.
-4. Comprobar la URL de RetrofitClient.kt.
-5. Verificar que AWS esté disponible.
-6. Seleccionar un emulador o dispositivo Android.
-7. Ejecutar el módulo app.
+4. Comprobar la URL en `RetrofitClient.kt`.
+5. Verificar que AWS se encuentra disponible.
+6. Iniciar un emulador o conectar un dispositivo Android.
+7. Ejecutar el módulo `app` para desarrollo.
 8. Seleccionar el perfil correspondiente.
 
 ### Backend Spring Boot
 
 1. Clonar el repositorio del backend.
 2. Configurar Java 21.
-3. Configurar las variables de entorno para PostgreSQL.
+3. Configurar la conexión a PostgreSQL.
 4. Descargar las dependencias Maven.
-5. Ejecutar Spring Boot.
-6. Comprobar los endpoints REST.
+5. Compilar el proyecto.
+6. Ejecutar Spring Boot.
+7. Comprobar los endpoints REST.
 
 ## Repositorios y planificación
 
-Android:
+### Aplicación Android
 
 https://github.com/npichiguen-alt/PROYECTO-MPAZ-NEB
 
-Backend:
+### Backend Spring Boot
 
 https://github.com/Matias-Pardo/MPAZ-NEB-API
 
-Tablero de planificación:
+### Tablero Trello
 
 https://trello.com/b/EGRBtnop/
 
@@ -411,29 +535,37 @@ https://trello.com/b/EGRBtnop/
 
 | Commit | Aporte |
 |---|---|
-| 940d5aa | Gestión remota de actividades y preguntas |
-| 3d4ee5d | Integración remota del Asistente |
-| b2355be | Persistencia de observaciones pedagógicas |
-| 5ed6089 | Integración de estudiantes remotos |
-| 85ef79e | Corrección del estado de asignaciones y pruebas unitarias |
-| fa6cc15 | Mejoras PokéAPI y respaldos locales |
-| ec040ad | Actualización de imágenes y pruebas Pokémon |
+| `940d5aa` | Gestión remota de actividades y preguntas |
+| `3d4ee5d` | Integración remota del Asistente |
+| `b2355be` | Persistencia de observaciones pedagógicas |
+| `5ed6089` | Integración de estudiantes remotos |
+| `85ef79e` | Corrección del estado de asignaciones en backend y pruebas |
+| `fa6cc15` | Mejoras de PokéAPI y respaldos locales |
+| `ec040ad` | Imágenes y pruebas de Pokémon |
+| `10cfe78` | Actualización de la IP pública AWS en Retrofit |
 
-## Estado de verificación
+## Estado final del proyecto
 
-- Código Android y backend publicado en GitHub.
-- Backend desplegado en AWS.
-- Conexión PostgreSQL operativa.
-- 64 pruebas unitarias Android aprobadas.
-- 70 pruebas unitarias backend aprobadas.
-- Informe de cobertura Android generado.
-- Flujo integral de los tres perfiles verificado.
-- Corrección de estado de asignaciones verificada.
-- Imagen Pokémon verificada en emulador.
-- Regeneración y verificación del APK firmado final pendiente.
+- [x] Código Android publicado en GitHub.
+- [x] Backend Spring Boot publicado en GitHub.
+- [x] Backend desplegado en AWS EC2.
+- [x] PostgreSQL RDS conectado correctamente.
+- [x] Integración con PokéAPI.
+- [x] 64 pruebas unitarias Android aprobadas.
+- [x] 70 pruebas unitarias backend aprobadas.
+- [x] Informe de cobertura JaCoCo generado.
+- [x] Flujo integrado de los tres perfiles verificado.
+- [x] Corrección del estado de asignaciones.
+- [x] Visualización de Pokémon comprobada.
+- [x] APK firmado release generado.
+- [x] APK firmado instalado en Pixel 6.
+- [x] Conexión del APK con AWS verificada.
+- [x] Consulta de estudiantes de PostgreSQL desde Android comprobada.
 
-## Consideraciones
+## Consideraciones finales
 
-MPAZ NEB utiliza exclusivamente información ficticia con fines educativos.
+MPAZ NEB utiliza información ficticia con fines educativos.
 
-No se deben utilizar datos personales reales de estudiantes ni publicar credenciales de PostgreSQL, AWS o claves privadas de firma.
+La disponibilidad de las funciones remotas depende de que AWS EC2, Spring Boot y PostgreSQL RDS estén operativos y de que la red utilizada tenga acceso autorizado al puerto correspondiente.
+
+No se deben publicar credenciales de AWS, PostgreSQL ni claves privadas de firma.
