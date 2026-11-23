@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    private const val BASE_URL = "http://98.82.178.102:8080/"
+    private const val BASE_URL = "http://3.85.113.237:8080/"
 
     val api: MpazApi by lazy {
         Retrofit.Builder()
