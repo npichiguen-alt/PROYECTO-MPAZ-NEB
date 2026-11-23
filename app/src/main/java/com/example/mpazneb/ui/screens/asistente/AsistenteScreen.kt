@@ -237,35 +237,51 @@ fun AsistenteScreen(
                             // SELECCION DEL ORIGEN
 
                             Row(
-                                modifier = Modifier.padding(8.dp),
-
-                                horizontalArrangement =
-                                    Arrangement.spacedBy(8.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                             ) {
 
-                                FilterChip(
-                                    selected = origenCatalogo == "LOCAL",
+                                Row(
+                                    horizontalArrangement =
+                                        Arrangement.spacedBy(8.dp)
+                                ) {
 
-                                    onClick = {
-                                        origenCatalogo = "LOCAL"
-                                    },
+                                    FilterChip(
+                                        selected = origenCatalogo == "LOCAL",
 
-                                    label = {
-                                        Text("Room local")
+                                        onClick = {
+                                            origenCatalogo = "LOCAL"
+                                        },
+
+                                        label = {
+                                            Text("Room local")
+                                        }
+                                    )
+
+                                    FilterChip(
+                                        selected = origenCatalogo == "AWS",
+
+                                        onClick = {
+                                            origenCatalogo = "AWS"
+                                        },
+
+                                        label = {
+                                            Text("Servidor AWS")
+                                        }
+                                    )
+                                }
+
+                                if (origenCatalogo == "AWS") {
+                                    TextButton(
+                                        onClick = vm::cargarActividadesRemotas,
+                                        enabled = !vm.cargandoActividadesRemotas
+                                    ) {
+                                        Text("Actualizar")
                                     }
-                                )
-
-                                FilterChip(
-                                    selected = origenCatalogo == "AWS",
-
-                                    onClick = {
-                                        origenCatalogo = "AWS"
-                                    },
-
-                                    label = {
-                                        Text("Servidor AWS")
-                                    }
-                                )
+                                }
                             }
 
                             // CARGANDO DATOS REMOTOS
